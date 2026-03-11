@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Velvet Ink is a writer-first WYSIWYG editor with revision history, command-driven editing, and an editorial canvas."
+    />
+    <title>Velvet Ink</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if (window.location.protocol === "file:") {
+        const distUrl = new URL("./dist/index.html", window.location.href).toString();
+        window.location.replace(distUrl);
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
