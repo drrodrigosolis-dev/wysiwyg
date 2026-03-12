@@ -863,6 +863,15 @@ select {
   min-width: 11.5rem;
 }
 
+.tempo-selector {
+  min-width: 11.4rem;
+}
+
+.tempo-status-pill {
+  border-color: var(--accent-border);
+  background: linear-gradient(120deg, var(--accent-soft), rgba(255, 251, 247, 0.9));
+}
+
 .rail {
   min-height: 0;
   overflow-y: auto;
@@ -1395,6 +1404,16 @@ select {
   border: 1px solid rgba(64, 44, 28, 0.08);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.58);
+  padding: 0.72rem;
+  margin-bottom: 0.62rem;
+}
+
+.outline-mission-group {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  border-radius: 16px;
+  background: linear-gradient(140deg, rgba(var(--accent-rgb), 0.09), rgba(255, 255, 255, 0.62));
   padding: 0.72rem;
   margin-bottom: 0.62rem;
 }
@@ -2344,6 +2363,15 @@ select {
   gap: 0.55rem;
 }
 
+.find-mission-group {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  border-radius: 14px;
+  background: linear-gradient(130deg, rgba(var(--accent-rgb), 0.08), rgba(255, 255, 255, 0.68));
+  padding: 0.68rem 0.72rem;
+}
+
 .find-history {
   display: grid;
   gap: 0.4rem;
@@ -2773,6 +2801,11 @@ body[data-theme="dark"] .outline-lens-badge.active {
   border-color: rgba(var(--accent-rgb), 0.45);
 }
 
+body[data-theme="dark"] .tempo-status-pill {
+  background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.24), rgba(26, 35, 49, 0.86));
+  border-color: rgba(var(--accent-rgb), 0.42);
+}
+
 body[data-theme="dark"] .chunk-build-strategy-head,
 body[data-theme="dark"] .chunk-capability-strip,
 body[data-theme="dark"] .outline-strategy-group,
@@ -2800,6 +2833,12 @@ body[data-theme="dark"] .chunk-launch-card,
 body[data-theme="dark"] .chunk-preflight-card {
   border-color: rgba(224, 213, 198, 0.16);
   background: rgba(33, 43, 58, 0.78);
+}
+
+body[data-theme="dark"] .find-mission-group,
+body[data-theme="dark"] .outline-mission-group {
+  border-color: rgba(var(--accent-rgb), 0.38);
+  background: linear-gradient(130deg, rgba(var(--accent-rgb), 0.2), rgba(26, 35, 49, 0.8));
 }
 
 body[data-theme="dark"] .chunk-preflight-badge.pass {

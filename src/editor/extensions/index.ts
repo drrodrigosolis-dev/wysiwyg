@@ -3,7 +3,7 @@ import Link from "@tiptap/extension-link";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import Superscript from "@tiptap/extension-superscript";
-import { Table } from "@tiptap/extension-table";
+import { Table, TableView, updateColumns } from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
@@ -21,6 +21,23 @@ import { InteractiveChunkNode } from "./InteractiveChunkNode";
 import { LetterSpacing } from "./LetterSpacing";
 import { LineHeight } from "./LineHeight";
 import { FontWeight } from "./FontWeight";
+
+class StyledTableView extends TableView {
+  update(node: any) {
+    if (node.type !== this.node.type) {
+      return false;
+    }
+
+    this.node = node;
+    if (typeof node.attrs?.style === "string" && node.attrs.style.trim().length > 0) {
+      this.table.style.cssText = node.attrs.style;
+    } else {
+      this.table.removeAttribute("style");
+    }
+    updateColumns(node, this.colgroup, this.table, this.cellMinWidth);
+    return true;
+  }
+}
 
 const StyledTable = Table.extend({
   renderHTML({ node, HTMLAttributes }): any {
@@ -95,6 +112,14 @@ const StyledTable = Table.extend({
   addAttributes() {
     return {
       ...(this.parent?.() ?? {}),
+      style: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.getAttribute("style");
+          return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+        },
+        renderHTML: () => ({}),
+      },
       borderColor: {
         default: null,
         parseHTML: (element) => {
@@ -328,6 +353,7 @@ export function buildEditorExtensions() {
       resizable: true,
       allowTableNodeSelection: false,
       lastColumnResizable: true,
+      View: StyledTableView,
     }),
     TableRow,
     StyledTableHeader,

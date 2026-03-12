@@ -1272,6 +1272,55 @@ const FIND_PREVIEW_LIMIT_OPTIONS: Array<{ label: string; value: FindPreviewLimit
   { label: "6 rows", value: 6 },
   { label: "10 rows", value: 10 },
 ];
+const FIND_MISSION_PRESETS: Array<{
+  id: "term-audit" | "tone-normalize" | "ship-rename";
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: FindStrategyId;
+  coach: FindCoachMode;
+  previewLimit: FindPreviewLimit;
+  caseSensitive: boolean;
+  wholeWord: boolean;
+  replaceTransform: ReplaceTransform;
+}> = [
+  {
+    id: "term-audit",
+    label: "Term audit",
+    summary: "Strict phrase checks with high-confidence previews before replacement.",
+    tip: "Use when terminology or compliance wording must stay exact.",
+    strategy: "precision",
+    coach: "audit",
+    previewLimit: 10,
+    caseSensitive: true,
+    wholeWord: true,
+    replaceTransform: "as-typed",
+  },
+  {
+    id: "tone-normalize",
+    label: "Tone normalize",
+    summary: "Balanced sweep to harmonize recurring terms and casing quickly.",
+    tip: "Use while refining readability or voice consistency across sections.",
+    strategy: "sweep",
+    coach: "guided",
+    previewLimit: 6,
+    caseSensitive: false,
+    wholeWord: true,
+    replaceTransform: "title",
+  },
+  {
+    id: "ship-rename",
+    label: "Ship rename",
+    summary: "Fast project-wide rename pass with compact review overhead.",
+    tip: "Use after final naming decisions when broad replacement speed matters.",
+    strategy: "normalize",
+    coach: "quick",
+    previewLimit: 3,
+    caseSensitive: false,
+    wholeWord: false,
+    replaceTransform: "lower",
+  },
+];
 const OUTLINE_DEPTH_OPTIONS: Array<{ label: string; value: OutlineDepthFilter }> = [
   { label: "All levels", value: "all" },
   { label: "H1 only", value: "h1" },
@@ -1291,6 +1340,55 @@ const OUTLINE_FOCUS_WINDOW_OPTIONS: Array<{ label: string; value: OutlineFocusWi
   { label: "±1", value: 1 },
   { label: "±2", value: 2 },
   { label: "±3", value: 3 },
+];
+const OUTLINE_MISSION_PRESETS: Array<{
+  id: "map-and-triage" | "focus-slice" | "resequence-board";
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: OutlineStrategyId;
+  depth: OutlineDepthFilter;
+  jumpMode: OutlineJumpMode;
+  focusLens: OutlineFocusLens;
+  focusWindow: OutlineFocusWindow;
+  activeOnly: boolean;
+}> = [
+  {
+    id: "map-and-triage",
+    label: "Map + triage",
+    summary: "Wide hierarchy scan for drift, missing bridges, and structural imbalance.",
+    tip: "Use early in review passes to quickly identify unstable heading depth.",
+    strategy: "structure-scan",
+    depth: "h3",
+    jumpMode: "focus",
+    focusLens: "all-visible",
+    focusWindow: 2,
+    activeOnly: false,
+  },
+  {
+    id: "focus-slice",
+    label: "Focus slice",
+    summary: "Local drafting lane around the active heading with reduced rail noise.",
+    tip: "Use while writing one section at a time and keeping nearby context only.",
+    strategy: "active-draft",
+    depth: "h2",
+    jumpMode: "focus-and-fold",
+    focusLens: "active-window",
+    focusWindow: 1,
+    activeOnly: true,
+  },
+  {
+    id: "resequence-board",
+    label: "Resequence board",
+    summary: "Open structure board for drag-order moves and chapter-level reshaping.",
+    tip: "Use during reordering sessions where complete hierarchy visibility is needed.",
+    strategy: "reorder-pass",
+    depth: "all",
+    jumpMode: "focus",
+    focusLens: "all-visible",
+    focusWindow: 3,
+    activeOnly: false,
+  },
 ];
 const STYLE_RECIPES: Array<{
   id: StyleRecipeId;
@@ -1971,6 +2069,9 @@ function Workspace({
   const [findCaseSensitive, setFindCaseSensitive] = useState(false);
   const [findWholeWord, setFindWholeWord] = useState(false);
   const [replaceTransform, setReplaceTransform] = useState<ReplaceTransform>("as-typed");
+  const [findMissionPresetId, setFindMissionPresetId] = useState<"term-audit" | "tone-normalize" | "ship-rename">(
+    "tone-normalize",
+  );
   const [findStrategyId, setFindStrategyId] = useState<FindStrategyId>(() => readFindStrategyPreference());
   const [findCoachMode, setFindCoachMode] = useState<FindCoachMode>(() => readFindCoachModePreference());
   const [findPreviewLimit, setFindPreviewLimit] = useState<FindPreviewLimit>(() => readFindPreviewLimitPreference());
@@ -1978,6 +2079,9 @@ function Workspace({
   const [outlineDepthFilter, setOutlineDepthFilter] = useState<OutlineDepthFilter>("all");
   const [outlineActiveOnly, setOutlineActiveOnly] = useState(false);
   const [outlineJumpMode, setOutlineJumpMode] = useState<OutlineJumpMode>("focus");
+  const [outlineMissionPresetId, setOutlineMissionPresetId] = useState<"map-and-triage" | "focus-slice" | "resequence-board">(
+    "focus-slice",
+  );
   const [outlineStrategyId, setOutlineStrategyId] = useState<OutlineStrategyId>(() => readOutlineStrategyPreference());
   const [outlineFocusLens, setOutlineFocusLens] = useState<OutlineFocusLens>(() => readOutlineFocusLensPreference());
   const [outlineFocusWindow, setOutlineFocusWindow] = useState<OutlineFocusWindow>(() => readOutlineFocusWindowPreference());
@@ -3012,6 +3116,8 @@ function Workspace({
   const selectedFindStrategy = FIND_STRATEGY_OPTIONS.find((strategy) => strategy.id === findStrategyId) ?? FIND_STRATEGY_OPTIONS[0];
   const selectedFindCoachMode =
     FIND_COACH_MODE_OPTIONS.find((option) => option.value === findCoachMode) ?? FIND_COACH_MODE_OPTIONS[1];
+  const selectedFindMissionPreset =
+    FIND_MISSION_PRESETS.find((preset) => preset.id === findMissionPresetId) ?? FIND_MISSION_PRESETS[1];
   const selectedChunkIntentProfile =
     CHUNK_INTENT_PROFILES.find((profile) => profile.id === chunkIntentProfileId) ?? CHUNK_INTENT_PROFILES[1];
   const selectedChunkDeliveryMode =
@@ -3026,6 +3132,8 @@ function Workspace({
     CHUNK_LAUNCH_PLAN_OPTIONS.find((plan) => plan.id === chunkLaunchPlanId) ?? CHUNK_LAUNCH_PLAN_OPTIONS[0];
   const selectedOutlineStrategy =
     OUTLINE_STRATEGY_OPTIONS.find((strategy) => strategy.id === outlineStrategyId) ?? OUTLINE_STRATEGY_OPTIONS[0];
+  const selectedOutlineMissionPreset =
+    OUTLINE_MISSION_PRESETS.find((preset) => preset.id === outlineMissionPresetId) ?? OUTLINE_MISSION_PRESETS[1];
   const selectedOutlineFocusLens =
     OUTLINE_FOCUS_LENS_OPTIONS.find((option) => option.value === outlineFocusLens) ?? OUTLINE_FOCUS_LENS_OPTIONS[0];
   const selectedChunkIntentTemplate = getChunkTemplate(selectedChunkIntentProfile.templateId);
@@ -3109,6 +3217,20 @@ function Workspace({
       : findRiskLevel === "medium"
         ? "Moderate risk. Review excerpts and keep strategy scoped."
         : "Low risk. Bulk replace is generally safe when the strategy matches intent.";
+  const findMissionAlignmentScore = clampPercent(
+    (findStrategyId === selectedFindMissionPreset.strategy ? 17 : 0) +
+      (findCoachMode === selectedFindMissionPreset.coach ? 17 : 0) +
+      (findPreviewLimit === selectedFindMissionPreset.previewLimit ? 16 : 0) +
+      (findCaseSensitive === selectedFindMissionPreset.caseSensitive ? 17 : 0) +
+      (findWholeWord === selectedFindMissionPreset.wholeWord ? 16 : 0) +
+      (replaceTransform === selectedFindMissionPreset.replaceTransform ? 17 : 0),
+  );
+  const findMissionTip =
+    findMissionAlignmentScore >= 85
+      ? "Mission aligned: replace controls are synchronized for this pass."
+      : findMissionAlignmentScore >= 55
+        ? "Mission partly aligned: apply mission to lock guardrails before replacing."
+        : "Mission drifted: apply mission first, then run match previews.";
   const findPreviewStartIndex = matches.length
     ? Math.max(0, Math.min(matches.length - findPreviewLimit, activeMatchIndex - Math.floor(findPreviewLimit / 2)))
     : 0;
@@ -3179,6 +3301,20 @@ function Workspace({
       : outlineDepthDriftCount > 0
         ? "Depth jumps detected. Consider adding bridge headings for smoother hierarchy."
         : "Hierarchy is steady. Use Reorder pass when sequencing chapters.";
+  const outlineMissionAlignmentScore = clampPercent(
+    (outlineStrategyId === selectedOutlineMissionPreset.strategy ? 16 : 0) +
+      (outlineDepthFilter === selectedOutlineMissionPreset.depth ? 17 : 0) +
+      (outlineJumpMode === selectedOutlineMissionPreset.jumpMode ? 17 : 0) +
+      (outlineFocusLens === selectedOutlineMissionPreset.focusLens ? 17 : 0) +
+      (outlineFocusWindow === selectedOutlineMissionPreset.focusWindow ? 16 : 0) +
+      (outlineActiveOnly === selectedOutlineMissionPreset.activeOnly ? 17 : 0),
+  );
+  const outlineMissionTip =
+    outlineMissionAlignmentScore >= 85
+      ? "Mission aligned: structure controls are synchronized for this editing lane."
+      : outlineMissionAlignmentScore >= 55
+        ? "Mission partly aligned: apply mission to restore depth and lens consistency."
+        : "Mission drifted: re-apply mission before major drag-and-drop reorder changes.";
   const outlineLensTip =
     outlineFocusLens === "all-visible"
       ? "All-visible lens keeps complete context for map-wide reordering."
@@ -4387,6 +4523,20 @@ function Workspace({
     rememberFindQuery(findQuery);
   }
 
+  function applyFindMissionPreset(nextPresetId: "term-audit" | "tone-normalize" | "ship-rename" = findMissionPresetId) {
+    const preset = FIND_MISSION_PRESETS.find((option) => option.id === nextPresetId);
+    if (!preset) {
+      return;
+    }
+    setFindMissionPresetId(preset.id);
+    applyFindStrategy(preset.strategy);
+    setFindCoachMode(preset.coach);
+    setFindPreviewLimit(preset.previewLimit);
+    setFindCaseSensitive(preset.caseSensitive);
+    setFindWholeWord(preset.wholeWord);
+    setReplaceTransform(preset.replaceTransform);
+  }
+
   function applyWorkspaceLayoutPreset(nextPreset: WorkspaceLayoutPreset = workspaceLayoutPreset) {
     const preset = WORKSPACE_LAYOUT_OPTIONS.find((option) => option.value === nextPreset);
     if (!preset) {
@@ -4673,6 +4823,22 @@ function Workspace({
       return;
     }
     openAllOutlineSections();
+  }
+
+  function applyOutlineMissionPreset(
+    nextPresetId: "map-and-triage" | "focus-slice" | "resequence-board" = outlineMissionPresetId,
+  ) {
+    const preset = OUTLINE_MISSION_PRESETS.find((option) => option.id === nextPresetId);
+    if (!preset) {
+      return;
+    }
+    setOutlineMissionPresetId(preset.id);
+    applyOutlineStrategy(preset.strategy);
+    setOutlineDepthFilter(preset.depth);
+    setOutlineJumpMode(preset.jumpMode);
+    setOutlineFocusLens(preset.focusLens);
+    setOutlineFocusWindow(preset.focusWindow);
+    setOutlineActiveOnly(preset.activeOnly);
   }
 
   function moveMinimapSelection(step: 1 | -1) {
@@ -5304,6 +5470,22 @@ function Workspace({
               ))}
             </select>
           </label>
+          <label className="theme-selector tempo-selector" htmlFor="session-tempo-selector">
+            <span>Tempo</span>
+            <select
+              id="session-tempo-selector"
+              value={sessionTempoPresetId}
+              aria-label="Session tempo preset"
+              title={selectedSessionTempo.summary}
+              onChange={(event) => setSessionTempoPresetId(event.target.value as SessionTempoPresetId)}
+            >
+              {SESSION_TEMPO_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="theme-selector" htmlFor="view-mode-selector">
             <span>View</span>
             <select
@@ -5381,6 +5563,9 @@ function Workspace({
           <button className="ghost-action" type="button" onClick={() => void resetToBlankDocument()}>
             New blank
           </button>
+          <button className="ghost-action" type="button" onClick={() => applySessionTempo()}>
+            Apply tempo
+          </button>
           <button className="ghost-action" type="button" onClick={clearSelectionFormatting}>
             Clear formatting
           </button>
@@ -5456,6 +5641,9 @@ function Workspace({
               Side by side
             </button>
           </div>
+          <span className="meta-pill tempo-status-pill" title={selectedSessionTempo.tip}>
+            Tempo {selectedSessionTempo.label} · {sessionTempoAlignmentScore}%
+          </span>
           {showCodeView ? (
             <button
               className="ghost-action"
@@ -6737,6 +6925,44 @@ function Workspace({
             onExpandAll={expandAllPanels}
             guidanceLevel={guidanceLevel}
           >
+            <div className="outline-mission-group">
+              <label className="style-control">
+                <span>Outline mission</span>
+                <select
+                  value={outlineMissionPresetId}
+                  onChange={(event) =>
+                    setOutlineMissionPresetId(event.target.value as "map-and-triage" | "focus-slice" | "resequence-board")
+                  }
+                >
+                  {OUTLINE_MISSION_PRESETS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {OUTLINE_MISSION_PRESETS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${outlineMissionPresetId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={outlineMissionPresetId === option.id}
+                    onClick={() => setOutlineMissionPresetId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyOutlineMissionPreset()}>
+                  Apply mission
+                </button>
+              </div>
+              <p className="small-copy">{selectedOutlineMissionPreset.summary}</p>
+              <p className="small-copy">
+                Mission alignment {outlineMissionAlignmentScore}%. {outlineMissionTip}
+              </p>
+              <p className="small-copy">Tip: {selectedOutlineMissionPreset.tip}</p>
+            </div>
             <div className="outline-strategy-group">
               <label className="style-control">
                 <span>Outline strategy</span>
@@ -8125,6 +8351,44 @@ function Workspace({
             guidanceLevel={guidanceLevel}
           >
             <div className="find-panel-inline">
+              <div className="find-mission-group">
+                <label className="style-control">
+                  <span>Find mission</span>
+                  <select
+                    value={findMissionPresetId}
+                    onChange={(event) =>
+                      setFindMissionPresetId(event.target.value as "term-audit" | "tone-normalize" | "ship-rename")
+                    }
+                  >
+                    {FIND_MISSION_PRESETS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-grid">
+                  {FIND_MISSION_PRESETS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`chip ${findMissionPresetId === option.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={findMissionPresetId === option.id}
+                      onClick={() => setFindMissionPresetId(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => applyFindMissionPreset()}>
+                    Apply mission
+                  </button>
+                </div>
+                <p className="small-copy">{selectedFindMissionPreset.summary}</p>
+                <p className="small-copy">
+                  Mission alignment {findMissionAlignmentScore}%. {findMissionTip}
+                </p>
+                <p className="small-copy">Tip: {selectedFindMissionPreset.tip}</p>
+              </div>
               <div className="find-structured-controls">
                 <label className="style-control">
                   <span>Find strategy</span>
@@ -10205,14 +10469,74 @@ function updateActiveTableAttributes(editor: Editor, partial: Record<string, unk
     return false;
   }
 
-  const nextAttributes = {
+  const nextAttributesWithoutStyle = {
     ...target.node.attrs,
     ...partial,
+  };
+  const computedStyle = buildTableStyleAttribute(nextAttributesWithoutStyle);
+  const nextAttributes = {
+    ...nextAttributesWithoutStyle,
+    style: computedStyle || null,
   };
 
   const transaction = editor.state.tr.setNodeMarkup(target.pos, undefined, nextAttributes);
   editor.view.dispatch(transaction);
   return true;
+}
+
+function buildTableStyleAttribute(attrs: Record<string, unknown>) {
+  const parts: string[] = [];
+
+  const borderColor = typeof attrs.borderColor === "string" ? attrs.borderColor.trim() : "";
+  if (borderColor) {
+    parts.push(`--table-grid-color: ${borderColor}`);
+  }
+
+  const legacyPadding = resolveOptionalTableSpace(attrs.cellPaddingPx);
+  const paddingTop = resolveOptionalTableSpace(attrs.cellPaddingTopPx) ?? legacyPadding;
+  const paddingRight = resolveOptionalTableSpace(attrs.cellPaddingRightPx) ?? legacyPadding;
+  const paddingBottom = resolveOptionalTableSpace(attrs.cellPaddingBottomPx) ?? legacyPadding;
+  const paddingLeft = resolveOptionalTableSpace(attrs.cellPaddingLeftPx) ?? legacyPadding;
+  if (paddingTop !== null) {
+    parts.push(`--table-cell-padding-top: ${paddingTop}px`);
+  }
+  if (paddingRight !== null) {
+    parts.push(`--table-cell-padding-right: ${paddingRight}px`);
+  }
+  if (paddingBottom !== null) {
+    parts.push(`--table-cell-padding-bottom: ${paddingBottom}px`);
+  }
+  if (paddingLeft !== null) {
+    parts.push(`--table-cell-padding-left: ${paddingLeft}px`);
+  }
+
+  const legacyMarginY = resolveOptionalTableSpace(attrs.marginYPx);
+  const marginTop = resolveOptionalTableSpace(attrs.marginTopPx) ?? legacyMarginY;
+  const marginRight = resolveOptionalTableSpace(attrs.marginRightPx);
+  const marginBottom = resolveOptionalTableSpace(attrs.marginBottomPx) ?? legacyMarginY;
+  const marginLeft = resolveOptionalTableSpace(attrs.marginLeftPx);
+  if (marginTop !== null) {
+    parts.push(`--table-margin-top: ${marginTop}px`);
+  }
+  if (marginRight !== null) {
+    parts.push(`--table-margin-right: ${marginRight}px`);
+  }
+  if (marginBottom !== null) {
+    parts.push(`--table-margin-bottom: ${marginBottom}px`);
+  }
+  if (marginLeft !== null) {
+    parts.push(`--table-margin-left: ${marginLeft}px`);
+  }
+
+  return parts.join("; ");
+}
+
+function resolveOptionalTableSpace(value: unknown) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Math.max(0, Math.round(numeric));
 }
 
 function replaceEditorDocument(editor: Editor, content: JSONContent) {
