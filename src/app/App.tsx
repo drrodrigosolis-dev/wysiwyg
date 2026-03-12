@@ -2814,8 +2814,9 @@ function Workspace({
       editor?.getAttributes("table").borderColor ??
       "",
   );
-  const currentTableCellPaddingPx = Number(editor?.getAttributes("table").cellPaddingPx ?? 10);
-  const currentTableMarginYPx = Number(editor?.getAttributes("table").marginYPx ?? 12);
+  const activeTableNode = resolveActiveTableNode(editor);
+  const currentTableCellPaddingPx = Number(activeTableNode?.node?.attrs?.cellPaddingPx ?? 10);
+  const currentTableMarginYPx = Number(activeTableNode?.node?.attrs?.marginYPx ?? 12);
   const currentAlignment = String(editor?.getAttributes("heading").textAlign ?? editor?.getAttributes("paragraph").textAlign ?? "left");
   const currentLineHeight = resolveLineHeight(editor);
   const currentCalloutTone = editor?.isActive("callout") ? String(editor.getAttributes("callout").tone ?? "note") : "none";
@@ -3787,7 +3788,8 @@ function Workspace({
       return;
     }
 
-    activeEditor.chain().focus().setCellAttribute("borderColor", color).updateAttributes("table", { borderColor: color }).run();
+    activeEditor.chain().focus().setCellAttribute("borderColor", color).run();
+    updateActiveTableAttributes(activeEditor, { borderColor: color });
   }
 
   function applyTableCellPadding(value: number) {
@@ -3796,7 +3798,7 @@ function Workspace({
     }
 
     const nextValue = Math.max(0, Math.round(value));
-    activeEditor.chain().focus().updateAttributes("table", { cellPaddingPx: nextValue }).run();
+    updateActiveTableAttributes(activeEditor, { cellPaddingPx: nextValue });
   }
 
   function applyTableMarginY(value: number) {
@@ -3805,7 +3807,7 @@ function Workspace({
     }
 
     const nextValue = Math.max(0, Math.round(value));
-    activeEditor.chain().focus().updateAttributes("table", { marginYPx: nextValue }).run();
+    updateActiveTableAttributes(activeEditor, { marginYPx: nextValue });
   }
 
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
@@ -9949,6 +9951,52 @@ function shouldOpenSlash(editor: Editor | null) {
   }
   const parent = editor.state.selection.$anchor.parent;
   return parent.type.name !== "codeBlock";
+}
+
+function resolveActiveTableNode(editor: Editor | null) {
+  if (!editor) {
+    return null;
+  }
+
+  const selection = editor.state.selection as {
+    $anchor?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
+    $from?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
+    $anchorCell?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
+  };
+  const resolved = selection.$anchorCell ?? selection.$anchor ?? selection.$from;
+  if (!resolved) {
+    return null;
+  }
+
+  for (let depth = resolved.depth; depth > 0; depth -= 1) {
+    const node = resolved.node(depth);
+    if (node.type.name !== "table") {
+      continue;
+    }
+
+    return {
+      node,
+      pos: resolved.before(depth),
+    };
+  }
+
+  return null;
+}
+
+function updateActiveTableAttributes(editor: Editor, partial: Record<string, unknown>) {
+  const target = resolveActiveTableNode(editor);
+  if (!target) {
+    return false;
+  }
+
+  const nextAttributes = {
+    ...target.node.attrs,
+    ...partial,
+  };
+
+  const transaction = editor.state.tr.setNodeMarkup(target.pos, undefined, nextAttributes);
+  editor.view.dispatch(transaction);
+  return true;
 }
 
 function replaceEditorDocument(editor: Editor, content: JSONContent) {
