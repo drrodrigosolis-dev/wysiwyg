@@ -797,6 +797,22 @@ select {
   border-color: var(--accent-border);
 }
 
+.topbar-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0.45rem;
+}
+
+.topbar-icon-glyph {
+  font-size: 0.8rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .view-mode-toggle {
   min-width: 0;
 }
@@ -1966,7 +1982,17 @@ select {
 }
 
 .tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2.2rem;
+}
+
+.tool.tool-icon {
+  min-width: 2rem;
+  padding: 0.46rem 0.56rem;
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .toolbar-select {
@@ -2029,6 +2055,18 @@ select {
   border-radius: 8px;
   border: 1px solid rgba(64, 44, 28, 0.14);
   background: transparent;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .editor-canvas {
@@ -2386,6 +2424,15 @@ select {
   gap: 0.38rem;
 }
 
+.find-guard-card {
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(255, 255, 255, 0.74));
+  padding: 0.64rem 0.72rem;
+  display: grid;
+  gap: 0.38rem;
+}
+
 .find-preview-list {
   display: grid;
   gap: 0.45rem;
@@ -2450,7 +2497,8 @@ select {
 
 .pulse-coach-group,
 .pulse-intervention-group,
-.revision-strategy-group {
+.revision-strategy-group,
+.revision-review-lane-group {
   display: grid;
   gap: 0.55rem;
   border: 1px solid rgba(64, 44, 28, 0.08);
@@ -2511,8 +2559,22 @@ select {
   margin-top: 0.72rem;
 }
 
+.revision-review-lane-card {
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(255, 255, 255, 0.76));
+  padding: 0.72rem 0.78rem;
+  display: grid;
+  gap: 0.44rem;
+}
+
 .revision-coach-card p {
   margin: 0;
+}
+
+.guidance-sync-pill {
+  border-color: rgba(var(--accent-rgb), 0.24);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .metric-card {
@@ -2784,7 +2846,8 @@ body[data-theme="dark"] .editor-hud .hud-pill {
   background: rgba(33, 43, 58, 0.78);
 }
 
-body[data-theme="dark"] .find-coach-card {
+body[data-theme="dark"] .find-coach-card,
+body[data-theme="dark"] .find-guard-card {
   border-color: rgba(224, 213, 198, 0.14);
   background: rgba(26, 35, 49, 0.72);
 }
@@ -2806,6 +2869,11 @@ body[data-theme="dark"] .tempo-status-pill {
   border-color: rgba(var(--accent-rgb), 0.42);
 }
 
+body[data-theme="dark"] .guidance-sync-pill {
+  background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.24), rgba(26, 35, 49, 0.86));
+  border-color: rgba(var(--accent-rgb), 0.42);
+}
+
 body[data-theme="dark"] .chunk-build-strategy-head,
 body[data-theme="dark"] .chunk-capability-strip,
 body[data-theme="dark"] .outline-strategy-group,
@@ -2815,8 +2883,10 @@ body[data-theme="dark"] .minimap-strategy-group,
 body[data-theme="dark"] .pulse-coach-group,
 body[data-theme="dark"] .pulse-intervention-group,
 body[data-theme="dark"] .revision-strategy-group,
+body[data-theme="dark"] .revision-review-lane-group,
 body[data-theme="dark"] .pulse-coach-card,
 body[data-theme="dark"] .revision-coach-card,
+body[data-theme="dark"] .revision-review-lane-card,
 body[data-theme="dark"] .mode-coach-card,
 body[data-theme="dark"] .minimap-coach-card,
 body[data-theme="dark"] .style-lane-group,

@@ -323,12 +323,6 @@ const DEFAULT_BLOCK_RGBA: RgbaValue = { r: 242, g: 109, b: 61, a: 0.12 };
 const DEFAULT_TABLE_CELL_RGBA: RgbaValue = { r: 255, g: 255, b: 255, a: 1 };
 const DEFAULT_TABLE_GRID_RGBA: RgbaValue = { r: 64, g: 44, b: 28, a: 0.2 };
 
-const VIEW_MODE_OPTIONS: Array<{ value: ViewMode; label: string }> = [
-  { value: "rich", label: "Rich text" },
-  { value: "html", label: "HTML source" },
-  { value: "exportable", label: "Exportable HTML" },
-];
-
 const BLOCK_BACKGROUNDS = [
   { label: "None", value: "none" },
   { label: "Note", value: "note" },
@@ -5873,9 +5867,7 @@ function Workspace({
               ))}
             </select>
           </label>
-          <button className="ghost-action" type="button" onClick={() => applyGlobalGuidanceSync()}>
-            Apply guidance sync
-          </button>
+          <TopbarIconButton label="Apply guidance sync" icon="⇄" onClick={() => applyGlobalGuidanceSync()} />
           <span className="meta-pill guidance-sync-pill" title={selectedGlobalGuidanceSync.tip}>
             Guidance sync {globalGuidanceAlignmentScore}%
           </span>
@@ -5904,19 +5896,6 @@ function Workspace({
             </select>
           </label>
 
-          {showCodeView ? (
-            <button
-              className="ghost-action"
-              type="button"
-              aria-pressed={htmlCodeLayout === "oneline"}
-              onClick={() =>
-                setHtmlCodeLayout((current) => (current === "paragraphs" ? "oneline" : "paragraphs"))
-              }
-            >
-              HTML: {htmlCodeLayout === "paragraphs" ? "Paragraphs" : "One line"}
-            </button>
-          ) : null}
-
           <label className="theme-selector" htmlFor="saved-documents-selector">
             <span>Load</span>
             <select
@@ -5942,67 +5921,50 @@ function Workspace({
             </select>
           </label>
 
-          <button className="ghost-action" type="button" onClick={() => void saveCurrentDocumentEntry()}>
-            Save
-          </button>
-          <button
-            className="ghost-action"
-            type="button"
+          <TopbarIconButton label="Save document" icon="SV" onClick={() => void saveCurrentDocumentEntry()} />
+          <TopbarIconButton
+            label="Delete saved document"
+            icon="DEL"
             disabled={!selectedSavedDocumentId}
             onClick={() => deleteSavedDocumentEntry(selectedSavedDocumentId)}
-          >
-            Delete saved
-          </button>
-          <button className="ghost-action" type="button" onClick={() => void resetToBlankDocument()}>
-            New blank
-          </button>
-          <button className="ghost-action" type="button" onClick={() => applySessionTempo()}>
-            Apply tempo
-          </button>
-          <button className="ghost-action" type="button" onClick={clearSelectionFormatting}>
-            Clear formatting
-          </button>
+          />
+          <TopbarIconButton label="New blank document" icon="＋" onClick={() => void resetToBlankDocument()} />
+          <TopbarIconButton label="Apply tempo preset" icon="⏱" onClick={() => applySessionTempo()} />
+          <TopbarIconButton label="Clear formatting" icon="Tx" onClick={clearSelectionFormatting} />
 
-          <button
-            className={`ghost-action ${focusMode ? "active" : ""}`}
-            type="button"
-            aria-pressed={focusMode}
+          <TopbarIconButton
+            label={focusMode ? "Exit focus mode" : "Focus mode"}
+            icon={focusMode ? "◉" : "◎"}
+            active={focusMode}
+            pressed={focusMode}
             onClick={() => setFocusMode((current) => !current)}
-          >
-            {focusMode ? "Exit focus" : "Focus"}
-          </button>
-          <button
-            className={`ghost-action ${showEditorHud ? "active" : ""}`}
-            type="button"
-            aria-pressed={showEditorHud}
+          />
+          <TopbarIconButton
+            label={showEditorHud ? "Hide editor HUD" : "Show editor HUD"}
+            icon={showEditorHud ? "◫" : "◧"}
+            active={showEditorHud}
+            pressed={showEditorHud}
             onClick={() => setShowEditorHud((current) => !current)}
-          >
-            {showEditorHud ? "Hide HUD" : "Show HUD"}
-          </button>
-          <button
-            className="ghost-action"
-            type="button"
-            aria-pressed={leftRailOpen}
+          />
+          <TopbarIconButton
+            label={leftRailOpen ? "Hide left panel" : "Show left panel"}
+            icon={leftRailOpen ? "⟨" : "⟪"}
+            pressed={leftRailOpen}
             onClick={() => setLeftRailOpen((current) => !current)}
-          >
-            Left panel
-          </button>
-          <button
-            className="ghost-action"
-            type="button"
+          />
+          <TopbarIconButton
+            label="Open commands"
+            icon="⌘"
             onClick={() => {
               setCommandPaletteOpen(true);
               setCommandQuery("");
             }}
-          >
-            Commands
-          </button>
-          <button className="ghost-action" type="button" onClick={() => setFindPanelOpen(true)}>
-            Find
-          </button>
-          <button
-            className={`ghost-action ${workspacePage === "chunk-builder" ? "active" : ""}`}
-            type="button"
+          />
+          <TopbarIconButton label="Open find" icon="⌕" onClick={() => setFindPanelOpen(true)} />
+          <TopbarIconButton
+            label={workspacePage === "chunk-builder" ? "Back to editor" : "Chunk builder"}
+            icon={workspacePage === "chunk-builder" ? "⬑" : "▦"}
+            active={workspacePage === "chunk-builder"}
             onClick={() => {
               if (workspacePage === "chunk-builder") {
                 closeChunkBuilder();
@@ -6010,56 +5972,30 @@ function Workspace({
               }
               openChunkBuilder();
             }}
-          >
-            {workspacePage === "chunk-builder" ? "Back to editor" : "Chunk builder"}
-          </button>
-          <div className="view-mode-group" role="group" aria-label="View mode">
-            {VIEW_MODE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                className={`ghost-action view-mode-toggle ${viewMode === option.value ? "active" : ""}`}
-                type="button"
-                aria-pressed={viewMode === option.value}
-                onClick={() => setViewMode(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-            <button
-              className={`ghost-action view-mode-toggle ${sideBySide ? "active" : ""}`}
-              type="button"
-              aria-pressed={sideBySide}
-              onClick={() => setSideBySide((current) => !current)}
-            >
-              Side by side
-            </button>
-          </div>
+          />
           <span className="meta-pill tempo-status-pill" title={selectedSessionTempo.tip}>
             Tempo {selectedSessionTempo.label} · {sessionTempoAlignmentScore}%
           </span>
           {showCodeView ? (
-            <button
-              className="ghost-action"
-              type="button"
-              aria-pressed={htmlCodeLayout === "oneline"}
-              onClick={() =>
-                setHtmlCodeLayout((current) => (current === "paragraphs" ? "oneline" : "paragraphs"))
-              }
-            >
-              HTML layout: {htmlCodeLayout === "paragraphs" ? "Paragraph breaks" : "One line"}
-            </button>
+            <TopbarIconButton
+              label={`HTML layout: ${htmlCodeLayout === "paragraphs" ? "Paragraph breaks" : "One line"}`}
+              icon={htmlCodeLayout === "paragraphs" ? "¶" : "≡"}
+              pressed={htmlCodeLayout === "oneline"}
+              onClick={() => setHtmlCodeLayout((current) => (current === "paragraphs" ? "oneline" : "paragraphs"))}
+            />
           ) : null}
-          <button
-            className="ghost-action"
-            type="button"
-            aria-pressed={rightRailOpen}
+          <TopbarIconButton
+            label={rightRailOpen ? "Hide right panel" : "Show right panel"}
+            icon={rightRailOpen ? "⟩" : "⟫"}
+            pressed={rightRailOpen}
             onClick={() => setRightRailOpen((current) => !current)}
-          >
-            Right panel
-          </button>
-          <button className="primary-action" type="button" onClick={() => exportHtml(activeEditor, title, accent)}>
-            Export HTML
-          </button>
+          />
+          <TopbarIconButton
+            label="Export HTML"
+            icon="⇪"
+            variant="primary"
+            onClick={() => exportHtml(activeEditor, title, accent)}
+          />
         </div>
       </header>
 
@@ -6706,7 +6642,7 @@ function Workspace({
           <PanelSection
             sectionId="left-style-lab"
             title="Style Lab"
-            copy="Complete controls for type, spacing, color, alignment, icons, and block backgrounds."
+            copy="High-level style strategies and coaching presets. Direct formatting controls live in the top toolbar."
             collapsed={isPanelCollapsed("left-style-lab")}
             onToggle={() => togglePanel("left-style-lab")}
             onSolo={() => soloPanel("left-style-lab")}
@@ -6936,375 +6872,10 @@ function Workspace({
                   <p className="small-copy">{selectedStyleReadabilityTarget.tip}</p>
                 </article>
               </div>
-
-              <div className="style-group">
-                <span className="style-label">Typography</span>
-                <div className="style-control-grid">
-                  <label className="style-control">
-                    <span>Font size</span>
-                    <select
-                      value={fontSizeSelectValue}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        if (nextValue === CUSTOM_SELECT_VALUE) {
-                          return;
-                        }
-                        applyFontSize(nextValue || null);
-                      }}
-                    >
-                      <option value="">Document default</option>
-                      {FONT_SIZE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      {fontSizeSelectValue === CUSTOM_SELECT_VALUE ? (
-                        <option value={CUSTOM_SELECT_VALUE} disabled>
-                          Custom ({currentFontSize})
-                        </option>
-                      ) : null}
-                    </select>
-                  </label>
-
-                  <label className="style-control">
-                    <span>Font weight</span>
-                    <select
-                      value={fontWeightSelectValue}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        if (nextValue === CUSTOM_SELECT_VALUE) {
-                          return;
-                        }
-
-                        applyFontWeight(nextValue || null);
-                      }}
-                    >
-                      <option value="">Document default</option>
-                      {FONT_WEIGHT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      {fontWeightSelectValue === CUSTOM_SELECT_VALUE ? (
-                        <option value={CUSTOM_SELECT_VALUE} disabled>
-                          Custom ({currentFontWeight})
-                        </option>
-                      ) : null}
-                    </select>
-                  </label>
-
-                  <label className="style-control">
-                    <span>Line height preset</span>
-                    <select
-                      value={lineHeightSelectValue}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        if (nextValue === CUSTOM_SELECT_VALUE) {
-                          return;
-                        }
-
-                        applyLineHeight(nextValue || null);
-                      }}
-                    >
-                      <option value="">Document default</option>
-                      {LINE_HEIGHT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      {lineHeightSelectValue === CUSTOM_SELECT_VALUE ? (
-                        <option value={CUSTOM_SELECT_VALUE} disabled>
-                          Custom ({currentLineHeight})
-                        </option>
-                      ) : null}
-                    </select>
-                  </label>
-
-                  <label className="style-control">
-                    <span>Tracking preset</span>
-                    <select
-                      value={letterSpacingSelectValue}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        if (nextValue === CUSTOM_SELECT_VALUE) {
-                          return;
-                        }
-
-                        applyLetterSpacing(nextValue || null);
-                      }}
-                    >
-                      <option value="">Document default</option>
-                      {LETTER_SPACING_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      {letterSpacingSelectValue === CUSTOM_SELECT_VALUE ? (
-                        <option value={CUSTOM_SELECT_VALUE} disabled>
-                          Custom ({currentLetterSpacing})
-                        </option>
-                      ) : null}
-                    </select>
-                  </label>
-
-                  <label className="style-control">
-                    <span>Font family preset</span>
-                    <select
-                      value={fontFamilySelectValue}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        if (nextValue === CUSTOM_SELECT_VALUE) {
-                          return;
-                        }
-
-                        applyFontFamily(nextValue || null);
-                      }}
-                    >
-                      <option value="">Document default</option>
-                      {FONT_FAMILY_OPTIONS.map((option) => (
-                        <option key={option.label} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                      {fontFamilySelectValue === CUSTOM_SELECT_VALUE ? (
-                        <option value={CUSTOM_SELECT_VALUE} disabled>
-                          Custom family
-                        </option>
-                      ) : null}
-                    </select>
-                  </label>
-                </div>
-                <div className="style-dimension-grid">
-                  <label className="style-control">
-                    <span>Text size value</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={fontSizeNumberDraft}
-                      onChange={(event) => setFontSizeNumberDraft(event.target.value)}
-                    />
-                  </label>
-                  <label className="style-control">
-                    <span>Text size unit</span>
-                    <select
-                      value={fontSizeUnitDraft}
-                      onChange={(event) => setFontSizeUnitDraft(event.target.value as LengthUnit)}
-                    >
-                      {LENGTH_UNITS.map((unit) => (
-                        <option key={unit} value={unit}>
-                          {unit}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button className="chip" type="button" onClick={applyDraftFontSize} disabled={!parsedFontSizeDraft}>
-                    Apply size
-                  </button>
-
-                  <label className="style-control">
-                    <span>Line height value</span>
-                    <input
-                      type="number"
-                      step="0.05"
-                      value={lineHeightNumberDraft}
-                      onChange={(event) => setLineHeightNumberDraft(event.target.value)}
-                    />
-                  </label>
-                  <label className="style-control">
-                    <span>Line height unit</span>
-                    <select
-                      value={lineHeightUnitDraft}
-                      onChange={(event) => setLineHeightUnitDraft(event.target.value as LineHeightUnit)}
-                    >
-                      {LINE_HEIGHT_UNITS.map((unit) => (
-                        <option key={unit} value={unit}>
-                          {unit === "unitless" ? "unitless" : unit}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button className="chip" type="button" onClick={applyDraftLineHeight} disabled={!parsedLineHeightDraft}>
-                    Apply line
-                  </button>
-
-                  <label className="style-control">
-                    <span>Font weight value</span>
-                    <input
-                      type="text"
-                      value={fontWeightDraft}
-                      placeholder="400 or bolder"
-                      onChange={(event) => setFontWeightDraft(event.target.value)}
-                    />
-                  </label>
-                  <button className="chip" type="button" onClick={applyDraftFontWeight} disabled={!parsedFontWeightDraft}>
-                    Apply weight
-                  </button>
-
-                  <label className="style-control">
-                    <span>Tracking value</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={letterSpacingNumberDraft}
-                      onChange={(event) => setLetterSpacingNumberDraft(event.target.value)}
-                    />
-                  </label>
-                  <label className="style-control">
-                    <span>Tracking unit</span>
-                    <select
-                      value={letterSpacingUnitDraft}
-                      onChange={(event) => setLetterSpacingUnitDraft(event.target.value as LengthUnit)}
-                    >
-                      {LENGTH_UNITS.map((unit) => (
-                        <option key={unit} value={unit}>
-                          {unit}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    className="chip"
-                    type="button"
-                    onClick={applyDraftLetterSpacing}
-                    disabled={!parsedLetterSpacingDraft}
-                  >
-                    Apply track
-                  </button>
-                </div>
-                <label className="style-control">
-                  <span>Custom font family stack</span>
-                  <input
-                    type="text"
-                    value={fontFamilyDraft}
-                    placeholder='e.g. "IBM Plex Serif", serif'
-                    onChange={(event) => setFontFamilyDraft(event.target.value)}
-                  />
-                </label>
-                <div className="compact-grid">
-                  <button className="chip" type="button" onClick={() => stepFontSize(-1)}>
-                    A-
-                  </button>
-                  <button className="chip" type="button" onClick={() => stepFontSize(1)}>
-                    A+
-                  </button>
-                  <button className="chip" type="button" onClick={applyDraftFontFamily}>
-                    Apply family
-                  </button>
-                  <button
-                    className="chip"
-                    type="button"
-                    onClick={() => {
-                      applyFontSize(null);
-                      applyFontFamily(null);
-                      applyFontWeight(null);
-                      applyLineHeight(null);
-                      applyLetterSpacing(null);
-                    }}
-                  >
-                    Reset type
-                  </button>
-                </div>
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Text color</span>
-                <RgbaEditor
-                  label="Selected text"
-                  value={textColorRgba}
-                  onChange={(nextValue) => {
-                    setTextColorRgba(nextValue);
-                    applyTextColor(toRgbaString(nextValue));
-                  }}
-                  onApply={() => applyTextColor(toRgbaString(textColorRgba))}
-                  onReset={() => applyTextColor(null)}
-                  realtime
-                />
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Text highlight</span>
-                <RgbaEditor
-                  label="Selected text"
-                  value={highlightRgba}
-                  onChange={(nextValue) => {
-                    setHighlightRgba(nextValue);
-                    applyTextBackground(toRgbaString(nextValue));
-                  }}
-                  onApply={() => applyTextBackground(toRgbaString(highlightRgba))}
-                  onReset={() => applyTextBackground(null)}
-                  realtime
-                />
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Block background</span>
-                <RgbaEditor
-                  label="Current block"
-                  value={blockBackgroundRgba}
-                  onChange={(nextValue) => {
-                    setBlockBackgroundRgba(nextValue);
-                    applyBlockBackgroundColor(toRgbaString(nextValue));
-                  }}
-                  onApply={() => applyBlockBackgroundColor(toRgbaString(blockBackgroundRgba))}
-                  onReset={() => applyBlockBackgroundColor(null)}
-                  realtime
-                />
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Block presets</span>
-                <div className="compact-grid">
-                  {BLOCK_BACKGROUNDS.map((tone) => (
-                    <button
-                      key={tone.value}
-                      className={`chip ${currentCalloutTone === tone.value ? "active" : ""}`}
-                      type="button"
-                      onClick={() => applyBlockBackgroundTone(tone.value)}
-                    >
-                      {tone.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Alignment</span>
-                <div className="compact-grid">
-                  {ALIGNMENTS.map((alignment) => (
-                    <button
-                      key={alignment.value}
-                      className={`chip ${currentAlignment === alignment.value ? "active" : ""}`}
-                      type="button"
-                      onClick={() => applyAlignment(alignment.value)}
-                    >
-                      {alignment.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="style-group">
-                <span className="style-label">Icons</span>
-                <div className="icon-grid">
-                  {ICON_INSERTIONS.map((icon) => (
-                    <button key={icon.label} className="icon-button" type="button" onClick={() => insertIcon(icon.value)}>
-                      <span>{icon.value}</span>
-                      {icon.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="icon-custom-row">
-                  <input
-                    type="text"
-                    value={customIconValue}
-                    onChange={(event) => setCustomIconValue(event.target.value)}
-                    placeholder="Custom symbol or emoji"
-                  />
-                  <button className="chip" type="button" onClick={insertCustomIcon} disabled={!customIconValue.trim()}>
-                    Insert custom
-                  </button>
-                </div>
-              </div>
+              <p className="small-copy">
+                Fine-grained formatting (typography, color, alignment, and icon insertion) is now consolidated into the top
+                toolbar so it is always in one place.
+              </p>
             </div>
           </PanelSection>
 
@@ -7803,17 +7374,29 @@ function Workspace({
               ) : null}
               <ToolbarButton
                 label="Add chunk"
+                icon="＋"
                 active={false}
                 onClick={() => insertStructuredChunk(chunkPickerTemplateId)}
               />
               <ToolbarButton
                 label="Raw HTML [Advanced]"
+                icon="</>"
                 active={false}
                 onClick={() => insertRawChunk()}
                 disabled={chunkTemplateEngineFilter === "javascript"}
               />
-              <ToolbarButton label="Undo" active={false} onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())} />
-              <ToolbarButton label="Redo" active={false} onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())} />
+              <ToolbarButton
+                label="Undo"
+                icon="↶"
+                active={false}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())}
+              />
+              <ToolbarButton
+                label="Redo"
+                icon="↷"
+                active={false}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())}
+              />
               <ToolbarSelect
                 label="Size"
                 value={fontSizeSelectValue}
@@ -8055,85 +7638,294 @@ function Workspace({
                   ))}
                 </select>
               </ToolbarInput>
-              <ToolbarButton label="B" active={activeEditor.isActive("bold")} onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBold().run())} />
-              <ToolbarButton label="I" active={activeEditor.isActive("italic")} onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleItalic().run())} />
               <ToolbarButton
-                label="U"
+                label="Bold"
+                icon="B"
+                active={activeEditor.isActive("bold")}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBold().run())}
+              />
+              <ToolbarButton
+                label="Italic"
+                icon="I"
+                active={activeEditor.isActive("italic")}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleItalic().run())}
+              />
+              <ToolbarButton
+                label="Underline"
+                icon="U"
                 active={activeEditor.isActive("underline")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleUnderline().run())}
               />
               <ToolbarButton
-                label="S"
+                label="Strikethrough"
+                icon="S"
                 active={activeEditor.isActive("strike")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleStrike().run())}
               />
               <ToolbarButton
                 label="Code"
+                icon="{}"
                 active={activeEditor.isActive("code")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleCode().run())}
               />
               <ToolbarButton
-                label="Mark"
+                label="Highlight mark"
+                icon="✸"
                 active={activeEditor.isActive("highlight")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHighlight().run())}
               />
-              <ToolbarButton label="L" active={currentAlignment === "left"} onClick={() => applyAlignment("left")} />
-              <ToolbarButton label="C" active={currentAlignment === "center"} onClick={() => applyAlignment("center")} />
-              <ToolbarButton label="R" active={currentAlignment === "right"} onClick={() => applyAlignment("right")} />
-              <ToolbarButton label="J" active={currentAlignment === "justify"} onClick={() => applyAlignment("justify")} />
+              <ToolbarInput label="Text">
+                <input
+                  type="color"
+                  value={toHexColor(textColorRgba)}
+                  onChange={(event) => {
+                    const nextColor = {
+                      ...parseCssColor(event.target.value, textColorRgba),
+                      a: textColorRgba.a,
+                    };
+                    setTextColorRgba(nextColor);
+                    applyTextColor(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarInput label="Text α">
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={formatAlpha(textColorRgba.a)}
+                  onChange={(event) => {
+                    const parsedAlpha = Number.parseFloat(event.target.value);
+                    if (!Number.isFinite(parsedAlpha)) {
+                      return;
+                    }
+
+                    const nextColor = {
+                      ...textColorRgba,
+                      a: clampAlpha(parsedAlpha),
+                    };
+                    setTextColorRgba(nextColor);
+                    applyTextColor(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarButton
+                label="Clear text color"
+                icon="T×"
+                active={false}
+                onClick={() => handleToolbar(() => applyTextColor(null))}
+              />
+              <ToolbarInput label="Highlight">
+                <input
+                  type="color"
+                  value={toHexColor(highlightRgba)}
+                  onChange={(event) => {
+                    const nextColor = {
+                      ...parseCssColor(event.target.value, highlightRgba),
+                      a: highlightRgba.a,
+                    };
+                    setHighlightRgba(nextColor);
+                    applyTextBackground(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarInput label="Highlight α">
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={formatAlpha(highlightRgba.a)}
+                  onChange={(event) => {
+                    const parsedAlpha = Number.parseFloat(event.target.value);
+                    if (!Number.isFinite(parsedAlpha)) {
+                      return;
+                    }
+
+                    const nextColor = {
+                      ...highlightRgba,
+                      a: clampAlpha(parsedAlpha),
+                    };
+                    setHighlightRgba(nextColor);
+                    applyTextBackground(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarButton
+                label="Clear highlight color"
+                icon="H×"
+                active={false}
+                onClick={() => handleToolbar(() => applyTextBackground(null))}
+              />
+              <ToolbarInput label="Block">
+                <input
+                  type="color"
+                  value={toHexColor(blockBackgroundRgba)}
+                  onChange={(event) => {
+                    const nextColor = {
+                      ...parseCssColor(event.target.value, blockBackgroundRgba),
+                      a: blockBackgroundRgba.a,
+                    };
+                    setBlockBackgroundRgba(nextColor);
+                    applyBlockBackgroundColor(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarInput label="Block α">
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={formatAlpha(blockBackgroundRgba.a)}
+                  onChange={(event) => {
+                    const parsedAlpha = Number.parseFloat(event.target.value);
+                    if (!Number.isFinite(parsedAlpha)) {
+                      return;
+                    }
+
+                    const nextColor = {
+                      ...blockBackgroundRgba,
+                      a: clampAlpha(parsedAlpha),
+                    };
+                    setBlockBackgroundRgba(nextColor);
+                    applyBlockBackgroundColor(toRgbaString(nextColor));
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarSelect
+                label="Tone"
+                value={currentCalloutTone}
+                onChange={(nextValue) => applyBlockBackgroundTone(nextValue as "none" | "note" | "warning" | "success")}
+              >
+                {BLOCK_BACKGROUNDS.map((tone) => (
+                  <option key={tone.value} value={tone.value}>
+                    {tone.label}
+                  </option>
+                ))}
+              </ToolbarSelect>
+              <ToolbarButton
+                label="Clear block background"
+                icon="□"
+                active={false}
+                onClick={() => handleToolbar(() => applyBlockBackgroundColor(null))}
+              />
+              <ToolbarSelect
+                label="Insert icon"
+                value=""
+                onChange={(nextValue) => {
+                  if (!nextValue) {
+                    return;
+                  }
+                  insertIcon(nextValue);
+                }}
+              >
+                <option value="">Icon</option>
+                {ICON_INSERTIONS.map((iconOption) => (
+                  <option key={iconOption.label} value={iconOption.value}>
+                    {iconOption.label}
+                  </option>
+                ))}
+              </ToolbarSelect>
+              <ToolbarInput label="Icon custom">
+                <input
+                  type="text"
+                  value={customIconValue}
+                  placeholder="Custom icon"
+                  onChange={(event) => setCustomIconValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      insertCustomIcon();
+                    }
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarButton
+                label="Insert custom icon"
+                icon="✦"
+                active={false}
+                disabled={!customIconValue.trim()}
+                onClick={() => handleToolbar(insertCustomIcon)}
+              />
+              <ToolbarButton label="Align left" icon="⇤" active={currentAlignment === "left"} onClick={() => applyAlignment("left")} />
+              <ToolbarButton
+                label="Align center"
+                icon="↔"
+                active={currentAlignment === "center"}
+                onClick={() => applyAlignment("center")}
+              />
+              <ToolbarButton label="Align right" icon="⇥" active={currentAlignment === "right"} onClick={() => applyAlignment("right")} />
+              <ToolbarButton
+                label="Align justify"
+                icon="☰"
+                active={currentAlignment === "justify"}
+                onClick={() => applyAlignment("justify")}
+              />
               <ToolbarButton
                 label="H1"
+                icon="H1"
                 active={activeEditor.isActive("heading", { level: 1 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 1 }).run())}
               />
               <ToolbarButton
                 label="H2"
+                icon="H2"
                 active={activeEditor.isActive("heading", { level: 2 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 2 }).run())}
               />
               <ToolbarButton
                 label="H3"
+                icon="H3"
                 active={activeEditor.isActive("heading", { level: 3 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 3 }).run())}
               />
               <ToolbarButton
                 label="Bullets"
+                icon="•"
                 active={activeEditor.isActive("bulletList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBulletList().run())}
               />
               <ToolbarButton
                 label="Numbered"
+                icon="1."
                 active={activeEditor.isActive("orderedList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleOrderedList().run())}
               />
               <ToolbarButton
                 label="Task"
+                icon="☑"
                 active={activeEditor.isActive("taskList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleTaskList().run())}
               />
               <ToolbarButton
                 label="Quote"
+                icon="❝"
                 active={activeEditor.isActive("blockquote")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBlockquote().run())}
               />
               <ToolbarButton
                 label="Callout"
+                icon="⚐"
                 active={activeEditor.isActive("callout")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().setCallout("note").run())}
               />
               <ToolbarButton
                 label="Sup"
+                icon="x²"
                 active={activeEditor.isActive("superscript")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleSuperscript().run())}
               />
-              <ToolbarButton label="Link" active={activeEditor.isActive("link")} onClick={() => setLinkEditorOpen(true)} />
+              <ToolbarButton label="Link" icon="Lnk" active={activeEditor.isActive("link")} onClick={() => setLinkEditorOpen(true)} />
               <ToolbarButton
                 label="Rule"
+                icon="―"
                 active={false}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().setHorizontalRule().run())}
               />
               <ToolbarButton
                 label="Table"
+                icon="▦"
                 active={activeEditor.isActive("table")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
               />
@@ -8353,43 +8145,73 @@ function Workspace({
                       }}
                     />
                   </ToolbarInput>
-                  <ToolbarButton label="Row+" active={false} disabled={!activeEditor.can().addRowAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())} />
-                  <ToolbarButton label="Col+" active={false} disabled={!activeEditor.can().addColumnAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())} />
-                  <ToolbarButton label="Row-" active={false} disabled={!activeEditor.can().deleteRow()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())} />
-                  <ToolbarButton label="Col-" active={false} disabled={!activeEditor.can().deleteColumn()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())} />
+                  <ToolbarButton
+                    label="Add row"
+                    icon="R+"
+                    active={false}
+                    disabled={!activeEditor.can().addRowAfter()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())}
+                  />
+                  <ToolbarButton
+                    label="Add column"
+                    icon="C+"
+                    active={false}
+                    disabled={!activeEditor.can().addColumnAfter()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())}
+                  />
+                  <ToolbarButton
+                    label="Delete row"
+                    icon="R-"
+                    active={false}
+                    disabled={!activeEditor.can().deleteRow()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())}
+                  />
+                  <ToolbarButton
+                    label="Delete column"
+                    icon="C-"
+                    active={false}
+                    disabled={!activeEditor.can().deleteColumn()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())}
+                  />
                   <ToolbarButton
                     label="Merge/Split"
+                    icon="⇄"
                     active={false}
                     disabled={!activeEditor.can().mergeOrSplit()}
                     onClick={() => handleToolbar(() => activeEditor.chain().focus().mergeOrSplit().run())}
                   />
                   <ToolbarButton
                     label="Clear cell"
+                    icon="□×"
                     active={false}
                     onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null))}
                   />
                   <ToolbarButton
                     label="Clear grid"
+                    icon="⌗×"
                     active={false}
                     onClick={() => handleToolbar(() => applyTableGridColor(null))}
                   />
                   <ToolbarButton
                     label="Delete table"
+                    icon="▦×"
                     active={false}
                     disabled={!activeEditor.can().deleteTable()}
                     onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteTable().run())}
                   />
                 </>
               ) : null}
-              <ToolbarButton label="Copy fmt" active={false} onClick={() => handleToolbar(copySelectionFormat)} />
+              <ToolbarButton label="Copy formatting" icon="⧉" active={false} onClick={() => handleToolbar(copySelectionFormat)} />
               <ToolbarButton
-                label="Paste fmt"
+                label="Paste formatting"
+                icon="⎘"
                 active={false}
                 disabled={!copiedFormatSnapshot}
                 onClick={() => handleToolbar(pasteSelectionFormat)}
               />
               <ToolbarButton
                 label="Clear format"
+                icon="Tx"
                 active={false}
                 onClick={() => handleToolbar(clearSelectionFormatting)}
               />
@@ -9991,24 +9813,68 @@ function RgbaEditor({
 
 function ToolbarButton({
   label,
+  icon,
   active,
   disabled = false,
   onClick,
 }: {
   label: string;
+  icon?: string;
   active: boolean;
   disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
-      className={`tool ${active ? "active" : ""}`}
+      className={`tool ${active ? "active" : ""} ${icon ? "tool-icon" : ""}`}
       type="button"
       disabled={disabled}
+      aria-label={label}
+      title={label}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
     >
-      {label}
+      {icon ?? label}
+    </button>
+  );
+}
+
+function TopbarIconButton({
+  label,
+  icon,
+  onClick,
+  pressed,
+  active = false,
+  disabled = false,
+  variant = "ghost",
+}: {
+  label: string;
+  icon: string;
+  onClick: () => void;
+  pressed?: boolean;
+  active?: boolean;
+  disabled?: boolean;
+  variant?: "ghost" | "primary";
+}) {
+  const className = `${variant === "primary" ? "primary-action" : "ghost-action"} topbar-icon-action ${
+    active ? "active" : ""
+  }`;
+  const pressedProps = pressed === undefined ? {} : { "aria-pressed": pressed };
+
+  return (
+    <button
+      className={className}
+      type="button"
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      {...pressedProps}
+    >
+      <span aria-hidden="true" className="topbar-icon-glyph">
+        {icon}
+      </span>
+      <span className="sr-only">{label}</span>
     </button>
   );
 }
