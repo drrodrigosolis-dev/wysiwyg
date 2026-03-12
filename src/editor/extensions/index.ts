@@ -22,6 +22,115 @@ import { LetterSpacing } from "./LetterSpacing";
 import { LineHeight } from "./LineHeight";
 import { FontWeight } from "./FontWeight";
 
+const StyledTable = Table.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      borderColor: {
+        default: null,
+        parseHTML: (element) => {
+          const variableValue = element.style.getPropertyValue("--table-grid-color").trim();
+          if (variableValue) {
+            return variableValue;
+          }
+
+          const borderValue = element.style.borderColor.trim();
+          return borderValue || null;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.borderColor) {
+            return {};
+          }
+
+          return {
+            style: `--table-grid-color: ${attributes.borderColor}`,
+          };
+        },
+      },
+    };
+  },
+});
+
+const StyledTableCell = TableCell.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      backgroundColor: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.style.backgroundColor.trim();
+          return value || null;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.backgroundColor) {
+            return {};
+          }
+
+          return {
+            style: `background-color: ${attributes.backgroundColor}`,
+          };
+        },
+      },
+      borderColor: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.style.borderColor.trim();
+          return value || null;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.borderColor) {
+            return {};
+          }
+
+          return {
+            style: `border-color: ${attributes.borderColor}`,
+          };
+        },
+      },
+    };
+  },
+});
+
+const StyledTableHeader = TableHeader.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      backgroundColor: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.style.backgroundColor.trim();
+          return value || null;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.backgroundColor) {
+            return {};
+          }
+
+          return {
+            style: `background-color: ${attributes.backgroundColor}`,
+          };
+        },
+      },
+      borderColor: {
+        default: null,
+        parseHTML: (element) => {
+          const value = element.style.borderColor.trim();
+          return value || null;
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.borderColor) {
+            return {};
+          }
+
+          return {
+            style: `border-color: ${attributes.borderColor}`,
+          };
+        },
+      },
+    };
+  },
+});
+
 export function buildEditorExtensions() {
   return [
     StarterKit.configure({
@@ -61,13 +170,14 @@ export function buildEditorExtensions() {
     TaskItem.configure({
       nested: true,
     }),
-    Table.configure({
+    StyledTable.configure({
       resizable: true,
-      allowTableNodeSelection: true,
+      allowTableNodeSelection: false,
+      lastColumnResizable: true,
     }),
     TableRow,
-    TableHeader,
-    TableCell,
+    StyledTableHeader,
+    StyledTableCell,
     Superscript,
     CalloutNode,
     InteractiveChunkNode,

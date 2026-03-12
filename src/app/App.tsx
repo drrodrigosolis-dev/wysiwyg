@@ -69,8 +69,6 @@ import type {
 
 const editorExtensions = buildEditorExtensions();
 const SAVE_DELAY = 350;
-const IDLE_SNAPSHOT_DELAY = 90_000;
-const STRUCTURE_SNAPSHOT_DELAY = 800;
 const RAIL_PREFS_KEY = "velvet-ink/rail-prefs/v2";
 const THEME_PREFS_KEY = "velvet-ink/theme-prefs/v1";
 const SECTION_PREFS_KEY = "velvet-ink/section-prefs/v1";
@@ -83,18 +81,47 @@ const WORKFLOW_TRACK_PREFS_KEY = "velvet-ink/workflow-track/v1";
 const NAVIGATION_PROFILE_PREFS_KEY = "velvet-ink/navigation-profile/v1";
 const WORKSPACE_LAYOUT_PREFS_KEY = "velvet-ink/workspace-layout/v1";
 const WORKSPACE_COACH_PREFS_KEY = "velvet-ink/workspace-coach/v1";
+const WORKSPACE_INTENT_PREFS_KEY = "velvet-ink/workspace-intent/v1";
+const SESSION_GOAL_PREFS_KEY = "velvet-ink/session-goal/v1";
+const EDITOR_COACH_PREFS_KEY = "velvet-ink/editor-coach/v1";
+const LEARNING_LANE_PREFS_KEY = "velvet-ink/learning-lane/v1";
+const REVISION_CADENCE_PREFS_KEY = "velvet-ink/revision-cadence/v1";
 const MODE_SCENE_PREFS_KEY = "velvet-ink/mode-scene/v1";
+const MODE_STRATEGY_PREFS_KEY = "velvet-ink/mode-strategy/v1";
+const MODE_RECOVERY_CUE_PREFS_KEY = "velvet-ink/mode-recovery-cue/v1";
+const MODE_GUIDANCE_LANE_PREFS_KEY = "velvet-ink/mode-guidance-lane/v1";
 const PULSE_LENS_PREFS_KEY = "velvet-ink/pulse-lens/v1";
 const PULSE_TARGET_PREFS_KEY = "velvet-ink/pulse-target/v1";
+const PULSE_COACH_PREFS_KEY = "velvet-ink/pulse-coach/v1";
 const REVISION_FILTER_PREFS_KEY = "velvet-ink/revision-filter/v1";
 const REVISION_DIFF_FOCUS_PREFS_KEY = "velvet-ink/revision-diff-focus/v1";
+const REVISION_STRATEGY_PREFS_KEY = "velvet-ink/revision-strategy/v1";
+const REVISION_DIFF_DEPTH_PREFS_KEY = "velvet-ink/revision-diff-depth/v1";
 const MINIMAP_DEPTH_PREFS_KEY = "velvet-ink/minimap-depth/v1";
 const MINIMAP_LABEL_PREFS_KEY = "velvet-ink/minimap-label/v1";
 const MINIMAP_HIGHLIGHT_PREFS_KEY = "velvet-ink/minimap-highlight/v1";
+const MINIMAP_STRATEGY_PREFS_KEY = "velvet-ink/minimap-strategy/v1";
+const MINIMAP_JUMP_STRIDE_PREFS_KEY = "velvet-ink/minimap-jump-stride/v1";
+const MINIMAP_COACH_LANE_PREFS_KEY = "velvet-ink/minimap-coach-lane/v1";
 const FIND_STRATEGY_PREFS_KEY = "velvet-ink/find-strategy/v1";
 const FIND_RECENT_PREFS_KEY = "velvet-ink/find-recent/v1";
 const CHUNK_BUILD_STRATEGY_PREFS_KEY = "velvet-ink/chunk-build-strategy/v1";
+const CHUNK_DELIVERY_MODE_PREFS_KEY = "velvet-ink/chunk-delivery-mode/v1";
+const CHUNK_LAUNCH_PLAN_PREFS_KEY = "velvet-ink/chunk-launch-plan/v1";
+const CHUNK_COACH_MODE_PREFS_KEY = "velvet-ink/chunk-coach-mode/v1";
 const OUTLINE_STRATEGY_PREFS_KEY = "velvet-ink/outline-strategy/v1";
+const OUTLINE_FOCUS_LENS_PREFS_KEY = "velvet-ink/outline-focus-lens/v1";
+const OUTLINE_FOCUS_WINDOW_PREFS_KEY = "velvet-ink/outline-focus-window/v1";
+const STYLE_READABILITY_PREFS_KEY = "velvet-ink/style-readability/v1";
+const STYLE_LANE_PREFS_KEY = "velvet-ink/style-lane/v1";
+const FIND_COACH_MODE_PREFS_KEY = "velvet-ink/find-coach-mode/v1";
+const FIND_PREVIEW_LIMIT_PREFS_KEY = "velvet-ink/find-preview-limit/v1";
+const REVISION_RESTORE_GUARD_PREFS_KEY = "velvet-ink/revision-restore-guard/v1";
+const REVISION_TIMELINE_LENS_PREFS_KEY = "velvet-ink/revision-timeline-lens/v1";
+const PANEL_FOCUS_PRESET_PREFS_KEY = "velvet-ink/panel-focus-preset/v1";
+const SESSION_TEMPO_PREFS_KEY = "velvet-ink/session-tempo/v1";
+const STYLE_ASSIST_PREFS_KEY = "velvet-ink/style-assist/v1";
+const PULSE_INTERVENTION_PREFS_KEY = "velvet-ink/pulse-intervention/v1";
 const WORD_GOAL_MIN = 300;
 const WORD_GOAL_MAX = 2400;
 const WORD_GOAL_STEP = 25;
@@ -146,24 +173,64 @@ type InterfaceDensity = "compact" | "balanced" | "comfort";
 type WorkflowTrack = "draft" | "revise" | "publish";
 type NavigationProfile = "immersive" | "balanced" | "survey";
 type WorkspaceLayoutPreset = "balanced" | "focus" | "panorama";
+type PanelFocusPresetId = "balanced-overview" | "structure-sweep" | "revision-sprint";
 type WorkspaceCoachPresetId = "starter-guided" | "hybrid-balanced" | "ship-review";
+type WorkspaceIntentPresetId = "onboard-clarity" | "balanced-production" | "ship-readiness";
+type SessionGoalPresetId = "draft-momentum" | "structure-tune" | "ship-check";
+type EditorCoachPresetId = "learn-loop" | "steady-shift" | "ship-rigorous";
+type LearningLaneId = "teach-me" | "steady-work" | "ship-fast";
+type RevisionCadenceProfileId = "gentle" | "balanced" | "intensive";
+type SessionTempoPresetId = "steady-atelier" | "focus-sprint" | "handoff-runway";
 type ModeScenePresetId = "draft-sprint" | "deep-focus" | "review-sweep";
+type ModeStrategyId = "momentum-lane" | "sprint-recovery" | "qa-rails";
+type ModeRecoveryCue = "checkpoint-first" | "open-structure" | "focus-reset";
+type ModeGuidanceLaneId = "orient-and-write" | "sustain-flow" | "handoff-guard";
 type StyleRecipeId = "editorial" | "story" | "analysis" | "briefing";
 type StylePersonaId = "clarity" | "narrative" | "contrast";
+type StyleReadabilityTargetId = "scan-light" | "narrative-flow" | "dense-brief";
+type StyleLaneId = "teach-clarity" | "steady-narrative" | "ship-contrast";
+type StyleAssistPresetId = "clarify-lesson" | "narrative-flow" | "contrast-qa";
 type ChunkIntentProfileId = "story" | "analysis" | "conversion";
 type ChunkBuildStrategyId = "safe-lesson" | "interactive-lab" | "ship-ready";
+type ChunkCoachMode = "learn-safe" | "balanced-flow" | "ship-control";
+type ChunkDeliveryModeId = "lesson-safe" | "demo-live" | "publish-proof";
+type ChunkLaunchPlanId = "selected-first" | "delivery-first" | "intent-lab";
 type ReplaceTransform = "as-typed" | "lower" | "upper" | "title";
 type FindStrategyId = "precision" | "sweep" | "normalize";
+type FindCoachMode = "quick" | "guided" | "audit";
+type FindPreviewLimit = 3 | 6 | 10;
 type OutlineDepthFilter = "all" | "h1" | "h2" | "h3";
 type OutlineJumpMode = "focus" | "focus-and-fold";
 type OutlineStrategyId = "structure-scan" | "active-draft" | "reorder-pass";
+type OutlineFocusLens = "all-visible" | "active-window" | "active-trail";
+type OutlineFocusWindow = 1 | 2 | 3;
 type MinimapDepthFilter = "all" | "h1-h2" | "h1";
 type MinimapLabelMode = "full" | "compact" | "hidden";
 type MinimapHighlightMode = "active" | "level";
+type MinimapStrategyId = "context-ladder" | "fast-scan" | "ship-verifier";
+type MinimapJumpStride = 1 | 2 | 3;
+type MinimapCoachLaneId = "map-learn" | "scan-balance" | "audit-handoff";
 type PulseLens = "flow" | "structure" | "delivery";
 type PulseCadenceTarget = "calm" | "balanced" | "brisk";
+type PulseCoachPresetId = "cadence-guard" | "structure-shape" | "release-readiness";
+type PulseInterventionId = "stabilize-flow" | "rebalance-structure" | "prep-handoff";
 type RevisionFilter = "all" | "checkpoint" | "autosave" | "restore";
 type RevisionDiffFocus = "balanced" | "additions" | "deletions";
+type RevisionStrategyId = "checkpoint-qa" | "growth-audit" | "trim-pass";
+type RevisionDiffDepth = "tight" | "balanced" | "extended";
+type RevisionRestoreGuard = "fast" | "confirm" | "diff-first";
+type RevisionTimelineLens = "all" | "last-hour" | "latest-three";
+
+const PANEL_SECTION_IDS = [
+  "left-mode",
+  "left-style-lab",
+  "left-outline",
+  "left-minimap",
+  "right-document-pulse",
+  "right-find-replace",
+  "right-interaction-block",
+  "right-revisions",
+] as const;
 
 type ChunkBuilderTarget =
   | {
@@ -205,6 +272,8 @@ type LineHeightUnit = "unitless" | "px" | "em" | "rem" | "%";
 const DEFAULT_TEXT_RGBA: RgbaValue = { r: 33, g: 22, b: 15, a: 1 };
 const DEFAULT_HIGHLIGHT_RGBA: RgbaValue = { r: 242, g: 109, b: 61, a: 0.18 };
 const DEFAULT_BLOCK_RGBA: RgbaValue = { r: 242, g: 109, b: 61, a: 0.12 };
+const DEFAULT_TABLE_CELL_RGBA: RgbaValue = { r: 255, g: 255, b: 255, a: 1 };
+const DEFAULT_TABLE_GRID_RGBA: RgbaValue = { r: 64, g: 44, b: 28, a: 0.2 };
 
 const VIEW_MODE_OPTIONS: Array<{ value: ViewMode; label: string }> = [
   { value: "rich", label: "Rich text" },
@@ -355,6 +424,43 @@ const WORKSPACE_LAYOUT_OPTIONS: Array<{
   { label: "Focus", value: "focus", copy: "Wider writing column with compact side rails." },
   { label: "Panorama", value: "panorama", copy: "Expanded rails for structure-heavy sweeps and audits." },
 ];
+const PANEL_FOCUS_PRESET_OPTIONS: Array<{
+  id: PanelFocusPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  leftRail: boolean;
+  rightRail: boolean;
+  openPanels: string[];
+}> = [
+  {
+    id: "balanced-overview",
+    label: "Balanced overview",
+    summary: "Keeps all sections open for mixed drafting and review visibility.",
+    tip: "Use for day-to-day editing when you need equal structure and revision context.",
+    leftRail: true,
+    rightRail: true,
+    openPanels: [...PANEL_SECTION_IDS],
+  },
+  {
+    id: "structure-sweep",
+    label: "Structure sweep",
+    summary: "Prioritizes mode, style, outline, and minimap while keeping revision tools compact.",
+    tip: "Use during hierarchy passes and sequencing audits.",
+    leftRail: true,
+    rightRail: true,
+    openPanels: ["left-mode", "left-style-lab", "left-outline", "left-minimap", "right-document-pulse"],
+  },
+  {
+    id: "revision-sprint",
+    label: "Revision sprint",
+    summary: "Expands revision and find surfaces while collapsing lower-priority drafting controls.",
+    tip: "Use before export when diffing and focused cleanup dominate.",
+    leftRail: false,
+    rightRail: true,
+    openPanels: ["right-document-pulse", "right-find-replace", "right-revisions"],
+  },
+];
 const WORKSPACE_COACH_OPTIONS: Array<{
   id: WorkspaceCoachPresetId;
   label: string;
@@ -404,6 +510,284 @@ const WORKSPACE_COACH_OPTIONS: Array<{
     modeScene: "review-sweep",
   },
 ];
+const WORKSPACE_INTENT_OPTIONS: Array<{
+  id: WorkspaceIntentPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  guidance: GuidanceLevel;
+  density: InterfaceDensity;
+  workflow: WorkflowTrack;
+  navigation: NavigationProfile;
+  panelFocus: PanelFocusPresetId;
+  modeStrategy: ModeStrategyId;
+  minimapStrategy: MinimapStrategyId;
+  sessionTempo: SessionTempoPresetId;
+}> = [
+  {
+    id: "onboard-clarity",
+    label: "Onboard clarity",
+    summary: "Teaching-forward setup with explicit cues and close-range navigation.",
+    tip: "Use when learning a new draft or onboarding collaborators.",
+    guidance: "guided",
+    density: "comfort",
+    workflow: "draft",
+    navigation: "balanced",
+    panelFocus: "balanced-overview",
+    modeStrategy: "momentum-lane",
+    minimapStrategy: "context-ladder",
+    sessionTempo: "handoff-runway",
+  },
+  {
+    id: "balanced-production",
+    label: "Balanced production",
+    summary: "General-purpose writing and revision flow with moderate coaching.",
+    tip: "Use for most sessions where drafting and structure checks alternate.",
+    guidance: "balanced",
+    density: "balanced",
+    workflow: "revise",
+    navigation: "balanced",
+    panelFocus: "structure-sweep",
+    modeStrategy: "sprint-recovery",
+    minimapStrategy: "fast-scan",
+    sessionTempo: "steady-atelier",
+  },
+  {
+    id: "ship-readiness",
+    label: "Ship readiness",
+    summary: "High-signal QA setup that prioritizes verification and handoff confidence.",
+    tip: "Use before export for decisive structure and revision sweeps.",
+    guidance: "expert",
+    density: "compact",
+    workflow: "publish",
+    navigation: "survey",
+    panelFocus: "revision-sprint",
+    modeStrategy: "qa-rails",
+    minimapStrategy: "ship-verifier",
+    sessionTempo: "focus-sprint",
+  },
+];
+const SESSION_GOAL_OPTIONS: Array<{
+  id: SessionGoalPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  guidance: GuidanceLevel;
+  workflow: WorkflowTrack;
+  navigation: NavigationProfile;
+  layout: WorkspaceLayoutPreset;
+  modeScene: ModeScenePresetId;
+  sideBySide: boolean;
+  viewMode: ViewMode;
+}> = [
+  {
+    id: "draft-momentum",
+    label: "Draft momentum",
+    summary: "Prioritizes writing flow while keeping light structural awareness visible.",
+    tip: "Use at session start to maximize drafting speed.",
+    guidance: "guided",
+    workflow: "draft",
+    navigation: "balanced",
+    layout: "balanced",
+    modeScene: "draft-sprint",
+    sideBySide: false,
+    viewMode: "rich",
+  },
+  {
+    id: "structure-tune",
+    label: "Structure tune",
+    summary: "Balances drafting with hierarchy checks and revision visibility.",
+    tip: "Use mid-session when refining flow and section order.",
+    guidance: "balanced",
+    workflow: "revise",
+    navigation: "survey",
+    layout: "panorama",
+    modeScene: "review-sweep",
+    sideBySide: true,
+    viewMode: "rich",
+  },
+  {
+    id: "ship-check",
+    label: "Ship check",
+    summary: "Compression-focused setup for final QA, diffs, and export confidence.",
+    tip: "Use before export to run a final quality pass.",
+    guidance: "expert",
+    workflow: "publish",
+    navigation: "survey",
+    layout: "panorama",
+    modeScene: "review-sweep",
+    sideBySide: true,
+    viewMode: "exportable",
+  },
+];
+const EDITOR_COACH_OPTIONS: Array<{
+  id: EditorCoachPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  guidance: GuidanceLevel;
+  density: InterfaceDensity;
+  workflow: WorkflowTrack;
+  navigation: NavigationProfile;
+  modeStrategy: ModeStrategyId;
+  minimapStrategy: MinimapStrategyId;
+}> = [
+  {
+    id: "learn-loop",
+    label: "Learn loop",
+    summary: "Teaching-forward structure with explicit coaching and slower navigation pacing.",
+    tip: "Use when onboarding to this draft or learning a new editorial style.",
+    guidance: "guided",
+    density: "comfort",
+    workflow: "draft",
+    navigation: "balanced",
+    modeStrategy: "momentum-lane",
+    minimapStrategy: "context-ladder",
+  },
+  {
+    id: "steady-shift",
+    label: "Steady shift",
+    summary: "Balanced coaching with flexible mode and minimap transitions.",
+    tip: "Use for most day-to-day writing and revision sessions.",
+    guidance: "balanced",
+    density: "balanced",
+    workflow: "revise",
+    navigation: "balanced",
+    modeStrategy: "sprint-recovery",
+    minimapStrategy: "fast-scan",
+  },
+  {
+    id: "ship-rigorous",
+    label: "Ship rigorous",
+    summary: "High-signal surface for final checks, navigation audits, and export confidence.",
+    tip: "Use before final review or publish-ready export.",
+    guidance: "expert",
+    density: "compact",
+    workflow: "publish",
+    navigation: "survey",
+    modeStrategy: "qa-rails",
+    minimapStrategy: "ship-verifier",
+  },
+];
+const LEARNING_LANE_OPTIONS: Array<{
+  id: LearningLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  guidance: GuidanceLevel;
+  density: InterfaceDensity;
+  workflow: WorkflowTrack;
+  navigation: NavigationProfile;
+  stylePersona: StylePersonaId;
+  chunkDeliveryMode: ChunkDeliveryModeId;
+}> = [
+  {
+    id: "teach-me",
+    label: "Teach me",
+    summary: "High-guidance lane that favors explainability and safer interactive defaults.",
+    tip: "Use when onboarding new collaborators or introducing complex chunks.",
+    guidance: "guided",
+    density: "comfort",
+    workflow: "draft",
+    navigation: "balanced",
+    stylePersona: "clarity",
+    chunkDeliveryMode: "lesson-safe",
+  },
+  {
+    id: "steady-work",
+    label: "Steady work",
+    summary: "Balanced lane for sustained drafting with mixed exploration and review.",
+    tip: "Use as your default lane for iterative writing sessions.",
+    guidance: "balanced",
+    density: "balanced",
+    workflow: "revise",
+    navigation: "balanced",
+    stylePersona: "narrative",
+    chunkDeliveryMode: "demo-live",
+  },
+  {
+    id: "ship-fast",
+    label: "Ship fast",
+    summary: "Low-friction lane for final checks, concise visuals, and reliable chunk output.",
+    tip: "Use right before export or handoff windows.",
+    guidance: "expert",
+    density: "compact",
+    workflow: "publish",
+    navigation: "survey",
+    stylePersona: "contrast",
+    chunkDeliveryMode: "publish-proof",
+  },
+];
+const REVISION_CADENCE_OPTIONS: Array<{
+  id: RevisionCadenceProfileId;
+  label: string;
+  summary: string;
+  idleMs: number;
+  structureMs: number;
+}> = [
+  {
+    id: "gentle",
+    label: "Gentle",
+    summary: "Longer idle windows with calmer autosnapshot cadence.",
+    idleMs: 180_000,
+    structureMs: 1_400,
+  },
+  {
+    id: "balanced",
+    label: "Balanced",
+    summary: "Default snapshot rhythm for mixed drafting and revisions.",
+    idleMs: 90_000,
+    structureMs: 800,
+  },
+  {
+    id: "intensive",
+    label: "Intensive",
+    summary: "Faster autosnapshot cadence for high-risk, high-change sessions.",
+    idleMs: 45_000,
+    structureMs: 500,
+  },
+];
+const SESSION_TEMPO_OPTIONS: Array<{
+  id: SessionTempoPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  guidance: GuidanceLevel;
+  density: InterfaceDensity;
+  cadence: RevisionCadenceProfileId;
+  workflow: WorkflowTrack;
+}> = [
+  {
+    id: "steady-atelier",
+    label: "Steady atelier",
+    summary: "Calmer drafting tempo with balanced coaching and revision cadence.",
+    tip: "Use during long writing blocks where consistency matters more than speed.",
+    guidance: "balanced",
+    density: "balanced",
+    cadence: "balanced",
+    workflow: "draft",
+  },
+  {
+    id: "focus-sprint",
+    label: "Focus sprint",
+    summary: "Compact, high-signal tempo for short bursts and rapid structure checks.",
+    tip: "Use for 20-40 minute pushes when quick iteration and dense cues help.",
+    guidance: "expert",
+    density: "compact",
+    cadence: "intensive",
+    workflow: "revise",
+  },
+  {
+    id: "handoff-runway",
+    label: "Handoff runway",
+    summary: "Review-oriented tempo that keeps coaching explicit before final delivery.",
+    tip: "Use near handoff to preserve context while tightening final quality signals.",
+    guidance: "guided",
+    density: "comfort",
+    cadence: "gentle",
+    workflow: "publish",
+  },
+];
 const MODE_SCENE_OPTIONS: Array<{
   id: ModeScenePresetId;
   label: string;
@@ -445,6 +829,109 @@ const MODE_SCENE_OPTIONS: Array<{
     rightRail: true,
   },
 ];
+const MODE_STRATEGY_OPTIONS: Array<{
+  id: ModeStrategyId;
+  label: string;
+  summary: string;
+  tip: string;
+  scene: ModeScenePresetId;
+  focus: boolean;
+  typewriter: boolean;
+  leftRail: boolean;
+  rightRail: boolean;
+  navigation: NavigationProfile;
+}> = [
+  {
+    id: "momentum-lane",
+    label: "Momentum lane",
+    summary: "Keeps writing flow steady with single-rail structure support.",
+    tip: "Great for early drafting blocks and story-first sessions.",
+    scene: "draft-sprint",
+    focus: false,
+    typewriter: true,
+    leftRail: true,
+    rightRail: false,
+    navigation: "balanced",
+  },
+  {
+    id: "sprint-recovery",
+    label: "Sprint recovery",
+    summary: "Transitions between deep focus and quick structure checks.",
+    tip: "Use after dense drafting to recover context without losing pace.",
+    scene: "deep-focus",
+    focus: true,
+    typewriter: true,
+    leftRail: true,
+    rightRail: false,
+    navigation: "immersive",
+  },
+  {
+    id: "qa-rails",
+    label: "QA rails",
+    summary: "Opens both rails for structure sweeps and revision checkpoints.",
+    tip: "Use before handoff when section ordering and diff confidence matter.",
+    scene: "review-sweep",
+    focus: false,
+    typewriter: false,
+    leftRail: true,
+    rightRail: true,
+    navigation: "survey",
+  },
+];
+const MODE_RECOVERY_CUE_OPTIONS: Array<{ value: ModeRecoveryCue; label: string; tip: string }> = [
+  {
+    value: "checkpoint-first",
+    label: "Checkpoint first",
+    tip: "Capture a manual snapshot before changing scene or rail state.",
+  },
+  {
+    value: "open-structure",
+    label: "Open structure",
+    tip: "Reveal left rail plus survey minimap defaults for quick orientation.",
+  },
+  {
+    value: "focus-reset",
+    label: "Focus reset",
+    tip: "Return to deep-focus defaults when cadence or concentration drops.",
+  },
+];
+const MODE_GUIDANCE_LANE_OPTIONS: Array<{
+  id: ModeGuidanceLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: ModeStrategyId;
+  scene: ModeScenePresetId;
+  recoveryCue: ModeRecoveryCue;
+}> = [
+  {
+    id: "orient-and-write",
+    label: "Orient + write",
+    summary: "Keeps context visible while preserving drafting momentum.",
+    tip: "Best when starting a section and confirming structure as you go.",
+    strategy: "momentum-lane",
+    scene: "draft-sprint",
+    recoveryCue: "open-structure",
+  },
+  {
+    id: "sustain-flow",
+    label: "Sustain flow",
+    summary: "Leans into concentration with a quick recovery path when cadence slips.",
+    tip: "Use for medium-length drafting blocks with occasional context checks.",
+    strategy: "sprint-recovery",
+    scene: "deep-focus",
+    recoveryCue: "focus-reset",
+  },
+  {
+    id: "handoff-guard",
+    label: "Handoff guard",
+    summary: "Biases toward review and checkpoint-first transitions before final edits.",
+    tip: "Use near handoff to avoid late-stage regressions.",
+    strategy: "qa-rails",
+    scene: "review-sweep",
+    recoveryCue: "checkpoint-first",
+  },
+];
 const MINIMAP_DEPTH_OPTIONS: Array<{ label: string; value: MinimapDepthFilter }> = [
   { label: "All levels", value: "all" },
   { label: "H1-H2", value: "h1-h2" },
@@ -458,6 +945,97 @@ const MINIMAP_LABEL_OPTIONS: Array<{ label: string; value: MinimapLabelMode }> =
 const MINIMAP_HIGHLIGHT_OPTIONS: Array<{ label: string; value: MinimapHighlightMode }> = [
   { label: "Active", value: "active" },
   { label: "By level", value: "level" },
+];
+const MINIMAP_STRATEGY_OPTIONS: Array<{
+  id: MinimapStrategyId;
+  label: string;
+  summary: string;
+  tip: string;
+  depth: MinimapDepthFilter;
+  labels: MinimapLabelMode;
+  highlight: MinimapHighlightMode;
+  jumpStride: MinimapJumpStride;
+}> = [
+  {
+    id: "context-ladder",
+    label: "Context ladder",
+    summary: "Full labels and active highlighting for orientation-heavy drafting.",
+    tip: "Best when onboarding a long document or mentoring collaborators.",
+    depth: "all",
+    labels: "full",
+    highlight: "active",
+    jumpStride: 1,
+  },
+  {
+    id: "fast-scan",
+    label: "Fast scan",
+    summary: "Compact skyline for brisk section hopping across long drafts.",
+    tip: "Use when searching for problem areas or repeated section patterns.",
+    depth: "h1-h2",
+    labels: "compact",
+    highlight: "level",
+    jumpStride: 2,
+  },
+  {
+    id: "ship-verifier",
+    label: "Ship verifier",
+    summary: "Top-level map with broad jumps for release-readiness sweeps.",
+    tip: "Use during final QA when only major sections need validation.",
+    depth: "h1",
+    labels: "hidden",
+    highlight: "level",
+    jumpStride: 3,
+  },
+];
+const MINIMAP_JUMP_STRIDE_OPTIONS: Array<{ value: MinimapJumpStride; label: string }> = [
+  { value: 1, label: "Single" },
+  { value: 2, label: "Double" },
+  { value: 3, label: "Triple" },
+];
+const MINIMAP_COACH_LANE_OPTIONS: Array<{
+  id: MinimapCoachLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: MinimapStrategyId;
+  depth: MinimapDepthFilter;
+  labels: MinimapLabelMode;
+  highlight: MinimapHighlightMode;
+  jumpStride: MinimapJumpStride;
+}> = [
+  {
+    id: "map-learn",
+    label: "Map learn",
+    summary: "Rich labels and active focus for orientation-first editing.",
+    tip: "Use when learning document structure or teaching collaborators.",
+    strategy: "context-ladder",
+    depth: "all",
+    labels: "full",
+    highlight: "active",
+    jumpStride: 1,
+  },
+  {
+    id: "scan-balance",
+    label: "Scan balance",
+    summary: "Balanced navigation for fast scans without losing hierarchy context.",
+    tip: "Use for routine section sweeps during active drafting.",
+    strategy: "fast-scan",
+    depth: "h1-h2",
+    labels: "compact",
+    highlight: "level",
+    jumpStride: 2,
+  },
+  {
+    id: "audit-handoff",
+    label: "Audit handoff",
+    summary: "Top-level verification lane for final review and handoff passes.",
+    tip: "Use before export to validate major section coverage quickly.",
+    strategy: "ship-verifier",
+    depth: "h1",
+    labels: "hidden",
+    highlight: "level",
+    jumpStride: 3,
+  },
 ];
 const PULSE_LENS_OPTIONS: Array<{
   label: string;
@@ -478,6 +1056,84 @@ const PULSE_TARGET_OPTIONS: Array<{
   { label: "Balanced", value: "balanced", ratioMin: 40, ratioMax: 72 },
   { label: "Brisk", value: "brisk", ratioMin: 24, ratioMax: 56 },
 ];
+const PULSE_COACH_OPTIONS: Array<{
+  id: PulseCoachPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  lens: PulseLens;
+  target: PulseCadenceTarget;
+}> = [
+  {
+    id: "cadence-guard",
+    label: "Cadence guard",
+    summary: "Tracks rhythm stability and sentence pacing while drafting.",
+    tip: "Use during long drafting sessions to avoid pace drift.",
+    lens: "flow",
+    target: "balanced",
+  },
+  {
+    id: "structure-shape",
+    label: "Structure shape",
+    summary: "Emphasizes heading and paragraph density for scannability.",
+    tip: "Use when reorganizing sections or tightening hierarchy.",
+    lens: "structure",
+    target: "calm",
+  },
+  {
+    id: "release-readiness",
+    label: "Release readiness",
+    summary: "Pairs cadence and revision freshness for final delivery checks.",
+    tip: "Use before publishing to confirm stable delivery posture.",
+    lens: "delivery",
+    target: "brisk",
+  },
+];
+const PULSE_INTERVENTION_OPTIONS: Array<{
+  id: PulseInterventionId;
+  label: string;
+  summary: string;
+  tip: string;
+  lens: PulseLens;
+  target: PulseCadenceTarget;
+  coach: PulseCoachPresetId;
+  cadence: RevisionCadenceProfileId;
+  timeline: RevisionTimelineLens;
+}> = [
+  {
+    id: "stabilize-flow",
+    label: "Stabilize flow",
+    summary: "Rein in pacing drift with flow-focused guidance and tighter checkpoints.",
+    tip: "Run this when cadence volatility rises and paragraph rhythm feels uneven.",
+    lens: "flow",
+    target: "balanced",
+    coach: "cadence-guard",
+    cadence: "intensive",
+    timeline: "last-hour",
+  },
+  {
+    id: "rebalance-structure",
+    label: "Rebalance structure",
+    summary: "Re-anchor heading and paragraph density during hierarchy revisions.",
+    tip: "Run this when sections feel dense or outline depth drift increases.",
+    lens: "structure",
+    target: "calm",
+    coach: "structure-shape",
+    cadence: "balanced",
+    timeline: "all",
+  },
+  {
+    id: "prep-handoff",
+    label: "Prep handoff",
+    summary: "Shift to delivery-readiness checks with a handoff-safe cadence.",
+    tip: "Run this before share/export windows to verify momentum and revision freshness.",
+    lens: "delivery",
+    target: "brisk",
+    coach: "release-readiness",
+    cadence: "gentle",
+    timeline: "latest-three",
+  },
+];
 const REVISION_FILTER_OPTIONS: Array<{
   label: string;
   value: RevisionFilter;
@@ -494,6 +1150,58 @@ const REVISION_DIFF_FOCUS_OPTIONS: Array<{
   { label: "Balanced", value: "balanced" },
   { label: "Growth", value: "additions" },
   { label: "Trim", value: "deletions" },
+];
+const REVISION_STRATEGY_OPTIONS: Array<{
+  id: RevisionStrategyId;
+  label: string;
+  summary: string;
+  tip: string;
+  filter: RevisionFilter;
+  focus: RevisionDiffFocus;
+  depth: RevisionDiffDepth;
+}> = [
+  {
+    id: "checkpoint-qa",
+    label: "Checkpoint QA",
+    summary: "Audits intentional checkpoints with balanced change review.",
+    tip: "Use after milestone edits to validate direction changes.",
+    filter: "checkpoint",
+    focus: "balanced",
+    depth: "balanced",
+  },
+  {
+    id: "growth-audit",
+    label: "Growth audit",
+    summary: "Focuses on inserted material to confirm net value.",
+    tip: "Use when expansions may have increased complexity.",
+    filter: "all",
+    focus: "additions",
+    depth: "extended",
+  },
+  {
+    id: "trim-pass",
+    label: "Trim pass",
+    summary: "Highlights deletions to protect intent while compressing copy.",
+    tip: "Use late-stage editing when reducing length aggressively.",
+    filter: "all",
+    focus: "deletions",
+    depth: "tight",
+  },
+];
+const REVISION_DIFF_DEPTH_OPTIONS: Array<{ label: string; value: RevisionDiffDepth; limit: number }> = [
+  { label: "Tight", value: "tight", limit: 8 },
+  { label: "Balanced", value: "balanced", limit: 16 },
+  { label: "Extended", value: "extended", limit: 24 },
+];
+const REVISION_RESTORE_GUARD_OPTIONS: Array<{ label: string; value: RevisionRestoreGuard; tip: string }> = [
+  { label: "Fast", value: "fast", tip: "Restore immediately from timeline actions." },
+  { label: "Confirm", value: "confirm", tip: "Require a second click on the same snapshot before restore." },
+  { label: "Diff first", value: "diff-first", tip: "Select snapshot and inspect diff before restore is enabled." },
+];
+const REVISION_TIMELINE_LENS_OPTIONS: Array<{ label: string; value: RevisionTimelineLens; tip: string }> = [
+  { label: "All", value: "all", tip: "Show full history for broad trend checks." },
+  { label: "Last hour", value: "last-hour", tip: "Narrow to recent sessions for fast recovery choices." },
+  { label: "Latest 3", value: "latest-three", tip: "Keep a compact triage list for rapid checkpoint review." },
 ];
 const REPLACE_TRANSFORM_OPTIONS: Array<{ label: string; value: ReplaceTransform }> = [
   { label: "As typed", value: "as-typed" },
@@ -534,6 +1242,16 @@ const FIND_STRATEGY_OPTIONS: Array<{
     wholeWord: false,
   },
 ];
+const FIND_COACH_MODE_OPTIONS: Array<{ label: string; value: FindCoachMode; tip: string }> = [
+  { label: "Quick", value: "quick", tip: "Lean view for fast term hops and lightweight cleanups." },
+  { label: "Guided", value: "guided", tip: "Balanced previews with replacement coaching before bulk actions." },
+  { label: "Audit", value: "audit", tip: "Expanded context for high-risk replace-all passes." },
+];
+const FIND_PREVIEW_LIMIT_OPTIONS: Array<{ label: string; value: FindPreviewLimit }> = [
+  { label: "3 rows", value: 3 },
+  { label: "6 rows", value: 6 },
+  { label: "10 rows", value: 10 },
+];
 const OUTLINE_DEPTH_OPTIONS: Array<{ label: string; value: OutlineDepthFilter }> = [
   { label: "All levels", value: "all" },
   { label: "H1 only", value: "h1" },
@@ -543,6 +1261,16 @@ const OUTLINE_DEPTH_OPTIONS: Array<{ label: string; value: OutlineDepthFilter }>
 const OUTLINE_JUMP_OPTIONS: Array<{ label: string; value: OutlineJumpMode }> = [
   { label: "Focus only", value: "focus" },
   { label: "Focus + fold others", value: "focus-and-fold" },
+];
+const OUTLINE_FOCUS_LENS_OPTIONS: Array<{ label: string; value: OutlineFocusLens; tip: string }> = [
+  { label: "All visible", value: "all-visible", tip: "Keep every filtered heading visible for broad structure sweeps." },
+  { label: "Active window", value: "active-window", tip: "Show only a radius around the active section while drafting." },
+  { label: "Active trail", value: "active-trail", tip: "Keep ancestor headings visible to preserve hierarchy context." },
+];
+const OUTLINE_FOCUS_WINDOW_OPTIONS: Array<{ label: string; value: OutlineFocusWindow }> = [
+  { label: "±1", value: 1 },
+  { label: "±2", value: 2 },
+  { label: "±3", value: 3 },
 ];
 const STYLE_RECIPES: Array<{
   id: StyleRecipeId;
@@ -653,6 +1381,125 @@ const STYLE_PERSONA_OPTIONS: Array<{
     blockBackground: { r: 240, g: 194, b: 66, a: 0.15 },
   },
 ];
+const STYLE_READABILITY_TARGET_OPTIONS: Array<{
+  id: StyleReadabilityTargetId;
+  label: string;
+  summary: string;
+  tip: string;
+  fontSize: string;
+  lineHeight: string;
+  letterSpacing: string;
+  fontWeight: string;
+}> = [
+  {
+    id: "scan-light",
+    label: "Scan light",
+    summary: "Higher readability for long sections and instructional walkthroughs.",
+    tip: "Best for documents read on mixed desktop/mobile contexts.",
+    fontSize: "1.08rem",
+    lineHeight: "1.82",
+    letterSpacing: "0.005em",
+    fontWeight: "450",
+  },
+  {
+    id: "narrative-flow",
+    label: "Narrative flow",
+    summary: "Softer rhythm for storytelling, interviews, and reflective copy.",
+    tip: "Use when paragraph flow and tone carry more weight than density.",
+    fontSize: "1.05rem",
+    lineHeight: "1.94",
+    letterSpacing: "0.01em",
+    fontWeight: "400",
+  },
+  {
+    id: "dense-brief",
+    label: "Dense brief",
+    summary: "Compact cadence for checklists, reviews, and executive skim passes.",
+    tip: "Use for shipping passes where brevity and scannability dominate.",
+    fontSize: "0.96rem",
+    lineHeight: "1.48",
+    letterSpacing: "0.02em",
+    fontWeight: "550",
+  },
+];
+const STYLE_LANE_OPTIONS: Array<{
+  id: StyleLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  recipe: StyleRecipeId;
+  persona: StylePersonaId;
+  readability: StyleReadabilityTargetId;
+}> = [
+  {
+    id: "teach-clarity",
+    label: "Teach clarity",
+    summary: "Instruction-friendly defaults with high scan stability.",
+    tip: "Use for onboarding copy and how-to sections with mixed expertise readers.",
+    recipe: "editorial",
+    persona: "clarity",
+    readability: "scan-light",
+  },
+  {
+    id: "steady-narrative",
+    label: "Steady narrative",
+    summary: "Balanced rhythm for flow-heavy drafts and revisions.",
+    tip: "Use during sustained drafting blocks where tone and continuity matter most.",
+    recipe: "story",
+    persona: "narrative",
+    readability: "narrative-flow",
+  },
+  {
+    id: "ship-contrast",
+    label: "Ship contrast",
+    summary: "Compact high-signal style lane for final pass clarity.",
+    tip: "Use near export to tighten contrast and improve skim speed.",
+    recipe: "briefing",
+    persona: "contrast",
+    readability: "dense-brief",
+  },
+];
+const STYLE_ASSIST_OPTIONS: Array<{
+  id: StyleAssistPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  lane: StyleLaneId;
+  recipe: StyleRecipeId;
+  persona: StylePersonaId;
+  readability: StyleReadabilityTargetId;
+}> = [
+  {
+    id: "clarify-lesson",
+    label: "Clarify lesson",
+    summary: "Emphasizes instructional clarity and stable readability rhythm.",
+    tip: "Use when your audience is mixed-experience and scan confidence is critical.",
+    lane: "teach-clarity",
+    recipe: "editorial",
+    persona: "clarity",
+    readability: "scan-light",
+  },
+  {
+    id: "narrative-flow",
+    label: "Narrative flow",
+    summary: "Balances warmth and rhythm for longform continuity.",
+    tip: "Use for chapters and case studies where voice continuity beats density.",
+    lane: "steady-narrative",
+    recipe: "story",
+    persona: "narrative",
+    readability: "narrative-flow",
+  },
+  {
+    id: "contrast-qa",
+    label: "Contrast QA",
+    summary: "Tightens hierarchy and contrast for final skim checks.",
+    tip: "Use right before export to keep key decisions visually unmistakable.",
+    lane: "ship-contrast",
+    recipe: "briefing",
+    persona: "contrast",
+    readability: "dense-brief",
+  },
+];
 const CHUNK_INTENT_PROFILES: Array<{
   id: ChunkIntentProfileId;
   label: string;
@@ -688,6 +1535,72 @@ const CHUNK_INTENT_PROFILES: Array<{
     templateId: "cta-banner",
     layout: "stacked",
     density: "spacious",
+  },
+];
+const CHUNK_DELIVERY_MODE_OPTIONS: Array<{
+  id: ChunkDeliveryModeId;
+  label: string;
+  summary: string;
+  tip: string;
+  intentProfileId: ChunkIntentProfileId;
+  engine: ChunkTemplateEngine;
+  layout: ChunkBuilderLayoutMode;
+  density: ChunkBuilderDensityMode;
+}> = [
+  {
+    id: "lesson-safe",
+    label: "Lesson safe",
+    summary: "Runtime-light delivery for dependable learning blocks and compatibility confidence.",
+    tip: "Prefer this when broad environment support matters most.",
+    intentProfileId: "analysis",
+    engine: "html",
+    layout: "tools-top",
+    density: "balanced",
+  },
+  {
+    id: "demo-live",
+    label: "Demo live",
+    summary: "Interactive delivery tuned for guided demos and richer feedback loops.",
+    tip: "Use for workshop-style chunks where immediate response is valuable.",
+    intentProfileId: "story",
+    engine: "javascript",
+    layout: "split",
+    density: "dense",
+  },
+  {
+    id: "publish-proof",
+    label: "Publish proof",
+    summary: "Conversion-ready setup with concise controls and predictable rendering.",
+    tip: "Use in final review when speed and reliability are both required.",
+    intentProfileId: "conversion",
+    engine: "html",
+    layout: "stacked",
+    density: "spacious",
+  },
+];
+const CHUNK_LAUNCH_PLAN_OPTIONS: Array<{
+  id: ChunkLaunchPlanId;
+  label: string;
+  summary: string;
+  tip: string;
+}> = [
+  {
+    id: "selected-first",
+    label: "Selected first",
+    summary: "Edit the currently selected chunk when available, otherwise start fresh.",
+    tip: "Use during iterative edits to preserve context while still supporting quick inserts.",
+  },
+  {
+    id: "delivery-first",
+    label: "Delivery first",
+    summary: "Open builder with the active delivery mode recommendation every time.",
+    tip: "Use when compatibility and output guarantees are the primary concern.",
+  },
+  {
+    id: "intent-lab",
+    label: "Intent lab",
+    summary: "Open builder from the selected intent profile and keep discovery broad.",
+    tip: "Use when exploring template concepts before committing to a delivery mode.",
   },
 ];
 const CHUNK_BUILD_STRATEGY_OPTIONS: Array<{
@@ -733,6 +1646,43 @@ const CHUNK_BUILD_STRATEGY_OPTIONS: Array<{
     intentProfileId: "conversion",
     layout: "stacked",
     density: "spacious",
+  },
+];
+const CHUNK_COACH_MODE_OPTIONS: Array<{
+  id: ChunkCoachMode;
+  label: string;
+  summary: string;
+  tip: string;
+  buildStrategy: ChunkBuildStrategyId;
+  deliveryMode: ChunkDeliveryModeId;
+  launchPlan: ChunkLaunchPlanId;
+}> = [
+  {
+    id: "learn-safe",
+    label: "Learn safe",
+    summary: "Biases toward stable HTML templates and coaching-rich launch defaults.",
+    tip: "Use for teaching-forward chunks and compatibility-first delivery.",
+    buildStrategy: "safe-lesson",
+    deliveryMode: "lesson-safe",
+    launchPlan: "delivery-first",
+  },
+  {
+    id: "balanced-flow",
+    label: "Balanced flow",
+    summary: "Keeps interactive power while preserving predictable review checkpoints.",
+    tip: "Use for mixed drafting and demo passes with moderate guardrails.",
+    buildStrategy: "interactive-lab",
+    deliveryMode: "demo-live",
+    launchPlan: "selected-first",
+  },
+  {
+    id: "ship-control",
+    label: "Ship control",
+    summary: "Tightens launch discipline for final QA and publish-ready chunk output.",
+    tip: "Use near handoff when speed and consistency both matter.",
+    buildStrategy: "ship-ready",
+    deliveryMode: "publish-proof",
+    launchPlan: "delivery-first",
   },
 ];
 const OUTLINE_STRATEGY_OPTIONS: Array<{
@@ -963,37 +1913,75 @@ function Workspace({
   const [workspaceLayoutPreset, setWorkspaceLayoutPreset] = useState<WorkspaceLayoutPreset>(() =>
     readWorkspaceLayoutPreference(),
   );
+  const [workspaceIntentPresetId, setWorkspaceIntentPresetId] = useState<WorkspaceIntentPresetId>(() =>
+    readWorkspaceIntentPreference(),
+  );
+  const [panelFocusPresetId, setPanelFocusPresetId] = useState<PanelFocusPresetId>(() => readPanelFocusPresetPreference());
   const [workspaceCoachPresetId, setWorkspaceCoachPresetId] = useState<WorkspaceCoachPresetId>(() =>
     readWorkspaceCoachPreference(),
   );
+  const [sessionGoalPresetId, setSessionGoalPresetId] = useState<SessionGoalPresetId>(() => readSessionGoalPreference());
+  const [editorCoachPresetId, setEditorCoachPresetId] = useState<EditorCoachPresetId>(() => readEditorCoachPreference());
+  const [learningLaneId, setLearningLaneId] = useState<LearningLaneId>(() => readLearningLanePreference());
+  const [revisionCadenceProfileId, setRevisionCadenceProfileId] = useState<RevisionCadenceProfileId>(() =>
+    readRevisionCadencePreference(),
+  );
+  const [sessionTempoPresetId, setSessionTempoPresetId] = useState<SessionTempoPresetId>(() => readSessionTempoPreference());
   const [modeScenePresetId, setModeScenePresetId] = useState<ModeScenePresetId>(() => readModeScenePreference());
+  const [modeStrategyId, setModeStrategyId] = useState<ModeStrategyId>(() => readModeStrategyPreference());
+  const [modeRecoveryCue, setModeRecoveryCue] = useState<ModeRecoveryCue>(() => readModeRecoveryCuePreference());
+  const [modeGuidanceLaneId, setModeGuidanceLaneId] = useState<ModeGuidanceLaneId>(() => readModeGuidanceLanePreference());
   const [styleRecipeId, setStyleRecipeId] = useState<StyleRecipeId>("editorial");
   const [stylePersonaId, setStylePersonaId] = useState<StylePersonaId>("clarity");
+  const [styleReadabilityTargetId, setStyleReadabilityTargetId] = useState<StyleReadabilityTargetId>(() =>
+    readStyleReadabilityPreference(),
+  );
+  const [styleLaneId, setStyleLaneId] = useState<StyleLaneId>(() => readStyleLanePreference());
+  const [styleAssistPresetId, setStyleAssistPresetId] = useState<StyleAssistPresetId>(() => readStyleAssistPreference());
   const [chunkIntentProfileId, setChunkIntentProfileId] = useState<ChunkIntentProfileId>("analysis");
+  const [chunkDeliveryModeId, setChunkDeliveryModeId] = useState<ChunkDeliveryModeId>(() => readChunkDeliveryModePreference());
+  const [chunkLaunchPlanId, setChunkLaunchPlanId] = useState<ChunkLaunchPlanId>(() => readChunkLaunchPlanPreference());
   const [chunkBuildStrategyId, setChunkBuildStrategyId] = useState<ChunkBuildStrategyId>(() =>
     readChunkBuildStrategyPreference(),
   );
+  const [chunkCoachMode, setChunkCoachMode] = useState<ChunkCoachMode>(() => readChunkCoachModePreference());
   const [findCaseSensitive, setFindCaseSensitive] = useState(false);
   const [findWholeWord, setFindWholeWord] = useState(false);
   const [replaceTransform, setReplaceTransform] = useState<ReplaceTransform>("as-typed");
   const [findStrategyId, setFindStrategyId] = useState<FindStrategyId>(() => readFindStrategyPreference());
+  const [findCoachMode, setFindCoachMode] = useState<FindCoachMode>(() => readFindCoachModePreference());
+  const [findPreviewLimit, setFindPreviewLimit] = useState<FindPreviewLimit>(() => readFindPreviewLimitPreference());
   const [recentFindQueries, setRecentFindQueries] = useState<string[]>(() => readRecentFindQueriesPreference());
   const [outlineDepthFilter, setOutlineDepthFilter] = useState<OutlineDepthFilter>("all");
   const [outlineActiveOnly, setOutlineActiveOnly] = useState(false);
   const [outlineJumpMode, setOutlineJumpMode] = useState<OutlineJumpMode>("focus");
   const [outlineStrategyId, setOutlineStrategyId] = useState<OutlineStrategyId>(() => readOutlineStrategyPreference());
+  const [outlineFocusLens, setOutlineFocusLens] = useState<OutlineFocusLens>(() => readOutlineFocusLensPreference());
+  const [outlineFocusWindow, setOutlineFocusWindow] = useState<OutlineFocusWindow>(() => readOutlineFocusWindowPreference());
   const [minimapDepthFilter, setMinimapDepthFilter] = useState<MinimapDepthFilter>(() => readMinimapDepthPreference());
   const [minimapLabelMode, setMinimapLabelMode] = useState<MinimapLabelMode>(() => readMinimapLabelPreference());
   const [minimapHighlightMode, setMinimapHighlightMode] = useState<MinimapHighlightMode>(() =>
     readMinimapHighlightPreference(),
   );
+  const [minimapStrategyId, setMinimapStrategyId] = useState<MinimapStrategyId>(() => readMinimapStrategyPreference());
+  const [minimapJumpStride, setMinimapJumpStride] = useState<MinimapJumpStride>(() => readMinimapJumpStridePreference());
+  const [minimapCoachLaneId, setMinimapCoachLaneId] = useState<MinimapCoachLaneId>(() => readMinimapCoachLanePreference());
   const [pulseLens, setPulseLens] = useState<PulseLens>(() => readPulseLensPreference());
   const [pulseCadenceTarget, setPulseCadenceTarget] = useState<PulseCadenceTarget>(() => readPulseTargetPreference());
+  const [pulseCoachPresetId, setPulseCoachPresetId] = useState<PulseCoachPresetId>(() => readPulseCoachPreference());
+  const [pulseInterventionId, setPulseInterventionId] = useState<PulseInterventionId>(() => readPulseInterventionPreference());
   const [revisionFilter, setRevisionFilter] = useState<RevisionFilter>(() => readRevisionFilterPreference());
   const [revisionDiffFocus, setRevisionDiffFocus] = useState<RevisionDiffFocus>(() => readRevisionDiffFocusPreference());
+  const [revisionStrategyId, setRevisionStrategyId] = useState<RevisionStrategyId>(() => readRevisionStrategyPreference());
+  const [revisionDiffDepth, setRevisionDiffDepth] = useState<RevisionDiffDepth>(() => readRevisionDiffDepthPreference());
+  const [revisionRestoreGuard, setRevisionRestoreGuard] = useState<RevisionRestoreGuard>(() => readRevisionRestoreGuardPreference());
+  const [revisionTimelineLens, setRevisionTimelineLens] = useState<RevisionTimelineLens>(() => readRevisionTimelineLensPreference());
+  const [pendingRestoreSnapshotId, setPendingRestoreSnapshotId] = useState<string | null>(null);
   const [textColorRgba, setTextColorRgba] = useState<RgbaValue>(DEFAULT_TEXT_RGBA);
   const [highlightRgba, setHighlightRgba] = useState<RgbaValue>(DEFAULT_HIGHLIGHT_RGBA);
   const [blockBackgroundRgba, setBlockBackgroundRgba] = useState<RgbaValue>(DEFAULT_BLOCK_RGBA);
+  const [tableCellBackgroundRgba, setTableCellBackgroundRgba] = useState<RgbaValue>(DEFAULT_TABLE_CELL_RGBA);
+  const [tableGridRgba, setTableGridRgba] = useState<RgbaValue>(DEFAULT_TABLE_GRID_RGBA);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
   const [lineHeightNumberDraft, setLineHeightNumberDraft] = useState("1.8");
@@ -1047,6 +2035,9 @@ function Workspace({
   useEffect(() => {
     snapshotsRef.current = snapshots;
   }, [snapshots]);
+
+  const activeRevisionCadence =
+    REVISION_CADENCE_OPTIONS.find((option) => option.id === revisionCadenceProfileId) ?? REVISION_CADENCE_OPTIONS[1];
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -1219,7 +2210,7 @@ function Workspace({
         if (signature !== lastSnapshotSignatureRef.current) {
           void createRevision(nextEditor, "autosave");
         }
-      }, IDLE_SNAPSHOT_DELAY);
+      }, activeRevisionCadence.idleMs);
 
       if (signature !== latestStructureSignatureRef.current) {
         latestStructureSignatureRef.current = signature;
@@ -1228,7 +2219,7 @@ function Workspace({
           if (signature !== lastSnapshotSignatureRef.current) {
             void createRevision(nextEditor, "autosave");
           }
-        }, STRUCTURE_SNAPSHOT_DELAY);
+        }, activeRevisionCadence.structureMs);
       }
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
@@ -1239,7 +2230,7 @@ function Workspace({
         scrollCurrentBlockIntoView(nextEditor);
       }
     },
-  });
+  }, [activeRevisionCadence.idleMs, activeRevisionCadence.structureMs]);
 
   useEffect(() => {
     const handleGlobalShortcuts = (event: KeyboardEvent) => {
@@ -1546,12 +2537,52 @@ function Workspace({
   }, [workspaceLayoutPreset]);
 
   useEffect(() => {
+    writeWorkspaceIntentPreference(workspaceIntentPresetId);
+  }, [workspaceIntentPresetId]);
+
+  useEffect(() => {
+    writePanelFocusPresetPreference(panelFocusPresetId);
+  }, [panelFocusPresetId]);
+
+  useEffect(() => {
     writeWorkspaceCoachPreference(workspaceCoachPresetId);
   }, [workspaceCoachPresetId]);
 
   useEffect(() => {
+    writeSessionGoalPreference(sessionGoalPresetId);
+  }, [sessionGoalPresetId]);
+
+  useEffect(() => {
+    writeEditorCoachPreference(editorCoachPresetId);
+  }, [editorCoachPresetId]);
+
+  useEffect(() => {
+    writeLearningLanePreference(learningLaneId);
+  }, [learningLaneId]);
+
+  useEffect(() => {
+    writeRevisionCadencePreference(revisionCadenceProfileId);
+  }, [revisionCadenceProfileId]);
+
+  useEffect(() => {
+    writeSessionTempoPreference(sessionTempoPresetId);
+  }, [sessionTempoPresetId]);
+
+  useEffect(() => {
     writeModeScenePreference(modeScenePresetId);
   }, [modeScenePresetId]);
+
+  useEffect(() => {
+    writeModeStrategyPreference(modeStrategyId);
+  }, [modeStrategyId]);
+
+  useEffect(() => {
+    writeModeRecoveryCuePreference(modeRecoveryCue);
+  }, [modeRecoveryCue]);
+
+  useEffect(() => {
+    writeModeGuidanceLanePreference(modeGuidanceLaneId);
+  }, [modeGuidanceLaneId]);
 
   useEffect(() => {
     writeMinimapDepthPreference(minimapDepthFilter);
@@ -1566,12 +2597,32 @@ function Workspace({
   }, [minimapHighlightMode]);
 
   useEffect(() => {
+    writeMinimapStrategyPreference(minimapStrategyId);
+  }, [minimapStrategyId]);
+
+  useEffect(() => {
+    writeMinimapJumpStridePreference(minimapJumpStride);
+  }, [minimapJumpStride]);
+
+  useEffect(() => {
+    writeMinimapCoachLanePreference(minimapCoachLaneId);
+  }, [minimapCoachLaneId]);
+
+  useEffect(() => {
     writePulseLensPreference(pulseLens);
   }, [pulseLens]);
 
   useEffect(() => {
     writePulseTargetPreference(pulseCadenceTarget);
   }, [pulseCadenceTarget]);
+
+  useEffect(() => {
+    writePulseCoachPreference(pulseCoachPresetId);
+  }, [pulseCoachPresetId]);
+
+  useEffect(() => {
+    writePulseInterventionPreference(pulseInterventionId);
+  }, [pulseInterventionId]);
 
   useEffect(() => {
     writeRevisionFilterPreference(revisionFilter);
@@ -1582,8 +2633,36 @@ function Workspace({
   }, [revisionDiffFocus]);
 
   useEffect(() => {
+    writeRevisionStrategyPreference(revisionStrategyId);
+  }, [revisionStrategyId]);
+
+  useEffect(() => {
+    writeRevisionDiffDepthPreference(revisionDiffDepth);
+  }, [revisionDiffDepth]);
+
+  useEffect(() => {
+    writeRevisionRestoreGuardPreference(revisionRestoreGuard);
+  }, [revisionRestoreGuard]);
+
+  useEffect(() => {
+    writeRevisionTimelineLensPreference(revisionTimelineLens);
+  }, [revisionTimelineLens]);
+
+  useEffect(() => {
+    setPendingRestoreSnapshotId(null);
+  }, [revisionFilter, revisionTimelineLens, revisionDiffFocus]);
+
+  useEffect(() => {
     writeFindStrategyPreference(findStrategyId);
   }, [findStrategyId]);
+
+  useEffect(() => {
+    writeFindCoachModePreference(findCoachMode);
+  }, [findCoachMode]);
+
+  useEffect(() => {
+    writeFindPreviewLimitPreference(findPreviewLimit);
+  }, [findPreviewLimit]);
 
   useEffect(() => {
     writeRecentFindQueriesPreference(recentFindQueries);
@@ -1594,8 +2673,40 @@ function Workspace({
   }, [chunkBuildStrategyId]);
 
   useEffect(() => {
+    writeChunkCoachModePreference(chunkCoachMode);
+  }, [chunkCoachMode]);
+
+  useEffect(() => {
+    writeChunkDeliveryModePreference(chunkDeliveryModeId);
+  }, [chunkDeliveryModeId]);
+
+  useEffect(() => {
+    writeChunkLaunchPlanPreference(chunkLaunchPlanId);
+  }, [chunkLaunchPlanId]);
+
+  useEffect(() => {
     writeOutlineStrategyPreference(outlineStrategyId);
   }, [outlineStrategyId]);
+
+  useEffect(() => {
+    writeOutlineFocusLensPreference(outlineFocusLens);
+  }, [outlineFocusLens]);
+
+  useEffect(() => {
+    writeOutlineFocusWindowPreference(outlineFocusWindow);
+  }, [outlineFocusWindow]);
+
+  useEffect(() => {
+    writeStyleReadabilityPreference(styleReadabilityTargetId);
+  }, [styleReadabilityTargetId]);
+
+  useEffect(() => {
+    writeStyleLanePreference(styleLaneId);
+  }, [styleLaneId]);
+
+  useEffect(() => {
+    writeStyleAssistPreference(styleAssistPresetId);
+  }, [styleAssistPresetId]);
 
   useEffect(() => {
     if (!editor) {
@@ -1669,6 +2780,17 @@ function Workspace({
   const currentLetterSpacing = String(editor?.getAttributes("textStyle").letterSpacing ?? "");
   const currentHighlightColor = String(editor?.getAttributes("highlight").color ?? "");
   const currentCalloutBackground = String(editor?.getAttributes("callout").backgroundColor ?? "");
+  const currentTableCellBackground = String(
+    editor?.getAttributes("tableCell").backgroundColor ??
+      editor?.getAttributes("tableHeader").backgroundColor ??
+      "",
+  );
+  const currentTableGridColor = String(
+    editor?.getAttributes("tableCell").borderColor ??
+      editor?.getAttributes("tableHeader").borderColor ??
+      editor?.getAttributes("table").borderColor ??
+      "",
+  );
   const currentAlignment = String(editor?.getAttributes("heading").textAlign ?? editor?.getAttributes("paragraph").textAlign ?? "left");
   const currentLineHeight = resolveLineHeight(editor);
   const currentCalloutTone = editor?.isActive("callout") ? String(editor.getAttributes("callout").tone ?? "note") : "none";
@@ -1689,6 +2811,14 @@ function Workspace({
   useEffect(() => {
     setBlockBackgroundRgba(parseCssColor(currentCalloutBackground, DEFAULT_BLOCK_RGBA));
   }, [currentCalloutBackground]);
+
+  useEffect(() => {
+    setTableCellBackgroundRgba(parseCssColor(currentTableCellBackground, DEFAULT_TABLE_CELL_RGBA));
+  }, [currentTableCellBackground]);
+
+  useEffect(() => {
+    setTableGridRgba(parseCssColor(currentTableGridColor, DEFAULT_TABLE_GRID_RGBA));
+  }, [currentTableGridColor]);
 
   useEffect(() => {
     const parsed = parseLengthValue(currentFontSize, "16", "px");
@@ -1731,30 +2861,83 @@ function Workspace({
     NAVIGATION_PROFILE_OPTIONS.find((option) => option.value === navigationProfile) ?? NAVIGATION_PROFILE_OPTIONS[1];
   const selectedWorkspaceLayout =
     WORKSPACE_LAYOUT_OPTIONS.find((option) => option.value === workspaceLayoutPreset) ?? WORKSPACE_LAYOUT_OPTIONS[0];
+  const selectedWorkspaceIntent =
+    WORKSPACE_INTENT_OPTIONS.find((option) => option.id === workspaceIntentPresetId) ?? WORKSPACE_INTENT_OPTIONS[1];
+  const selectedPanelFocusPreset =
+    PANEL_FOCUS_PRESET_OPTIONS.find((option) => option.id === panelFocusPresetId) ?? PANEL_FOCUS_PRESET_OPTIONS[0];
   const selectedWorkspaceCoach =
     WORKSPACE_COACH_OPTIONS.find((option) => option.id === workspaceCoachPresetId) ?? WORKSPACE_COACH_OPTIONS[1];
+  const selectedSessionGoal =
+    SESSION_GOAL_OPTIONS.find((option) => option.id === sessionGoalPresetId) ?? SESSION_GOAL_OPTIONS[1];
+  const selectedEditorCoach =
+    EDITOR_COACH_OPTIONS.find((option) => option.id === editorCoachPresetId) ?? EDITOR_COACH_OPTIONS[1];
+  const selectedLearningLane =
+    LEARNING_LANE_OPTIONS.find((option) => option.id === learningLaneId) ?? LEARNING_LANE_OPTIONS[1];
+  const selectedRevisionCadence =
+    REVISION_CADENCE_OPTIONS.find((option) => option.id === revisionCadenceProfileId) ?? REVISION_CADENCE_OPTIONS[1];
+  const selectedSessionTempo =
+    SESSION_TEMPO_OPTIONS.find((option) => option.id === sessionTempoPresetId) ?? SESSION_TEMPO_OPTIONS[0];
   const selectedModeScenePreset =
     MODE_SCENE_OPTIONS.find((option) => option.id === modeScenePresetId) ?? MODE_SCENE_OPTIONS[0];
+  const selectedModeStrategy = MODE_STRATEGY_OPTIONS.find((option) => option.id === modeStrategyId) ?? MODE_STRATEGY_OPTIONS[0];
+  const selectedModeRecoveryCue =
+    MODE_RECOVERY_CUE_OPTIONS.find((option) => option.value === modeRecoveryCue) ?? MODE_RECOVERY_CUE_OPTIONS[0];
+  const selectedModeGuidanceLane =
+    MODE_GUIDANCE_LANE_OPTIONS.find((option) => option.id === modeGuidanceLaneId) ?? MODE_GUIDANCE_LANE_OPTIONS[1];
   const selectedMinimapDepthOption =
     MINIMAP_DEPTH_OPTIONS.find((option) => option.value === minimapDepthFilter) ?? MINIMAP_DEPTH_OPTIONS[0];
   const selectedMinimapLabelOption =
     MINIMAP_LABEL_OPTIONS.find((option) => option.value === minimapLabelMode) ?? MINIMAP_LABEL_OPTIONS[0];
   const selectedMinimapHighlightOption =
     MINIMAP_HIGHLIGHT_OPTIONS.find((option) => option.value === minimapHighlightMode) ?? MINIMAP_HIGHLIGHT_OPTIONS[0];
+  const selectedMinimapStrategy =
+    MINIMAP_STRATEGY_OPTIONS.find((option) => option.id === minimapStrategyId) ?? MINIMAP_STRATEGY_OPTIONS[1];
+  const selectedMinimapCoachLane =
+    MINIMAP_COACH_LANE_OPTIONS.find((option) => option.id === minimapCoachLaneId) ?? MINIMAP_COACH_LANE_OPTIONS[1];
   const selectedPulseLens = PULSE_LENS_OPTIONS.find((option) => option.value === pulseLens) ?? PULSE_LENS_OPTIONS[1];
   const selectedPulseTarget =
     PULSE_TARGET_OPTIONS.find((option) => option.value === pulseCadenceTarget) ?? PULSE_TARGET_OPTIONS[1];
+  const selectedPulseCoach =
+    PULSE_COACH_OPTIONS.find((option) => option.id === pulseCoachPresetId) ?? PULSE_COACH_OPTIONS[0];
+  const selectedPulseIntervention =
+    PULSE_INTERVENTION_OPTIONS.find((option) => option.id === pulseInterventionId) ?? PULSE_INTERVENTION_OPTIONS[1];
+  const selectedRevisionStrategy =
+    REVISION_STRATEGY_OPTIONS.find((option) => option.id === revisionStrategyId) ?? REVISION_STRATEGY_OPTIONS[0];
+  const selectedRevisionDiffDepth =
+    REVISION_DIFF_DEPTH_OPTIONS.find((option) => option.value === revisionDiffDepth) ?? REVISION_DIFF_DEPTH_OPTIONS[1];
+  const selectedRevisionRestoreGuard =
+    REVISION_RESTORE_GUARD_OPTIONS.find((option) => option.value === revisionRestoreGuard) ?? REVISION_RESTORE_GUARD_OPTIONS[1];
+  const selectedRevisionTimelineLens =
+    REVISION_TIMELINE_LENS_OPTIONS.find((option) => option.value === revisionTimelineLens) ?? REVISION_TIMELINE_LENS_OPTIONS[0];
   const selectedStyleRecipe = STYLE_RECIPES.find((recipe) => recipe.id === styleRecipeId) ?? STYLE_RECIPES[0];
   const selectedStylePersona = STYLE_PERSONA_OPTIONS.find((persona) => persona.id === stylePersonaId) ?? STYLE_PERSONA_OPTIONS[0];
+  const selectedStyleReadabilityTarget =
+    STYLE_READABILITY_TARGET_OPTIONS.find((target) => target.id === styleReadabilityTargetId) ??
+    STYLE_READABILITY_TARGET_OPTIONS[1];
+  const selectedStyleLane = STYLE_LANE_OPTIONS.find((lane) => lane.id === styleLaneId) ?? STYLE_LANE_OPTIONS[1];
+  const selectedStyleAssist = STYLE_ASSIST_OPTIONS.find((preset) => preset.id === styleAssistPresetId) ?? STYLE_ASSIST_OPTIONS[1];
   const selectedFindStrategy = FIND_STRATEGY_OPTIONS.find((strategy) => strategy.id === findStrategyId) ?? FIND_STRATEGY_OPTIONS[0];
+  const selectedFindCoachMode =
+    FIND_COACH_MODE_OPTIONS.find((option) => option.value === findCoachMode) ?? FIND_COACH_MODE_OPTIONS[1];
   const selectedChunkIntentProfile =
     CHUNK_INTENT_PROFILES.find((profile) => profile.id === chunkIntentProfileId) ?? CHUNK_INTENT_PROFILES[1];
+  const selectedChunkDeliveryMode =
+    CHUNK_DELIVERY_MODE_OPTIONS.find((mode) => mode.id === chunkDeliveryModeId) ?? CHUNK_DELIVERY_MODE_OPTIONS[1];
+  const selectedChunkDeliveryIntentProfile =
+    CHUNK_INTENT_PROFILES.find((profile) => profile.id === selectedChunkDeliveryMode.intentProfileId) ?? CHUNK_INTENT_PROFILES[1];
   const selectedChunkBuildStrategy =
     CHUNK_BUILD_STRATEGY_OPTIONS.find((strategy) => strategy.id === chunkBuildStrategyId) ?? CHUNK_BUILD_STRATEGY_OPTIONS[0];
+  const selectedChunkCoachMode =
+    CHUNK_COACH_MODE_OPTIONS.find((mode) => mode.id === chunkCoachMode) ?? CHUNK_COACH_MODE_OPTIONS[1];
+  const selectedChunkLaunchPlan =
+    CHUNK_LAUNCH_PLAN_OPTIONS.find((plan) => plan.id === chunkLaunchPlanId) ?? CHUNK_LAUNCH_PLAN_OPTIONS[0];
   const selectedOutlineStrategy =
     OUTLINE_STRATEGY_OPTIONS.find((strategy) => strategy.id === outlineStrategyId) ?? OUTLINE_STRATEGY_OPTIONS[0];
+  const selectedOutlineFocusLens =
+    OUTLINE_FOCUS_LENS_OPTIONS.find((option) => option.value === outlineFocusLens) ?? OUTLINE_FOCUS_LENS_OPTIONS[0];
   const selectedChunkIntentTemplate = getChunkTemplate(selectedChunkIntentProfile.templateId);
-  const filteredSnapshots = snapshots.filter((snapshot) => {
+  const chunkDeliveryTemplate = getChunkTemplate(selectedChunkDeliveryIntentProfile.templateId);
+  const reasonFilteredSnapshots = snapshots.filter((snapshot) => {
     if (revisionFilter === "all") {
       return true;
     }
@@ -1763,6 +2946,21 @@ function Workspace({
     }
     return snapshot.reason === revisionFilter;
   });
+  const revisionTimelineWindowMinutes =
+    revisionTimelineLens === "last-hour" ? 60 : revisionTimelineLens === "latest-three" ? 15 : null;
+  const revisionTimelineCutoffTimestamp =
+    revisionTimelineWindowMinutes === null ? null : Date.now() - revisionTimelineWindowMinutes * 60 * 1000;
+  let filteredSnapshots = reasonFilteredSnapshots.filter((snapshot) => {
+    if (revisionTimelineCutoffTimestamp === null) {
+      return true;
+    }
+    return Date.parse(snapshot.createdAt) >= revisionTimelineCutoffTimestamp;
+  });
+  if (revisionTimelineLens === "latest-three") {
+    filteredSnapshots = filteredSnapshots.slice(0, 3);
+  }
+  const revisionTimelineCoverage =
+    reasonFilteredSnapshots.length > 0 ? Math.round((filteredSnapshots.length / reasonFilteredSnapshots.length) * 100) : 0;
   const snapshotIntervals = getSnapshotIntervalsInMinutes(snapshots);
   const averageSnapshotCadence = snapshotIntervals.length
     ? Math.round(snapshotIntervals.reduce((sum, value) => sum + value, 0) / snapshotIntervals.length)
@@ -1787,6 +2985,23 @@ function Workspace({
       : pulseLens === "structure"
         ? "Use heading clusters and shorter paragraphs to support scanning."
         : "Use revisions + cadence together before exporting final HTML.";
+  const pulseRhythmScore =
+    averageSnapshotCadence === null ? 0 : clampPercent(100 - Math.min(100, Math.abs(averageSnapshotCadence - 20) * 3));
+  const pulseCoachTip =
+    pulseRhythmScore >= 75
+      ? "Revision rhythm is steady. Keep checkpoint cadence consistent."
+      : pulseRhythmScore >= 45
+        ? "Cadence is drifting. Add manual checkpoints near major section edits."
+        : "Cadence is sparse. Capture checkpoints more frequently for safer restores.";
+  const pulseInterventionScore = clampPercent(
+    Math.round((pulseLensScore * 0.4 + pulseRhythmScore * 0.35 + revisionTimelineCoverage * 0.25) / 1),
+  );
+  const pulseInterventionTip =
+    pulseInterventionScore >= 78
+      ? "Pulse is stable for this intervention. Apply it to keep momentum predictable."
+      : pulseInterventionScore >= 48
+        ? "Pulse is recoverable. Apply intervention, then capture a checkpoint once metrics settle."
+        : "Pulse is volatile. Apply intervention and run a guarded revision check before big edits.";
   const findMatchDensity = stats.words > 0 ? Math.round((matches.length / stats.words) * 1000 * 10) / 10 : 0;
   const findDensityTip =
     findMatchDensity > 12
@@ -1794,7 +3009,26 @@ function Workspace({
       : findMatchDensity > 4
         ? "Moderate match density: preview next/prev before bulk changes."
         : "Low match density: broader strategy can speed cleanup passes.";
-  const visibleOutline = outline.filter((item) => {
+  const findRiskLevel = findMatchDensity > 12 ? "high" : findMatchDensity > 4 ? "medium" : "low";
+  const findRiskMessage =
+    findRiskLevel === "high"
+      ? "High-risk pass detected. Confirm replacements in preview before running Replace all."
+      : findRiskLevel === "medium"
+        ? "Moderate risk. Review excerpts and keep strategy scoped."
+        : "Low risk. Bulk replace is generally safe when the strategy matches intent.";
+  const findPreviewStartIndex = matches.length
+    ? Math.max(0, Math.min(matches.length - findPreviewLimit, activeMatchIndex - Math.floor(findPreviewLimit / 2)))
+    : 0;
+  const findPreviewMatches = matches.slice(findPreviewStartIndex, findPreviewStartIndex + findPreviewLimit);
+  const activeSelectionSeed =
+    editor && !editor.state.selection.empty
+      ? editor.state.doc
+          .textBetween(editor.state.selection.from, editor.state.selection.to, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 72)
+      : "";
+  const scopedOutline = outline.filter((item) => {
     if (outlineDepthFilter === "h1" && item.level > 1) {
       return false;
     }
@@ -1811,6 +3045,25 @@ function Workspace({
 
     return true;
   });
+  const scopedActiveOutlineIndex = scopedOutline.findIndex((item) => item.key === activeSectionKey);
+  const outlineTrailKeys = new Set<string>();
+  if (scopedActiveOutlineIndex >= 0) {
+    let currentLevel = scopedOutline[scopedActiveOutlineIndex]?.level ?? 6;
+    outlineTrailKeys.add(scopedOutline[scopedActiveOutlineIndex].key);
+    for (let index = scopedActiveOutlineIndex - 1; index >= 0; index -= 1) {
+      const candidate = scopedOutline[index];
+      if (candidate.level < currentLevel) {
+        outlineTrailKeys.add(candidate.key);
+        currentLevel = candidate.level;
+      }
+    }
+  }
+  const visibleOutline =
+    outlineFocusLens === "all-visible" || scopedActiveOutlineIndex === -1
+      ? scopedOutline
+      : outlineFocusLens === "active-window"
+        ? scopedOutline.filter((_, index) => Math.abs(index - scopedActiveOutlineIndex) <= outlineFocusWindow)
+        : scopedOutline.filter((item) => outlineTrailKeys.has(item.key));
   const outlineLevelCounts = {
     h1: outline.filter((item) => item.level === 1).length,
     h2: outline.filter((item) => item.level === 2).length,
@@ -1825,12 +3078,20 @@ function Workspace({
     return previous && item.level - previous.level > 1 ? count + 1 : count;
   }, 0);
   const outlineCoverageRatio = outline.length > 0 ? Math.round((visibleOutline.length / outline.length) * 100) : 0;
+  const outlineScopedCoverageRatio =
+    scopedOutline.length > 0 ? Math.round((visibleOutline.length / scopedOutline.length) * 100) : 0;
   const outlineCoachTip =
     outlineLevelCounts.h1 === 0
       ? "Add at least one H1 heading so large sections anchor correctly."
       : outlineDepthDriftCount > 0
         ? "Depth jumps detected. Consider adding bridge headings for smoother hierarchy."
         : "Hierarchy is steady. Use Reorder pass when sequencing chapters.";
+  const outlineLensTip =
+    outlineFocusLens === "all-visible"
+      ? "All-visible lens keeps complete context for map-wide reordering."
+      : outlineFocusLens === "active-window"
+        ? `Active-window lens is showing a ±${outlineFocusWindow} heading radius around your cursor.`
+        : "Active-trail lens keeps parent headings visible so hierarchy stays anchored.";
   const minimapVisibleOutline = outline.filter((item) => {
     if (minimapDepthFilter === "h1" && item.level > 1) {
       return false;
@@ -1841,6 +3102,121 @@ function Workspace({
     return true;
   });
   const minimapActiveIndex = minimapVisibleOutline.findIndex((item) => item.key === activeSectionKey);
+  const modeAlignmentScore = clampPercent(
+    (focusMode === selectedModeStrategy.focus ? 25 : 0) +
+      (typewriterMode === selectedModeStrategy.typewriter ? 25 : 0) +
+      (leftRailOpen === selectedModeStrategy.leftRail ? 25 : 0) +
+      (rightRailOpen === selectedModeStrategy.rightRail ? 25 : 0),
+  );
+  const modeCoachTip =
+    modeAlignmentScore >= 85
+      ? "Mode system aligned: keep this strategy while drafting this section set."
+      : modeAlignmentScore >= 55
+        ? "Partial alignment: apply strategy to sync rails and focus behavior."
+        : "Low alignment: run recovery cue, then apply strategy for a clean reset.";
+  const modeLaneAlignmentScore = clampPercent(
+    (modeStrategyId === selectedModeGuidanceLane.strategy ? 34 : 0) +
+      (modeScenePresetId === selectedModeGuidanceLane.scene ? 33 : 0) +
+      (modeRecoveryCue === selectedModeGuidanceLane.recoveryCue ? 33 : 0),
+  );
+  const modeLaneTip =
+    modeLaneAlignmentScore >= 85
+      ? "Mode lane aligned: transitions and recovery cues are synchronized."
+      : modeLaneAlignmentScore >= 55
+        ? "Mode lane partly aligned: apply lane to restore scene and cue consistency."
+        : "Mode lane drifted: apply lane before changing focus states manually.";
+  const minimapCoverageRatio = outline.length > 0 ? Math.round((minimapVisibleOutline.length / outline.length) * 100) : 0;
+  const minimapLoadPerStep = minimapJumpStride > 0 ? Math.round(minimapVisibleOutline.length / minimapJumpStride) : 0;
+  const minimapStrategyScore = clampPercent(
+    (minimapDepthFilter === selectedMinimapStrategy.depth ? 34 : 0) +
+      (minimapLabelMode === selectedMinimapStrategy.labels ? 33 : 0) +
+      (minimapHighlightMode === selectedMinimapStrategy.highlight ? 33 : 0),
+  );
+  const minimapCoachTip =
+    minimapStrategyScore >= 85
+      ? "Minimap strategy aligned: keep scanning and jump through checkpoints."
+      : minimapStrategyScore >= 55
+        ? "Some minimap controls drifted: apply strategy to restore scan rhythm."
+        : "Low alignment: reset strategy to recover navigation consistency.";
+  const minimapCoachLaneScore = clampPercent(
+    (minimapStrategyId === selectedMinimapCoachLane.strategy ? 20 : 0) +
+      (minimapDepthFilter === selectedMinimapCoachLane.depth ? 20 : 0) +
+      (minimapLabelMode === selectedMinimapCoachLane.labels ? 20 : 0) +
+      (minimapHighlightMode === selectedMinimapCoachLane.highlight ? 20 : 0) +
+      (minimapJumpStride === selectedMinimapCoachLane.jumpStride ? 20 : 0),
+  );
+  const minimapLaneTip =
+    minimapCoachLaneScore >= 85
+      ? "Minimap lane aligned: scan effort and jump stride are predictable."
+      : minimapCoachLaneScore >= 55
+        ? "Minimap lane partly aligned: apply lane to normalize scan behavior."
+        : "Minimap lane drifted: apply lane before a long navigation pass.";
+  const currentFontSizePx = resolveLengthValueToPx(currentFontSize, 16);
+  const currentLineHeightRatio = resolveLineHeightToRatio(currentLineHeight, currentFontSizePx);
+  const currentTrackingEm = resolveLengthValueToEm(currentLetterSpacing, currentFontSizePx);
+  const currentWeightNumeric = resolveNumericFontWeight(currentFontWeight);
+  const readabilityScore = clampPercent(
+    Math.round(
+      scoreRange(currentFontSizePx, 15, 18, 25) +
+        scoreRange(currentLineHeightRatio, 1.45, 1.9, 35) +
+        scoreCenter(currentTrackingEm, 0.01, 0.03, 20) +
+        scoreRange(currentWeightNumeric, 380, 620, 20),
+    ),
+  );
+  const readabilityTip =
+    readabilityScore >= 80
+      ? "Readability is strong for long sessions. Keep this target while refining tone."
+      : readabilityScore >= 55
+        ? "Readability is serviceable. Apply the active target to tighten rhythm."
+        : "Readability is drifting. Apply a target, then tune size and line height first.";
+  const styleLaneAlignmentScore = clampPercent(
+    (styleRecipeId === selectedStyleLane.recipe ? 34 : 0) +
+      (stylePersonaId === selectedStyleLane.persona ? 33 : 0) +
+      (styleReadabilityTargetId === selectedStyleLane.readability ? 33 : 0),
+  );
+  const styleLaneTip =
+    styleLaneAlignmentScore >= 85
+      ? "Style lane aligned: keep manual tweaks focused on local emphasis only."
+      : styleLaneAlignmentScore >= 55
+        ? "Style lane partly aligned: apply lane to re-sync recipe, persona, and readability."
+        : "Style lane drifted: apply lane before detailed typography tuning.";
+  const styleAssistAlignmentScore = clampPercent(
+    (styleLaneId === selectedStyleAssist.lane ? 34 : 0) +
+      (styleRecipeId === selectedStyleAssist.recipe ? 33 : 0) +
+      (stylePersonaId === selectedStyleAssist.persona ? 33 : 0),
+  );
+  const styleAssistTip =
+    styleAssistAlignmentScore >= 85
+      ? "Assist profile aligned. Keep manual controls for local tuning only."
+      : styleAssistAlignmentScore >= 55
+        ? "Assist profile partly aligned. Applying it will re-center visual consistency."
+        : "Assist profile drifted. Apply profile before deep manual refinements.";
+  const sessionTempoAlignmentScore = clampPercent(
+    (guidanceLevel === selectedSessionTempo.guidance ? 25 : 0) +
+      (interfaceDensity === selectedSessionTempo.density ? 25 : 0) +
+      (revisionCadenceProfileId === selectedSessionTempo.cadence ? 25 : 0) +
+      (workflowTrack === selectedSessionTempo.workflow ? 25 : 0),
+  );
+  const workspaceIntentAlignmentScore = clampPercent(
+    (guidanceLevel === selectedWorkspaceIntent.guidance ? 14 : 0) +
+      (interfaceDensity === selectedWorkspaceIntent.density ? 14 : 0) +
+      (workflowTrack === selectedWorkspaceIntent.workflow ? 14 : 0) +
+      (panelFocusPresetId === selectedWorkspaceIntent.panelFocus ? 14 : 0) +
+      (modeStrategyId === selectedWorkspaceIntent.modeStrategy ? 14 : 0) +
+      (minimapStrategyId === selectedWorkspaceIntent.minimapStrategy ? 15 : 0) +
+      (sessionTempoPresetId === selectedWorkspaceIntent.sessionTempo ? 15 : 0),
+  );
+  const chunkDeliveryScore = clampPercent(
+    (chunkIntentProfileId === selectedChunkDeliveryMode.intentProfileId ? 34 : 0) +
+      (chunkBuilderLayout === selectedChunkDeliveryMode.layout ? 33 : 0) +
+      (chunkBuilderDensity === selectedChunkDeliveryMode.density ? 33 : 0),
+  );
+  const chunkDeliveryTip =
+    chunkDeliveryScore >= 85
+      ? "Delivery mode aligned: launch and validate with confidence."
+      : chunkDeliveryScore >= 55
+        ? "Delivery partly aligned: apply mode to sync layout and intent."
+        : "Delivery misaligned: apply mode before opening the builder.";
 
   if (!editor) {
     return (
@@ -1946,6 +3322,76 @@ function Workspace({
   const chunkBuilderCoverage = chunkBuilderTemplate && chunkBuilderData
     ? computeChunkBuilderCoverage(chunkBuilderTemplate.fields, chunkBuilderData)
     : { filled: 0, total: 0, ratio: 0, missingLabels: [] as string[] };
+  const chunkLaunchReadinessScore = clampPercent(
+    Math.round(
+      chunkDeliveryScore * 0.55 +
+        (chunkBuilderCoverage.ratio || 0) * 0.35 +
+        (activeChunkAttrs ? 10 : 0),
+    ),
+  );
+  const chunkLaunchTip =
+    chunkLaunchReadinessScore >= 80
+      ? "Launch readiness is strong. Keep this plan and continue iterating."
+      : chunkLaunchReadinessScore >= 55
+        ? "Launch readiness is moderate. Fill a few core fields before launching."
+        : "Launch readiness is low. Apply delivery mode and complete core fields first.";
+  const chunkPreflightChecks = [
+    {
+      label: "Mode alignment",
+      pass:
+        chunkBuildStrategyId === selectedChunkCoachMode.buildStrategy &&
+        chunkDeliveryModeId === selectedChunkCoachMode.deliveryMode &&
+        chunkLaunchPlanId === selectedChunkCoachMode.launchPlan,
+      detail: `Expected ${selectedChunkCoachMode.buildStrategy}, ${selectedChunkCoachMode.deliveryMode}, ${selectedChunkCoachMode.launchPlan}.`,
+    },
+    {
+      label: "Delivery fit",
+      pass: chunkDeliveryScore >= 70,
+      detail: `Delivery score ${chunkDeliveryScore}% with ${selectedChunkDeliveryMode.label.toLowerCase()} mode.`,
+    },
+    {
+      label: "Launch readiness",
+      pass: chunkLaunchReadinessScore >= 70,
+      detail: `Readiness ${chunkLaunchReadinessScore}% using ${selectedChunkLaunchPlan.label.toLowerCase()} plan.`,
+    },
+    {
+      label: "Context anchor",
+      pass: chunkLaunchPlanId !== "selected-first" || Boolean(activeChunkAttrs),
+      detail:
+        chunkLaunchPlanId === "selected-first" && !activeChunkAttrs
+          ? "Select a chunk or switch launch plan before opening builder."
+          : "Launch context is valid for the selected plan.",
+    },
+  ];
+  const chunkPreflightPassCount = chunkPreflightChecks.filter((check) => check.pass).length;
+  const chunkPreflightScore = clampPercent(Math.round((chunkPreflightPassCount / Math.max(1, chunkPreflightChecks.length)) * 100));
+  const chunkCoachTip =
+    chunkPreflightScore >= 85
+      ? "Coach lane is stable. Run launch plan and review output once."
+      : chunkPreflightScore >= 55
+        ? "Coach lane is partially aligned. Apply coach mode to sync strategy and delivery."
+        : "Coach lane is drifting. Apply coach mode before launching.";
+  const revisionNetChange = revisionSummary.inserted - revisionSummary.deleted;
+  const revisionTimelineTip =
+    revisionTimelineLens === "all"
+      ? "Full history view: best for trend checks and milestone restores."
+      : revisionTimelineLens === "last-hour"
+        ? "Recent lens: keeps recovery decisions anchored to this session."
+        : "Compact lens: triage only the three most recent snapshots.";
+  const revisionGuardStatus =
+    revisionRestoreGuard === "fast"
+      ? "Restores apply immediately."
+      : revisionRestoreGuard === "confirm"
+        ? pendingRestoreSnapshotId
+          ? "One snapshot is armed for restore. Click its restore button again to confirm."
+          : "Two-step restore is enabled for safety."
+        : "Diff-first guard: select and inspect a snapshot before restoring.";
+  const revisionCoachTip =
+    revisionDiffFocus === "additions"
+      ? "Confirm each addition resolves a reader need or remove it."
+      : revisionDiffFocus === "deletions"
+        ? "Verify every trim keeps core claims and calls to action intact."
+        : "Review paired adds/removes to ensure the section intent stayed stable.";
 
   async function persistDocument(nextEditor: Editor) {
     const document = buildDocument(nextEditor.getJSON());
@@ -2056,8 +3502,24 @@ function Workspace({
 
     rememberFindQuery(findQuery);
     const nextIndex = (activeMatchIndex + direction + matches.length) % matches.length;
-    setActiveMatchIndex(nextIndex);
-    selectMatch(activeEditor, matches[nextIndex]);
+    jumpToMatchIndex(nextIndex);
+  }
+
+  function jumpToMatchIndex(index: number) {
+    if (!matches.length) {
+      return;
+    }
+    const boundedIndex = Math.max(0, Math.min(matches.length - 1, index));
+    setActiveMatchIndex(boundedIndex);
+    selectMatch(activeEditor, matches[boundedIndex]);
+  }
+
+  function useSelectionAsFindQuery() {
+    if (!activeSelectionSeed) {
+      return;
+    }
+    setFindQuery(activeSelectionSeed);
+    rememberFindQuery(activeSelectionSeed);
   }
 
   function replaceActiveMatch() {
@@ -2087,6 +3549,7 @@ function Workspace({
 
   function restoreSnapshot(snapshot: RevisionSnapshot) {
     replaceEditorDocument(activeEditor, snapshot.content);
+    setPendingRestoreSnapshotId(null);
     void createRevision(activeEditor, "restore");
   }
 
@@ -2113,6 +3576,23 @@ function Workspace({
     }
 
     setCollapsedKeys(outline.filter((candidate) => candidate.key !== item.key).map((candidate) => candidate.key));
+  }
+
+  function moveOutlineLensSelection(step: 1 | -1) {
+    if (!visibleOutline.length) {
+      return;
+    }
+    const currentIndex = visibleOutline.findIndex((item) => item.key === activeSectionKey);
+    const nextIndex =
+      currentIndex < 0
+        ? step > 0
+          ? 0
+          : visibleOutline.length - 1
+        : (currentIndex + step + visibleOutline.length) % visibleOutline.length;
+    const nextItem = visibleOutline[nextIndex];
+    if (nextItem) {
+      jumpToOutlineItem(nextItem);
+    }
   }
 
   function moveOutlineSection(from: OutlineItem, to: OutlineItem) {
@@ -2163,6 +3643,22 @@ function Workspace({
     }
 
     activeEditor.chain().focus().unsetHighlight().run();
+  }
+
+  function applyTableCellBackgroundColor(color: string | null) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    activeEditor.chain().focus().setCellAttribute("backgroundColor", color).run();
+  }
+
+  function applyTableGridColor(color: string | null) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    activeEditor.chain().focus().setCellAttribute("borderColor", color).updateAttributes("table", { borderColor: color }).run();
   }
 
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
@@ -2601,6 +4097,45 @@ function Workspace({
     applyBlockBackgroundColor(toRgbaString(persona.blockBackground));
   }
 
+  function applyStyleReadabilityTarget(nextTarget: StyleReadabilityTargetId = styleReadabilityTargetId) {
+    const target = STYLE_READABILITY_TARGET_OPTIONS.find((candidate) => candidate.id === nextTarget);
+    if (!target) {
+      return;
+    }
+    setStyleReadabilityTargetId(target.id);
+    applyFontSize(target.fontSize);
+    applyLineHeight(target.lineHeight);
+    applyLetterSpacing(target.letterSpacing);
+    applyFontWeight(target.fontWeight);
+  }
+
+  function applyStyleLane(nextLane: StyleLaneId = styleLaneId) {
+    const lane = STYLE_LANE_OPTIONS.find((candidate) => candidate.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setStyleLaneId(lane.id);
+    setStyleRecipeId(lane.recipe);
+    setStylePersonaId(lane.persona);
+    setStyleReadabilityTargetId(lane.readability);
+    applyStyleRecipe(lane.recipe);
+    applyStylePersona(lane.persona);
+    applyStyleReadabilityTarget(lane.readability);
+  }
+
+  function applyStyleAssistPreset(nextPreset: StyleAssistPresetId = styleAssistPresetId) {
+    const preset = STYLE_ASSIST_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setStyleAssistPresetId(preset.id);
+    setStyleLaneId(preset.lane);
+    setStyleRecipeId(preset.recipe);
+    setStylePersonaId(preset.persona);
+    setStyleReadabilityTargetId(preset.readability);
+    applyStyleLane(preset.lane);
+  }
+
   function applyFindStrategy(nextStrategy: FindStrategyId = findStrategyId) {
     const strategy = FIND_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
     if (!strategy) {
@@ -2619,6 +4154,40 @@ function Workspace({
       return;
     }
     setWorkspaceLayoutPreset(preset.value);
+  }
+
+  function applyWorkspaceIntentPreset(nextPreset: WorkspaceIntentPresetId = workspaceIntentPresetId) {
+    const preset = WORKSPACE_INTENT_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setWorkspaceIntentPresetId(preset.id);
+    setGuidanceLevel(preset.guidance);
+    setInterfaceDensity(preset.density);
+    setWorkflowTrack(preset.workflow);
+    setNavigationProfile(preset.navigation);
+    setSessionTempoPresetId(preset.sessionTempo);
+    setPanelFocusPresetId(preset.panelFocus);
+    applyPanelFocusPreset(preset.panelFocus);
+    applyModeStrategy(preset.modeStrategy);
+    applyMinimapStrategy(preset.minimapStrategy);
+    applySessionTempo(preset.sessionTempo);
+  }
+
+  function applyPanelFocusPreset(nextPreset: PanelFocusPresetId = panelFocusPresetId) {
+    const preset = PANEL_FOCUS_PRESET_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setPanelFocusPresetId(preset.id);
+    setLeftRailOpen(preset.leftRail);
+    setRightRailOpen(preset.rightRail);
+    setPanelCollapsePrefs(
+      PANEL_SECTION_IDS.reduce<PanelCollapsePrefs>((accumulator, id) => {
+        accumulator[id] = !preset.openPanels.includes(id);
+        return accumulator;
+      }, {} as PanelCollapsePrefs),
+    );
   }
 
   function applyWorkspaceCoachPreset(nextPreset: WorkspaceCoachPresetId = workspaceCoachPresetId) {
@@ -2643,6 +4212,68 @@ function Workspace({
 
     setViewMode("rich");
     setSideBySide(false);
+  }
+
+  function applySessionGoalPreset(nextPreset: SessionGoalPresetId = sessionGoalPresetId) {
+    const preset = SESSION_GOAL_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setSessionGoalPresetId(preset.id);
+    setGuidanceLevel(preset.guidance);
+    setWorkflowTrack(preset.workflow);
+    setNavigationProfile(preset.navigation);
+    applyWorkspaceLayoutPreset(preset.layout);
+    applyModeScenePreset(preset.modeScene);
+    setSideBySide(preset.sideBySide);
+    setViewMode(preset.viewMode);
+  }
+
+  function applyEditorCoachPreset(nextPreset: EditorCoachPresetId = editorCoachPresetId) {
+    const preset = EDITOR_COACH_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setEditorCoachPresetId(preset.id);
+    setGuidanceLevel(preset.guidance);
+    setInterfaceDensity(preset.density);
+    setWorkflowTrack(preset.workflow);
+    setNavigationProfile(preset.navigation);
+    applyModeStrategy(preset.modeStrategy);
+    applyMinimapStrategy(preset.minimapStrategy);
+  }
+
+  function applyLearningLane(nextLane: LearningLaneId = learningLaneId) {
+    const lane = LEARNING_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setLearningLaneId(lane.id);
+    setGuidanceLevel(lane.guidance);
+    setInterfaceDensity(lane.density);
+    setWorkflowTrack(lane.workflow);
+    setNavigationProfile(lane.navigation);
+    if (lane.id === "teach-me") {
+      setStyleLaneId("teach-clarity");
+    } else if (lane.id === "ship-fast") {
+      setStyleLaneId("ship-contrast");
+    } else {
+      setStyleLaneId("steady-narrative");
+    }
+    applyStylePersona(lane.stylePersona);
+    applyChunkDeliveryMode(lane.chunkDeliveryMode);
+  }
+
+  function applySessionTempo(nextPreset: SessionTempoPresetId = sessionTempoPresetId) {
+    const preset = SESSION_TEMPO_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setSessionTempoPresetId(preset.id);
+    setGuidanceLevel(preset.guidance);
+    setInterfaceDensity(preset.density);
+    setRevisionCadenceProfileId(preset.cadence);
+    setWorkflowTrack(preset.workflow);
   }
 
   function applyWorkflowTrackPreset(nextTrack: WorkflowTrack = workflowTrack) {
@@ -2726,6 +4357,68 @@ function Workspace({
     }
   }
 
+  function rotateModeScene(step: 1 | -1) {
+    const currentIndex = MODE_SCENE_OPTIONS.findIndex((option) => option.id === modeScenePresetId);
+    const nextIndex =
+      currentIndex < 0
+        ? 0
+        : (currentIndex + step + MODE_SCENE_OPTIONS.length) % MODE_SCENE_OPTIONS.length;
+    const nextScene = MODE_SCENE_OPTIONS[nextIndex];
+    if (!nextScene) {
+      return;
+    }
+    setModeScenePresetId(nextScene.id);
+    applyModeScenePreset(nextScene.id);
+  }
+
+  function applyModeStrategy(nextStrategy: ModeStrategyId = modeStrategyId) {
+    const strategy = MODE_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
+    if (!strategy) {
+      return;
+    }
+    setModeStrategyId(strategy.id);
+    setModeScenePresetId(strategy.scene);
+    setFocusMode(strategy.focus);
+    setTypewriterMode(strategy.typewriter);
+    setLeftRailOpen(strategy.leftRail);
+    setRightRailOpen(strategy.rightRail);
+    setNavigationProfile(strategy.navigation);
+  }
+
+  function applyModeGuidanceLane(nextLane: ModeGuidanceLaneId = modeGuidanceLaneId) {
+    const lane = MODE_GUIDANCE_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setModeGuidanceLaneId(lane.id);
+    setModeRecoveryCue(lane.recoveryCue);
+    setModeScenePresetId(lane.scene);
+    applyModeStrategy(lane.strategy);
+    applyModeScenePreset(lane.scene);
+  }
+
+  function runModeRecoveryCue(nextCue: ModeRecoveryCue = modeRecoveryCue) {
+    setModeRecoveryCue(nextCue);
+    if (nextCue === "checkpoint-first") {
+      void createRevision(activeEditor, "manual-checkpoint");
+      return;
+    }
+    if (nextCue === "open-structure") {
+      setLeftRailOpen(true);
+      setRightRailOpen(true);
+      setNavigationProfile("survey");
+      setMinimapDepthFilter("all");
+      setMinimapLabelMode("full");
+      setMinimapHighlightMode("level");
+      return;
+    }
+    setFocusMode(true);
+    setTypewriterMode(true);
+    setLeftRailOpen(true);
+    setRightRailOpen(false);
+    setNavigationProfile("immersive");
+  }
+
   function applyOutlineStrategy(nextStrategy: OutlineStrategyId = outlineStrategyId) {
     const strategy = OUTLINE_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
     if (!strategy) {
@@ -2747,18 +4440,55 @@ function Workspace({
     if (!minimapVisibleOutline.length) {
       return;
     }
+    const stride = Math.max(1, minimapJumpStride);
     const currentIndex = minimapVisibleOutline.findIndex((item) => item.key === activeSectionKey);
     const nextIndex =
       currentIndex < 0
         ? step > 0
           ? 0
           : minimapVisibleOutline.length - 1
-        : Math.min(minimapVisibleOutline.length - 1, Math.max(0, currentIndex + step));
+        : Math.min(minimapVisibleOutline.length - 1, Math.max(0, currentIndex + step * stride));
     const nextItem = minimapVisibleOutline[nextIndex];
     if (!nextItem) {
       return;
     }
     activeEditor.chain().focus(nextItem.pos).run();
+  }
+
+  function jumpToMinimapEdge(edge: "first" | "last") {
+    if (!minimapVisibleOutline.length) {
+      return;
+    }
+    const target = edge === "first" ? minimapVisibleOutline[0] : minimapVisibleOutline[minimapVisibleOutline.length - 1];
+    if (!target) {
+      return;
+    }
+    activeEditor.chain().focus(target.pos).run();
+  }
+
+  function applyMinimapStrategy(nextStrategy: MinimapStrategyId = minimapStrategyId) {
+    const strategy = MINIMAP_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
+    if (!strategy) {
+      return;
+    }
+    setMinimapStrategyId(strategy.id);
+    setMinimapDepthFilter(strategy.depth);
+    setMinimapLabelMode(strategy.labels);
+    setMinimapHighlightMode(strategy.highlight);
+    setMinimapJumpStride(strategy.jumpStride);
+  }
+
+  function applyMinimapCoachLane(nextLane: MinimapCoachLaneId = minimapCoachLaneId) {
+    const lane = MINIMAP_COACH_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setMinimapCoachLaneId(lane.id);
+    setMinimapDepthFilter(lane.depth);
+    setMinimapLabelMode(lane.labels);
+    setMinimapHighlightMode(lane.highlight);
+    setMinimapJumpStride(lane.jumpStride);
+    applyMinimapStrategy(lane.strategy);
   }
 
   function applyPulseLensPreset(nextLens: PulseLens = pulseLens) {
@@ -2780,6 +4510,95 @@ function Workspace({
     setLeftRailOpen(true);
     setOutlineDepthFilter("h2");
     setOutlineActiveOnly(false);
+  }
+
+  function applyPulseCoachPreset(nextPreset: PulseCoachPresetId = pulseCoachPresetId) {
+    const preset = PULSE_COACH_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setPulseCoachPresetId(preset.id);
+    setPulseLens(preset.lens);
+    setPulseCadenceTarget(preset.target);
+    if (preset.id === "release-readiness") {
+      setRightRailOpen(true);
+      setRevisionFilter("checkpoint");
+    }
+  }
+
+  function applyPulseIntervention(nextIntervention: PulseInterventionId = pulseInterventionId) {
+    const intervention = PULSE_INTERVENTION_OPTIONS.find((option) => option.id === nextIntervention);
+    if (!intervention) {
+      return;
+    }
+    setPulseInterventionId(intervention.id);
+    setPulseLens(intervention.lens);
+    setPulseCadenceTarget(intervention.target);
+    setPulseCoachPresetId(intervention.coach);
+    setRevisionCadenceProfileId(intervention.cadence);
+    setRevisionTimelineLens(intervention.timeline);
+    setRightRailOpen(true);
+    if (intervention.id === "prep-handoff") {
+      setRevisionFilter("checkpoint");
+      setRevisionDiffFocus("balanced");
+    }
+  }
+
+  function applyRevisionStrategy(nextStrategy: RevisionStrategyId = revisionStrategyId) {
+    const strategy = REVISION_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
+    if (!strategy) {
+      return;
+    }
+    setRevisionStrategyId(strategy.id);
+    setRevisionFilter(strategy.filter);
+    setRevisionDiffFocus(strategy.focus);
+    setRevisionDiffDepth(strategy.depth);
+    setPendingRestoreSnapshotId(null);
+    setRightRailOpen(true);
+  }
+
+  function moveRevisionSelection(step: 1 | -1) {
+    if (!filteredSnapshots.length) {
+      return;
+    }
+    const currentIndex = filteredSnapshots.findIndex((snapshot) => snapshot.id === selectedSnapshotId);
+    const nextIndex =
+      currentIndex < 0
+        ? step > 0
+          ? 0
+          : filteredSnapshots.length - 1
+        : (currentIndex + step + filteredSnapshots.length) % filteredSnapshots.length;
+    const nextSnapshot = filteredSnapshots[nextIndex];
+    if (!nextSnapshot) {
+      return;
+    }
+    setSelectedSnapshotId(nextSnapshot.id);
+    setPendingRestoreSnapshotId(null);
+  }
+
+  function requestSnapshotRestore(snapshot: RevisionSnapshot) {
+    if (revisionRestoreGuard === "fast") {
+      restoreSnapshot(snapshot);
+      setPendingRestoreSnapshotId(null);
+      return;
+    }
+    if (revisionRestoreGuard === "confirm") {
+      if (pendingRestoreSnapshotId === snapshot.id) {
+        restoreSnapshot(snapshot);
+        setPendingRestoreSnapshotId(null);
+        return;
+      }
+      setPendingRestoreSnapshotId(snapshot.id);
+      setSelectedSnapshotId(snapshot.id);
+      return;
+    }
+    if (pendingRestoreSnapshotId === snapshot.id && selectedSnapshotId === snapshot.id) {
+      restoreSnapshot(snapshot);
+      setPendingRestoreSnapshotId(null);
+      return;
+    }
+    setPendingRestoreSnapshotId(snapshot.id);
+    setSelectedSnapshotId(snapshot.id);
   }
 
   function openChunkBuilderWithTemplate(templateId: string) {
@@ -2809,6 +4628,39 @@ function Workspace({
     setChunkBuilderDensity(profile.density);
   }
 
+  function applyChunkDeliveryMode(nextMode: ChunkDeliveryModeId = chunkDeliveryModeId) {
+    const mode = CHUNK_DELIVERY_MODE_OPTIONS.find((option) => option.id === nextMode);
+    if (!mode) {
+      return;
+    }
+    setChunkDeliveryModeId(mode.id);
+    applyChunkIntentProfile(mode.intentProfileId, mode.engine);
+    setChunkBuilderLayout(mode.layout);
+    setChunkBuilderDensity(mode.density);
+  }
+
+  function runChunkLaunchPlan(nextPlan: ChunkLaunchPlanId = chunkLaunchPlanId) {
+    const plan = CHUNK_LAUNCH_PLAN_OPTIONS.find((option) => option.id === nextPlan);
+    if (!plan) {
+      return;
+    }
+
+    setChunkLaunchPlanId(plan.id);
+    if (plan.id === "selected-first") {
+      openChunkBuilder(activeChunkAttrs);
+      return;
+    }
+
+    if (plan.id === "delivery-first") {
+      applyChunkDeliveryMode(chunkDeliveryModeId);
+      openChunkBuilderWithTemplate(chunkDeliveryTemplate?.id ?? selectedChunkDeliveryIntentProfile.templateId);
+      return;
+    }
+
+    applyChunkIntentProfile(chunkIntentProfileId);
+    openChunkBuilderWithTemplate(selectedChunkIntentProfile.templateId);
+  }
+
   function applyChunkBuildStrategy(nextStrategy: ChunkBuildStrategyId = chunkBuildStrategyId) {
     const strategy = CHUNK_BUILD_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
     if (!strategy) {
@@ -2820,6 +4672,17 @@ function Workspace({
     applyChunkIntentProfile(strategy.intentProfileId, strategy.engine);
     setChunkBuilderLayout(strategy.layout);
     setChunkBuilderDensity(strategy.density);
+  }
+
+  function applyChunkCoachMode(nextMode: ChunkCoachMode = chunkCoachMode) {
+    const mode = CHUNK_COACH_MODE_OPTIONS.find((option) => option.id === nextMode);
+    if (!mode) {
+      return;
+    }
+    setChunkCoachMode(mode.id);
+    applyChunkBuildStrategy(mode.buildStrategy);
+    applyChunkDeliveryMode(mode.deliveryMode);
+    setChunkLaunchPlanId(mode.launchPlan);
   }
 
   function createInsertChunkBuilderState(templateId: string): ChunkBuilderState {
@@ -3110,9 +4973,27 @@ function Workspace({
     }));
   }
 
+  function soloPanel(sectionId: string) {
+    setPanelCollapsePrefs((current) =>
+      PANEL_SECTION_IDS.reduce<PanelCollapsePrefs>((next, id) => {
+        next[id] = id !== sectionId;
+        return next;
+      }, { ...current }),
+    );
+  }
+
+  function expandAllPanels() {
+    setPanelCollapsePrefs((current) =>
+      PANEL_SECTION_IDS.reduce<PanelCollapsePrefs>((next, id) => {
+        next[id] = false;
+        return next;
+      }, { ...current }),
+    );
+  }
+
   return (
     <div
-      className={`app-shell accent-${accent} density-${interfaceDensity} workflow-${workflowTrack} nav-${navigationProfile} workspace-layout-${workspaceLayoutPreset} ${focusMode ? "focus-mode" : ""}`}
+      className={`app-shell accent-${accent} density-${interfaceDensity} workflow-${workflowTrack} nav-${navigationProfile} workspace-layout-${workspaceLayoutPreset} workspace-intent-${workspaceIntentPresetId} panel-focus-${panelFocusPresetId} session-tempo-${sessionTempoPresetId} mode-lane-${modeGuidanceLaneId} minimap-lane-${minimapCoachLaneId} ${focusMode ? "focus-mode" : ""}`}
     >
       <div className="ambient ambient-one"></div>
       <div className="ambient ambient-two"></div>
@@ -3232,6 +5113,25 @@ function Workspace({
               ))}
             </select>
           </label>
+          <label className="theme-selector panel-focus-selector" htmlFor="panel-focus-selector">
+            <span>Panel focus</span>
+            <select
+              id="panel-focus-selector"
+              value={panelFocusPresetId}
+              aria-label="Panel focus preset"
+              title={selectedPanelFocusPreset.summary}
+              onChange={(event) => setPanelFocusPresetId(event.target.value as PanelFocusPresetId)}
+            >
+              {PANEL_FOCUS_PRESET_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedPanelFocusPreset.tip} onClick={() => applyPanelFocusPreset()}>
+            Apply panel focus
+          </button>
           <label className="theme-selector coach-selector" htmlFor="workspace-coach-selector">
             <span>Coach scene</span>
             <select
@@ -3250,6 +5150,117 @@ function Workspace({
           </label>
           <button className="ghost-action" type="button" title={selectedWorkspaceCoach.tip} onClick={() => applyWorkspaceCoachPreset()}>
             Apply coach scene
+          </button>
+          <label className="theme-selector workspace-intent-selector" htmlFor="workspace-intent-selector">
+            <span>Workspace intent</span>
+            <select
+              id="workspace-intent-selector"
+              value={workspaceIntentPresetId}
+              aria-label="Workspace intent preset"
+              title={selectedWorkspaceIntent.summary}
+              onChange={(event) => setWorkspaceIntentPresetId(event.target.value as WorkspaceIntentPresetId)}
+            >
+              {WORKSPACE_INTENT_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedWorkspaceIntent.tip} onClick={() => applyWorkspaceIntentPreset()}>
+            Apply workspace intent
+          </button>
+          <label className="theme-selector session-goal-selector" htmlFor="session-goal-selector">
+            <span>Session goal</span>
+            <select
+              id="session-goal-selector"
+              value={sessionGoalPresetId}
+              aria-label="Session goal"
+              title={selectedSessionGoal.summary}
+              onChange={(event) => setSessionGoalPresetId(event.target.value as SessionGoalPresetId)}
+            >
+              {SESSION_GOAL_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedSessionGoal.tip} onClick={() => applySessionGoalPreset()}>
+            Apply session goal
+          </button>
+          <label className="theme-selector editor-coach-selector" htmlFor="editor-coach-selector">
+            <span>Editor coach</span>
+            <select
+              id="editor-coach-selector"
+              value={editorCoachPresetId}
+              aria-label="Editor coach"
+              title={selectedEditorCoach.summary}
+              onChange={(event) => setEditorCoachPresetId(event.target.value as EditorCoachPresetId)}
+            >
+              {EDITOR_COACH_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedEditorCoach.tip} onClick={() => applyEditorCoachPreset()}>
+            Apply editor coach
+          </button>
+          <label className="theme-selector learning-lane-selector" htmlFor="learning-lane-selector">
+            <span>Learning lane</span>
+            <select
+              id="learning-lane-selector"
+              value={learningLaneId}
+              aria-label="Learning lane"
+              title={selectedLearningLane.summary}
+              onChange={(event) => setLearningLaneId(event.target.value as LearningLaneId)}
+            >
+              {LEARNING_LANE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedLearningLane.tip} onClick={() => applyLearningLane()}>
+            Apply learning lane
+          </button>
+          <label className="theme-selector cadence-selector" htmlFor="revision-cadence-selector">
+            <span>Revision cadence</span>
+            <select
+              id="revision-cadence-selector"
+              value={revisionCadenceProfileId}
+              aria-label="Revision cadence profile"
+              title={selectedRevisionCadence.summary}
+              onChange={(event) => setRevisionCadenceProfileId(event.target.value as RevisionCadenceProfileId)}
+            >
+              {REVISION_CADENCE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="theme-selector session-tempo-selector" htmlFor="session-tempo-selector">
+            <span>Session tempo</span>
+            <select
+              id="session-tempo-selector"
+              value={sessionTempoPresetId}
+              aria-label="Session tempo"
+              title={selectedSessionTempo.summary}
+              onChange={(event) => setSessionTempoPresetId(event.target.value as SessionTempoPresetId)}
+            >
+              {SESSION_TEMPO_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" title={selectedSessionTempo.tip} onClick={() => applySessionTempo()}>
+            Apply tempo
           </button>
           <button
             className={`ghost-action ${focusMode ? "active" : ""}`}
@@ -3788,6 +5799,9 @@ function Workspace({
             copy="Calm on first glance, but deep once you start shaping the draft."
             collapsed={isPanelCollapsed("left-mode")}
             onToggle={() => togglePanel("left-mode")}
+            onSolo={() => soloPanel("left-mode")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
             <div className="mode-scene-stack">
               <div className="mode-scene-head">
@@ -3834,6 +5848,123 @@ function Workspace({
                 {guidanceLevel === "expert" ? " Expert mode keeps this panel lean; advanced toggles stay available below." : ""}
               </p>
             </div>
+            <div className="mode-strategy-group mode-lane-group">
+              <div className="mode-strategy-head">
+                <span>Mode lane</span>
+                <label className="mode-scene-select">
+                  <span>Lane</span>
+                  <select
+                    value={modeGuidanceLaneId}
+                    title={selectedModeGuidanceLane.summary}
+                    onChange={(event) => setModeGuidanceLaneId(event.target.value as ModeGuidanceLaneId)}
+                  >
+                    {MODE_GUIDANCE_LANE_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mode-strategy-grid">
+                {MODE_GUIDANCE_LANE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`mode-scene-card ${modeGuidanceLaneId === option.id ? "active" : ""}`}
+                    type="button"
+                    onClick={() => setModeGuidanceLaneId(option.id)}
+                    aria-pressed={modeGuidanceLaneId === option.id}
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.summary}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="compact-grid">
+                <button className="chip" type="button" onClick={() => applyModeGuidanceLane()}>
+                  Apply mode lane
+                </button>
+                <button className="chip" type="button" onClick={() => rotateModeScene(-1)}>
+                  Prev scene
+                </button>
+                <button className="chip" type="button" onClick={() => rotateModeScene(1)}>
+                  Next scene
+                </button>
+              </div>
+              <article className="mode-coach-card">
+                <div className="meter-head">
+                  <span>{selectedModeGuidanceLane.label} alignment</span>
+                  <span>{modeLaneAlignmentScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${modeLaneAlignmentScore}%` }}></span>
+                </div>
+                <p className="small-copy">{modeLaneTip}</p>
+                <p className="small-copy">{selectedModeGuidanceLane.tip}</p>
+              </article>
+            </div>
+            <div className="mode-strategy-group">
+              <div className="mode-strategy-head">
+                <span>Mode strategy</span>
+                <label className="mode-scene-select">
+                  <span>Strategy</span>
+                  <select
+                    value={modeStrategyId}
+                    title={selectedModeStrategy.summary}
+                    onChange={(event) => setModeStrategyId(event.target.value as ModeStrategyId)}
+                  >
+                    {MODE_STRATEGY_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mode-strategy-grid">
+                {MODE_STRATEGY_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`mode-scene-card ${modeStrategyId === option.id ? "active" : ""}`}
+                    type="button"
+                    onClick={() => setModeStrategyId(option.id)}
+                    aria-pressed={modeStrategyId === option.id}
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.summary}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="compact-grid">
+                <button className="chip" type="button" onClick={() => applyModeStrategy()}>
+                  Apply strategy
+                </button>
+                <button className="chip" type="button" onClick={() => runModeRecoveryCue()}>
+                  Run recovery cue
+                </button>
+              </div>
+              <label className="mode-scene-select">
+                <span>Recovery cue</span>
+                <select
+                  value={modeRecoveryCue}
+                  title={selectedModeRecoveryCue.tip}
+                  onChange={(event) => setModeRecoveryCue(event.target.value as ModeRecoveryCue)}
+                >
+                  {MODE_RECOVERY_CUE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="mode-coach-card">
+                <p>
+                  <strong>{selectedModeStrategy.label}</strong> alignment {modeAlignmentScore}%.
+                </p>
+                <p>{modeCoachTip}</p>
+                <p className="small-copy">{selectedModeRecoveryCue.tip}</p>
+              </div>
+            </div>
             <div className="toggle-grid">
               <button
                 className={`chip ${focusMode ? "active" : ""}`}
@@ -3866,8 +5997,114 @@ function Workspace({
             copy="Complete controls for type, spacing, color, alignment, icons, and block backgrounds."
             collapsed={isPanelCollapsed("left-style-lab")}
             onToggle={() => togglePanel("left-style-lab")}
+            onSolo={() => soloPanel("left-style-lab")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
             <div className="style-stack">
+              <div className="style-group style-lane-group">
+                <div className="style-recipe-head">
+                  <span className="style-label">Style lane</span>
+                  <span className="small-copy">Structured bundle that syncs recipe, persona, and readability target.</span>
+                </div>
+                <label className="style-control">
+                  <span>Lane</span>
+                  <select value={styleLaneId} title={selectedStyleLane.summary} onChange={(event) => setStyleLaneId(event.target.value as StyleLaneId)}>
+                    {STYLE_LANE_OPTIONS.map((lane) => (
+                      <option key={lane.id} value={lane.id}>
+                        {lane.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="style-lane-grid">
+                  {STYLE_LANE_OPTIONS.map((lane) => (
+                    <button
+                      key={lane.id}
+                      className={`style-lane-card ${styleLaneId === lane.id ? "active" : ""}`}
+                      type="button"
+                      onClick={() => setStyleLaneId(lane.id)}
+                      aria-pressed={styleLaneId === lane.id}
+                    >
+                      <strong>{lane.label}</strong>
+                      <span>{lane.summary}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="compact-grid">
+                  <button className="chip" type="button" onClick={() => applyStyleLane(styleLaneId)}>
+                    Apply style lane
+                  </button>
+                </div>
+                <article className="style-lane-card-detail">
+                  <div className="meter-head">
+                    <span>{selectedStyleLane.label} alignment</span>
+                    <span>{styleLaneAlignmentScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${styleLaneAlignmentScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">
+                    Recipe <strong>{selectedStyleRecipe.label}</strong>, persona <strong>{selectedStylePersona.label}</strong>, target{" "}
+                    <strong>{selectedStyleReadabilityTarget.label}</strong>.
+                  </p>
+                  <p className="small-copy">{styleLaneTip}</p>
+                  <p className="small-copy">{selectedStyleLane.tip}</p>
+                </article>
+              </div>
+
+              <div className="style-group style-assist-group">
+                <div className="style-recipe-head">
+                  <span className="style-label">Style assist</span>
+                  <span className="small-copy">Structured coaching presets that synchronize lane, recipe, and persona for your audience.</span>
+                </div>
+                <label className="style-control">
+                  <span>Assist profile</span>
+                  <select
+                    value={styleAssistPresetId}
+                    title={selectedStyleAssist.summary}
+                    onChange={(event) => setStyleAssistPresetId(event.target.value as StyleAssistPresetId)}
+                  >
+                    {STYLE_ASSIST_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="style-assist-grid">
+                  {STYLE_ASSIST_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`style-lane-card ${styleAssistPresetId === option.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={styleAssistPresetId === option.id}
+                      onClick={() => setStyleAssistPresetId(option.id)}
+                    >
+                      <strong>{option.label}</strong>
+                      <span>{option.summary}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="compact-grid">
+                  <button className="chip" type="button" onClick={() => applyStyleAssistPreset()}>
+                    Apply style assist
+                  </button>
+                </div>
+                <article className="style-lane-card-detail">
+                  <div className="meter-head">
+                    <span>{selectedStyleAssist.label} alignment</span>
+                    <span>{styleAssistAlignmentScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${styleAssistAlignmentScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">{selectedStyleAssist.summary}</p>
+                  <p className="small-copy">{styleAssistTip}</p>
+                  <p className="small-copy">{selectedStyleAssist.tip}</p>
+                </article>
+              </div>
+
               <div className="style-group style-recipe-group">
                 <div className="style-recipe-head">
                   <span className="style-label">Style recipes</span>
@@ -3937,6 +6174,55 @@ function Workspace({
                   Tip: {selectedStylePersona.tip}
                   {guidanceLevel === "expert" ? " Expert mode keeps the swatch cues minimal." : ""}
                 </p>
+              </div>
+
+              <div className="style-group style-readability-group">
+                <div className="style-recipe-head">
+                  <span className="style-label">Readability target</span>
+                  <span className="small-copy">Structured rhythm presets with measurable readability coaching.</span>
+                </div>
+                <label className="style-control">
+                  <span>Target</span>
+                  <select
+                    value={styleReadabilityTargetId}
+                    title={selectedStyleReadabilityTarget.summary}
+                    onChange={(event) => setStyleReadabilityTargetId(event.target.value as StyleReadabilityTargetId)}
+                  >
+                    {STYLE_READABILITY_TARGET_OPTIONS.map((target) => (
+                      <option key={target.id} value={target.id}>
+                        {target.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-grid">
+                  {STYLE_READABILITY_TARGET_OPTIONS.map((target) => (
+                    <button
+                      key={target.id}
+                      className={`chip ${styleReadabilityTargetId === target.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={styleReadabilityTargetId === target.id}
+                      onClick={() => setStyleReadabilityTargetId(target.id)}
+                    >
+                      {target.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => applyStyleReadabilityTarget()}>
+                    Apply target
+                  </button>
+                </div>
+                <article className="style-readability-card">
+                  <div className="meter-head">
+                    <span>{selectedStyleReadabilityTarget.label} score</span>
+                    <span>{readabilityScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${readabilityScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">{selectedStyleReadabilityTarget.summary}</p>
+                  <p className="small-copy">{readabilityTip}</p>
+                  <p className="small-copy">{selectedStyleReadabilityTarget.tip}</p>
+                </article>
               </div>
 
               <div className="style-group">
@@ -4304,6 +6590,9 @@ function Workspace({
             copy="Drag sections, jump to structure, and fold what you are not touching."
             collapsed={isPanelCollapsed("left-outline")}
             onToggle={() => togglePanel("left-outline")}
+            onSolo={() => soloPanel("left-outline")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
             <div className="outline-strategy-group">
               <label className="style-control">
@@ -4365,6 +6654,34 @@ function Workspace({
                   ))}
                 </select>
               </label>
+              <label className="style-control">
+                <span>Focus lens</span>
+                <select
+                  value={outlineFocusLens}
+                  title={selectedOutlineFocusLens.tip}
+                  onChange={(event) => setOutlineFocusLens(event.target.value as OutlineFocusLens)}
+                >
+                  {OUTLINE_FOCUS_LENS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="style-control">
+                <span>Window radius</span>
+                <select
+                  value={String(outlineFocusWindow)}
+                  onChange={(event) => setOutlineFocusWindow(Number(event.target.value) as OutlineFocusWindow)}
+                  disabled={outlineFocusLens !== "active-window"}
+                >
+                  {OUTLINE_FOCUS_WINDOW_OPTIONS.map((option) => (
+                    <option key={option.value} value={String(option.value)}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className="compact-grid">
                 <button
                   className={`chip ${outlineActiveOnly ? "active" : ""}`}
@@ -4379,6 +6696,12 @@ function Workspace({
                 </button>
                 <button className="chip" type="button" onClick={openAllOutlineSections}>
                   Open all
+                </button>
+                <button className="chip" type="button" onClick={() => moveOutlineLensSelection(-1)}>
+                  Prev in lens
+                </button>
+                <button className="chip" type="button" onClick={() => moveOutlineLensSelection(1)}>
+                  Next in lens
                 </button>
               </div>
               <p className="small-copy">
@@ -4396,6 +6719,10 @@ function Workspace({
                 <p className="small-copy">
                   Tip: {outlineCoachTip}
                   {guidanceLevel === "expert" ? " Expert mode keeps this diagnostic compact." : ""}
+                </p>
+                <p className="small-copy">
+                  Lens: {outlineLensTip} Showing {visibleOutline.length}/{scopedOutline.length || 0} scoped headings (
+                  {outlineScopedCoverageRatio}%).
                 </p>
               </div>
             </div>
@@ -4422,12 +6749,18 @@ function Workspace({
                   >
                     <span className="outline-level">H{item.level}</span>
                     <span className="outline-text">{item.text}</span>
+                    {outlineFocusLens !== "all-visible" ? (
+                      <span className={`outline-lens-badge ${activeSectionKey === item.key ? "active" : ""}`}>
+                        {activeSectionKey === item.key ? "Active" : outlineFocusLens === "active-trail" ? "Trail" : "Context"}
+                      </span>
+                    ) : null}
                   </button>
                   <button className="outline-toggle" type="button" onClick={() => toggleSection(item)}>
                     {collapsedKeys.includes(item.key) ? "Open" : "Fold"}
                   </button>
                 </div>
               ))}
+              {!visibleOutline.length ? <p className="small-copy">No headings in this lens. Relax filters to continue.</p> : null}
             </div>
           </PanelSection>
 
@@ -4437,7 +6770,104 @@ function Workspace({
             copy="A compressed skyline of the document, tuned for fast navigation."
             collapsed={isPanelCollapsed("left-minimap")}
             onToggle={() => togglePanel("left-minimap")}
+            onSolo={() => soloPanel("left-minimap")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
+            <div className="minimap-strategy-group">
+              <div className="mode-strategy-head">
+                <span>Minimap strategy</span>
+                <label className="minimap-control">
+                  <span>Strategy</span>
+                  <select
+                    value={minimapStrategyId}
+                    title={selectedMinimapStrategy.summary}
+                    onChange={(event) => setMinimapStrategyId(event.target.value as MinimapStrategyId)}
+                  >
+                    {MINIMAP_STRATEGY_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mode-strategy-grid">
+                {MINIMAP_STRATEGY_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`mode-scene-card ${minimapStrategyId === option.id ? "active" : ""}`}
+                    type="button"
+                    onClick={() => setMinimapStrategyId(option.id)}
+                    aria-pressed={minimapStrategyId === option.id}
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.summary}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="compact-grid">
+                <button className="chip" type="button" onClick={() => applyMinimapStrategy()}>
+                  Apply minimap strategy
+                </button>
+              </div>
+              <p className="small-copy">{selectedMinimapStrategy.tip}</p>
+            </div>
+            <div className="minimap-strategy-group minimap-lane-group">
+              <div className="mode-strategy-head">
+                <span>Minimap coach lane</span>
+                <label className="minimap-control">
+                  <span>Lane</span>
+                  <select
+                    value={minimapCoachLaneId}
+                    title={selectedMinimapCoachLane.summary}
+                    onChange={(event) => setMinimapCoachLaneId(event.target.value as MinimapCoachLaneId)}
+                  >
+                    {MINIMAP_COACH_LANE_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mode-strategy-grid">
+                {MINIMAP_COACH_LANE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`mode-scene-card ${minimapCoachLaneId === option.id ? "active" : ""}`}
+                    type="button"
+                    onClick={() => setMinimapCoachLaneId(option.id)}
+                    aria-pressed={minimapCoachLaneId === option.id}
+                  >
+                    <strong>{option.label}</strong>
+                    <span>{option.summary}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="compact-grid">
+                <button className="chip" type="button" onClick={() => applyMinimapCoachLane()}>
+                  Apply coach lane
+                </button>
+                <button className="chip" type="button" onClick={() => jumpToMinimapEdge("first")}>
+                  First section
+                </button>
+                <button className="chip" type="button" onClick={() => jumpToMinimapEdge("last")}>
+                  Last section
+                </button>
+              </div>
+              <article className="minimap-coach-card">
+                <div className="meter-head">
+                  <span>{selectedMinimapCoachLane.label} alignment</span>
+                  <span>{minimapCoachLaneScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${minimapCoachLaneScore}%` }}></span>
+                </div>
+                <p className="small-copy">{minimapLaneTip}</p>
+                <p className="small-copy">{selectedMinimapCoachLane.tip}</p>
+              </article>
+            </div>
             <div className="minimap-controls">
               <label className="minimap-control">
                 <span>Depth</span>
@@ -4481,6 +6911,20 @@ function Workspace({
                   ))}
                 </select>
               </label>
+              <label className="minimap-control">
+                <span>Jump stride</span>
+                <select
+                  value={String(minimapJumpStride)}
+                  title={`${minimapJumpStride} section jump stride`}
+                  onChange={(event) => setMinimapJumpStride(Number(event.target.value) as MinimapJumpStride)}
+                >
+                  {MINIMAP_JUMP_STRIDE_OPTIONS.map((option) => (
+                    <option key={option.value} value={String(option.value)}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div className="compact-grid minimap-actions">
               <button className="chip" type="button" onClick={() => moveMinimapSelection(-1)}>
@@ -4489,14 +6933,30 @@ function Workspace({
               <button className="chip" type="button" onClick={() => moveMinimapSelection(1)}>
                 Next section
               </button>
+              <button className="chip" type="button" onClick={() => jumpToMinimapEdge("first")}>
+                Jump first
+              </button>
+              <button className="chip" type="button" onClick={() => jumpToMinimapEdge("last")}>
+                Jump last
+              </button>
               <button className="chip" type="button" onClick={() => applyNavigationProfilePreset()}>
                 Apply navigation profile
               </button>
             </div>
             <p className="small-copy minimap-tip">
               {selectedNavigationProfile.copy} Depth: {selectedMinimapDepthOption.label}.{" "}
-              {minimapVisibleOutline.length} sections shown.
+              {minimapVisibleOutline.length} sections shown. Jump stride: {minimapJumpStride}.
             </p>
+            <div className="minimap-coach-card">
+              <p>
+                <strong>{selectedMinimapStrategy.label}</strong> alignment {minimapStrategyScore}%.
+              </p>
+              <p>
+                Coverage {minimapCoverageRatio}% with {minimapVisibleOutline.length} visible sections. Estimated scan load{" "}
+                {Math.max(1, minimapLoadPerStep)} steps.
+              </p>
+              <p className="small-copy">{minimapCoachTip}</p>
+            </div>
             <div className="minimap">
               {minimapVisibleOutline.map((item) => (
                 <button
@@ -4915,6 +7375,56 @@ function Workspace({
                 active={activeEditor.isActive("table")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
               />
+              {activeEditor.isActive("table") ? (
+                <>
+                  <ToolbarInput label="Cell bg">
+                    <input
+                      type="color"
+                      value={toHexColor(tableCellBackgroundRgba)}
+                      onChange={(event) => {
+                        const nextColor = parseCssColor(event.target.value, tableCellBackgroundRgba);
+                        setTableCellBackgroundRgba(nextColor);
+                        applyTableCellBackgroundColor(toRgbaString(nextColor));
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Grid">
+                    <input
+                      type="color"
+                      value={toHexColor(tableGridRgba)}
+                      onChange={(event) => {
+                        const nextColor = parseCssColor(event.target.value, tableGridRgba);
+                        setTableGridRgba(nextColor);
+                        applyTableGridColor(toRgbaString(nextColor));
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarButton label="Row+" active={false} disabled={!activeEditor.can().addRowAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())} />
+                  <ToolbarButton label="Col+" active={false} disabled={!activeEditor.can().addColumnAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())} />
+                  <ToolbarButton
+                    label="Merge/Split"
+                    active={false}
+                    disabled={!activeEditor.can().mergeOrSplit()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().mergeOrSplit().run())}
+                  />
+                  <ToolbarButton
+                    label="Clear cell"
+                    active={false}
+                    onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null))}
+                  />
+                  <ToolbarButton
+                    label="Clear grid"
+                    active={false}
+                    onClick={() => handleToolbar(() => applyTableGridColor(null))}
+                  />
+                  <ToolbarButton
+                    label="Delete table"
+                    active={false}
+                    disabled={!activeEditor.can().deleteTable()}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteTable().run())}
+                  />
+                </>
+              ) : null}
               <ToolbarButton
                 label="Clear"
                 active={false}
@@ -4941,10 +7451,20 @@ function Workspace({
               <span className="hud-pill">{selectedGuidanceOption.label} guidance</span>
               <span className="hud-pill">{selectedWorkflowTrack.label} track</span>
               <span className="hud-pill">{selectedNavigationProfile.label} navigation</span>
+              <span className="hud-pill">{selectedWorkspaceIntent.label} intent</span>
+              <span className="hud-pill">{selectedEditorCoach.label} coach</span>
+              <span className="hud-pill">{selectedLearningLane.label} lane</span>
+              <span className="hud-pill">{selectedSessionTempo.label} tempo</span>
               <span>{selectedGuidanceOption.copy}</span>
               <span>{selectedWorkflowTrack.copy}</span>
               <span>{selectedNavigationProfile.copy}</span>
+              <span>{selectedWorkspaceIntent.summary}</span>
+              <span>{selectedEditorCoach.summary}</span>
+              <span>{selectedLearningLane.summary}</span>
+              <span>{selectedSessionTempo.summary}</span>
               <span>Density: {selectedDensityOption.label}</span>
+              <span>Tempo alignment: {sessionTempoAlignmentScore}%</span>
+              <span>Workspace intent alignment: {workspaceIntentAlignmentScore}%</span>
               <span>Press <kbd>/</kbd> on an empty line for block commands.</span>
               <span>Cmd/Ctrl+K opens the command deck (or use the Command button).</span>
               {guidanceLevel !== "expert" ? (
@@ -4960,6 +7480,18 @@ function Workspace({
               </button>
               <button className="chip" type="button" onClick={() => applyNavigationProfilePreset()}>
                 Apply navigation preset
+              </button>
+              <button className="chip" type="button" onClick={() => applyEditorCoachPreset()}>
+                Apply editor coach
+              </button>
+              <button className="chip" type="button" onClick={() => applyLearningLane()}>
+                Apply learning lane
+              </button>
+              <button className="chip" type="button" onClick={() => applySessionTempo()}>
+                Apply tempo preset
+              </button>
+              <button className="chip" type="button" onClick={() => applyWorkspaceIntentPreset()}>
+                Apply workspace intent
               </button>
             </div>
 
@@ -5082,7 +7614,87 @@ function Workspace({
             copy="Live structural signals that move with the draft."
             collapsed={isPanelCollapsed("right-document-pulse")}
             onToggle={() => togglePanel("right-document-pulse")}
+            onSolo={() => soloPanel("right-document-pulse")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
+            <div className="pulse-coach-group">
+              <label className="style-control">
+                <span>Pulse coach</span>
+                <select
+                  value={pulseCoachPresetId}
+                  title={selectedPulseCoach.summary}
+                  onChange={(event) => setPulseCoachPresetId(event.target.value as PulseCoachPresetId)}
+                >
+                  {PULSE_COACH_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {PULSE_COACH_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${pulseCoachPresetId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={pulseCoachPresetId === option.id}
+                    onClick={() => setPulseCoachPresetId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyPulseCoachPreset()}>
+                  Apply pulse coach
+                </button>
+              </div>
+              <p className="small-copy">{selectedPulseCoach.summary}</p>
+            </div>
+            <div className="pulse-intervention-group">
+              <label className="style-control">
+                <span>Intervention</span>
+                <select
+                  value={pulseInterventionId}
+                  title={selectedPulseIntervention.summary}
+                  onChange={(event) => setPulseInterventionId(event.target.value as PulseInterventionId)}
+                >
+                  {PULSE_INTERVENTION_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="pulse-intervention-grid">
+                {PULSE_INTERVENTION_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${pulseInterventionId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={pulseInterventionId === option.id}
+                    onClick={() => setPulseInterventionId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyPulseIntervention()}>
+                  Run intervention
+                </button>
+              </div>
+              <article className="pulse-coach-card pulse-intervention-card">
+                <div className="meter-head">
+                  <span>{selectedPulseIntervention.label} readiness</span>
+                  <span>{pulseInterventionScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${pulseInterventionScore}%` }}></span>
+                </div>
+                <p className="small-copy">{selectedPulseIntervention.summary}</p>
+                <p className="small-copy">{pulseInterventionTip}</p>
+                <p className="small-copy">{selectedPulseIntervention.tip}</p>
+              </article>
+            </div>
             <div className="pulse-controls">
               <label className="style-control">
                 <span>Lens</span>
@@ -5109,6 +7721,10 @@ function Workspace({
               </label>
             </div>
             <p className="small-copy pulse-lens-copy">{selectedPulseLens.copy}</p>
+            <p className="small-copy pulse-lens-copy">
+              Autosnapshot cadence: <strong>{selectedRevisionCadence.label}</strong> (idle {Math.round(selectedRevisionCadence.idleMs / 1000)}s,
+              structure {selectedRevisionCadence.structureMs}ms).
+            </p>
             <div className="metric-grid">
               <MetricCard label="Words" value={stats.words.toLocaleString()} />
               <MetricCard label="Read time" value={`${stats.readMinutes} min`} />
@@ -5156,6 +7772,24 @@ function Workspace({
                 </button>
               </div>
             </div>
+            <article className="pulse-coach-card">
+              <div className="meter-head">
+                <span>Revision rhythm</span>
+                <span>{pulseRhythmScore}%</span>
+              </div>
+              <div className="meter">
+                <span style={{ width: `${pulseRhythmScore}%` }}></span>
+              </div>
+              <p className="small-copy">
+                {averageSnapshotCadence === null
+                  ? "No cadence baseline yet. Capture at least two checkpoints."
+                  : `Average checkpoint cadence is ${averageSnapshotCadence} min.`}
+              </p>
+              <p className="small-copy">
+                Tip: {pulseCoachTip}
+                {guidanceLevel === "expert" ? " Expert mode keeps this card concise." : ""}
+              </p>
+            </article>
           </PanelSection>
 
           <PanelSection
@@ -5164,6 +7798,9 @@ function Workspace({
             copy="Search through the document without leaving the keyboard."
             collapsed={isPanelCollapsed("right-find-replace")}
             onToggle={() => togglePanel("right-find-replace")}
+            onSolo={() => soloPanel("right-find-replace")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
             <div className="find-panel-inline">
               <div className="find-structured-controls">
@@ -5190,6 +7827,29 @@ function Workspace({
                     ))}
                   </select>
                 </label>
+                <label className="style-control">
+                  <span>Coach mode</span>
+                  <select value={findCoachMode} onChange={(event) => setFindCoachMode(event.target.value as FindCoachMode)}>
+                    {FIND_COACH_MODE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="style-control">
+                  <span>Preview rows</span>
+                  <select
+                    value={String(findPreviewLimit)}
+                    onChange={(event) => setFindPreviewLimit(Number(event.target.value) as FindPreviewLimit)}
+                  >
+                    {FIND_PREVIEW_LIMIT_OPTIONS.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="compact-grid">
                   <button
                     className={`chip ${findCaseSensitive ? "active" : ""}`}
@@ -5209,6 +7869,9 @@ function Workspace({
                   </button>
                   <button className="chip" type="button" onClick={() => applyFindStrategy(findStrategyId)}>
                     Apply strategy
+                  </button>
+                  <button className="chip" type="button" onClick={useSelectionAsFindQuery} disabled={!activeSelectionSeed}>
+                    Seed from selection
                   </button>
                 </div>
               </div>
@@ -5245,6 +7908,27 @@ function Workspace({
                   Replace all
                 </button>
               </div>
+              {findPreviewMatches.length ? (
+                <div className="find-preview-list">
+                  {findPreviewMatches.map((match, index) => {
+                    const matchIndex = findPreviewStartIndex + index;
+                    return (
+                      <button
+                        key={`${match.from}-${match.to}`}
+                        type="button"
+                        className={`find-preview-item ${matchIndex === activeMatchIndex ? "active" : ""}`}
+                        onClick={() => jumpToMatchIndex(matchIndex)}
+                      >
+                        <span className="find-preview-meta">Match {matchIndex + 1}</span>
+                        <span className="find-preview-from">{match.excerpt}</span>
+                        <span className="find-preview-to">
+                          {buildReplacementPreview(match.excerpt, findQuery, replaceValue, findCaseSensitive, replaceTransform)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
               <p className="small-copy">
                 {selectionCount} matches. Replace mode:{" "}
                 {REPLACE_TRANSFORM_OPTIONS.find((option) => option.value === replaceTransform)?.label ?? "As typed"}.
@@ -5259,6 +7943,15 @@ function Workspace({
                 </div>
                 <p className="small-copy">{selectedFindStrategy.summary}</p>
                 <p className="small-copy">{findDensityTip}</p>
+                <p className="small-copy">
+                  Coach: {selectedFindCoachMode.tip}
+                  {findCoachMode === "audit" ? ` ${findRiskMessage}` : ""}
+                </p>
+                {findCoachMode !== "quick" ? (
+                  <p className={`small-copy find-risk-note risk-${findRiskLevel}`}>
+                    Replace-all risk: {findRiskLevel.toUpperCase()}.
+                  </p>
+                ) : null}
               </article>
             </div>
           </PanelSection>
@@ -5269,8 +7962,55 @@ function Workspace({
             copy="Open a dedicated chunk-builder page and pass changes back to this editor."
             collapsed={isPanelCollapsed("right-interaction-block")}
             onToggle={() => togglePanel("right-interaction-block")}
+            onSolo={() => soloPanel("right-interaction-block")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
             <div className="chunk-empty">
+              <div className="chunk-coach-group">
+                <label className="style-control">
+                  <span>Coach lane</span>
+                  <select
+                    value={chunkCoachMode}
+                    title={selectedChunkCoachMode.summary}
+                    onChange={(event) => setChunkCoachMode(event.target.value as ChunkCoachMode)}
+                  >
+                    {CHUNK_COACH_MODE_OPTIONS.map((mode) => (
+                      <option key={mode.id} value={mode.id}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-grid">
+                  {CHUNK_COACH_MODE_OPTIONS.map((mode) => (
+                    <button
+                      key={mode.id}
+                      className={`chip ${chunkCoachMode === mode.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={chunkCoachMode === mode.id}
+                      onClick={() => setChunkCoachMode(mode.id)}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => applyChunkCoachMode()}>
+                    Apply coach lane
+                  </button>
+                </div>
+                <article className="chunk-coach-card">
+                  <div className="meter-head">
+                    <span>{selectedChunkCoachMode.label} preflight</span>
+                    <span>{chunkPreflightScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${chunkPreflightScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">{selectedChunkCoachMode.summary}</p>
+                  <p className="small-copy">{chunkCoachTip}</p>
+                  <p className="small-copy">{selectedChunkCoachMode.tip}</p>
+                </article>
+              </div>
               <div className="chunk-intent-head">
                 <span className="style-label">Chunk intent</span>
                 <span className="small-copy">Pick a workflow profile, then launch with a tuned template.</span>
@@ -5294,6 +8034,119 @@ function Workspace({
                 <strong>{selectedChunkIntentTemplate?.label ?? selectedChunkIntentProfile.templateId}</strong>{" "}
                 <span className="chunk-inline-badge">Pure HTML</span>. {selectedChunkIntentProfile.tip}
               </p>
+              <div className="chunk-delivery-group">
+                <label className="style-control">
+                  <span>Delivery mode</span>
+                  <select
+                    value={chunkDeliveryModeId}
+                    title={selectedChunkDeliveryMode.summary}
+                    onChange={(event) => setChunkDeliveryModeId(event.target.value as ChunkDeliveryModeId)}
+                  >
+                    {CHUNK_DELIVERY_MODE_OPTIONS.map((mode) => (
+                      <option key={mode.id} value={mode.id}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-grid">
+                  {CHUNK_DELIVERY_MODE_OPTIONS.map((mode) => (
+                    <button
+                      key={mode.id}
+                      className={`chip ${chunkDeliveryModeId === mode.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={chunkDeliveryModeId === mode.id}
+                      onClick={() => setChunkDeliveryModeId(mode.id)}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => applyChunkDeliveryMode()}>
+                    Apply delivery mode
+                  </button>
+                </div>
+                <article className="chunk-delivery-card">
+                  <div className="meter-head">
+                    <span>{selectedChunkDeliveryMode.label} alignment</span>
+                    <span>{chunkDeliveryScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${chunkDeliveryScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">
+                    Intent <strong>{selectedChunkIntentProfile.label}</strong>, layout {chunkBuilderLayout}, density{" "}
+                    {chunkBuilderDensity}. Engine target: {selectedChunkDeliveryMode.engine === "javascript" ? "JavaScript" : "Pure HTML"}.
+                  </p>
+                  <p className="small-copy">{chunkDeliveryTip}</p>
+                  <p className="small-copy">
+                    Suggested template: <strong>{chunkDeliveryTemplate?.label ?? selectedChunkIntentProfile.templateId}</strong>.{" "}
+                    {selectedChunkDeliveryMode.tip}
+                  </p>
+                </article>
+              </div>
+              <div className="chunk-launch-group">
+                <label className="style-control">
+                  <span>Launch plan</span>
+                  <select
+                    value={chunkLaunchPlanId}
+                    title={selectedChunkLaunchPlan.summary}
+                    onChange={(event) => setChunkLaunchPlanId(event.target.value as ChunkLaunchPlanId)}
+                  >
+                    {CHUNK_LAUNCH_PLAN_OPTIONS.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="compact-grid">
+                  {CHUNK_LAUNCH_PLAN_OPTIONS.map((plan) => (
+                    <button
+                      key={plan.id}
+                      className={`chip ${chunkLaunchPlanId === plan.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={chunkLaunchPlanId === plan.id}
+                      onClick={() => setChunkLaunchPlanId(plan.id)}
+                    >
+                      {plan.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => runChunkLaunchPlan()}>
+                    Run launch plan
+                  </button>
+                </div>
+                <article className="chunk-launch-card">
+                  <div className="meter-head">
+                    <span>{selectedChunkLaunchPlan.label} readiness</span>
+                    <span>{chunkLaunchReadinessScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${chunkLaunchReadinessScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">{selectedChunkLaunchPlan.summary}</p>
+                  <p className="small-copy">{chunkLaunchTip}</p>
+                  <p className="small-copy">{selectedChunkLaunchPlan.tip}</p>
+                </article>
+              </div>
+              <article className="chunk-preflight-card">
+                <div className="meter-head">
+                  <span>Preflight checks</span>
+                  <span>
+                    {chunkPreflightPassCount}/{chunkPreflightChecks.length}
+                  </span>
+                </div>
+                <div className="chunk-preflight-list">
+                  {chunkPreflightChecks.map((check) => (
+                    <div key={check.label} className={`chunk-preflight-item ${check.pass ? "pass" : "fail"}`}>
+                      <span className={`chunk-preflight-badge ${check.pass ? "pass" : "fail"}`}>{check.pass ? "Pass" : "Fix"}</span>
+                      <div>
+                        <strong>{check.label}</strong>
+                        <p className="small-copy">{check.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
               {activeChunkAttrs ? (
                 <>
                   <p>
@@ -5331,7 +8184,43 @@ function Workspace({
             copy="Autosnapshots, manual checkpoints, and diffable restore points."
             collapsed={isPanelCollapsed("right-revisions")}
             onToggle={() => togglePanel("right-revisions")}
+            onSolo={() => soloPanel("right-revisions")}
+            onExpandAll={expandAllPanels}
+            guidanceLevel={guidanceLevel}
           >
+            <div className="revision-strategy-group">
+              <label className="style-control">
+                <span>Revision strategy</span>
+                <select
+                  value={revisionStrategyId}
+                  title={selectedRevisionStrategy.summary}
+                  onChange={(event) => setRevisionStrategyId(event.target.value as RevisionStrategyId)}
+                >
+                  {REVISION_STRATEGY_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {REVISION_STRATEGY_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${revisionStrategyId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={revisionStrategyId === option.id}
+                    onClick={() => setRevisionStrategyId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyRevisionStrategy()}>
+                  Apply revision strategy
+                </button>
+              </div>
+              <p className="small-copy">{selectedRevisionStrategy.summary}</p>
+            </div>
             <div className="revision-structured-controls">
               <label className="style-control">
                 <span>Snapshot filter</span>
@@ -5347,6 +8236,50 @@ function Workspace({
                 <span>Diff focus</span>
                 <select value={revisionDiffFocus} onChange={(event) => setRevisionDiffFocus(event.target.value as RevisionDiffFocus)}>
                   {REVISION_DIFF_FOCUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="style-control">
+                <span>Diff depth</span>
+                <select
+                  value={revisionDiffDepth}
+                  title={`${selectedRevisionDiffDepth.limit} diff blocks`}
+                  onChange={(event) => setRevisionDiffDepth(event.target.value as RevisionDiffDepth)}
+                >
+                  {REVISION_DIFF_DEPTH_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="revision-guard-grid">
+              <label className="style-control">
+                <span>Timeline lens</span>
+                <select
+                  value={revisionTimelineLens}
+                  title={selectedRevisionTimelineLens.tip}
+                  onChange={(event) => setRevisionTimelineLens(event.target.value as RevisionTimelineLens)}
+                >
+                  {REVISION_TIMELINE_LENS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="style-control">
+                <span>Restore guard</span>
+                <select
+                  value={revisionRestoreGuard}
+                  title={selectedRevisionRestoreGuard.tip}
+                  onChange={(event) => setRevisionRestoreGuard(event.target.value as RevisionRestoreGuard)}
+                >
+                  {REVISION_RESTORE_GUARD_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -5373,10 +8306,17 @@ function Workspace({
                 onClick={() => {
                   if (filteredSnapshots[0]) {
                     setSelectedSnapshotId(filteredSnapshots[0].id);
+                    setPendingRestoreSnapshotId(null);
                   }
                 }}
               >
                 Jump latest in filter
+              </button>
+              <button type="button" onClick={() => moveRevisionSelection(-1)}>
+                Previous snapshot
+              </button>
+              <button type="button" onClick={() => moveRevisionSelection(1)}>
+                Next snapshot
               </button>
             </div>
             <p className="small-copy revision-meta-copy">
@@ -5384,21 +8324,61 @@ function Workspace({
               {averageSnapshotCadence === null
                 ? "Capture two checkpoints to unlock cadence coaching."
                 : `Average capture cadence: ${averageSnapshotCadence} min.`}{" "}
-              {latestSnapshotAgeMinutes === null ? "" : `Latest snapshot age: ${formatAgeMinutes(latestSnapshotAgeMinutes)}.`}
+              {latestSnapshotAgeMinutes === null ? "" : `Latest snapshot age: ${formatAgeMinutes(latestSnapshotAgeMinutes)}.`}{" "}
+              Lens coverage: {revisionTimelineCoverage}%.
             </p>
+            <article className="revision-coach-card">
+              <div className="revision-summary">
+                <span>Net change {revisionNetChange >= 0 ? `+${revisionNetChange}` : revisionNetChange}</span>
+                <span>Focus: {selectedRevisionStrategy.label}</span>
+                <span>Depth: {selectedRevisionDiffDepth.label}</span>
+              </div>
+              <p className="small-copy">
+                Tip: {revisionCoachTip}
+                {guidanceLevel === "expert" ? " Expert mode keeps this recommendation compact." : ""}
+              </p>
+              <p className="small-copy">Timeline: {revisionTimelineTip}</p>
+              <p className="small-copy">
+                Guard: {selectedRevisionRestoreGuard.tip} {revisionGuardStatus}
+              </p>
+            </article>
 
             <div className="revision-list">
               {filteredSnapshots.map((snapshot) => (
                 <article
                   key={snapshot.id}
-                  className={`revision-card ${snapshot.id === selectedSnapshotId ? "active" : ""}`}
+                  className={`revision-card ${snapshot.id === selectedSnapshotId ? "active" : ""} ${pendingRestoreSnapshotId === snapshot.id ? "pending-restore" : ""}`}
                 >
-                  <button type="button" className="revision-select" onClick={() => setSelectedSnapshotId(snapshot.id)}>
+                  <button
+                    type="button"
+                    className="revision-select"
+                    onClick={() => {
+                      setSelectedSnapshotId(snapshot.id);
+                      if (pendingRestoreSnapshotId && pendingRestoreSnapshotId !== snapshot.id) {
+                        setPendingRestoreSnapshotId(null);
+                      }
+                    }}
+                  >
                     <strong>{snapshot.reason === "manual-checkpoint" ? "Checkpoint" : snapshot.reason === "restore" ? "Restore" : "Autosave"}</strong>
                     <span>{formatTime(snapshot.createdAt)}</span>
                   </button>
-                  <button type="button" className="revision-restore" onClick={() => restoreSnapshot(snapshot)}>
-                    Restore
+                  <button
+                    type="button"
+                    className="revision-restore"
+                    onClick={() => requestSnapshotRestore(snapshot)}
+                    title={
+                      revisionRestoreGuard === "fast"
+                        ? "Restore now"
+                        : revisionRestoreGuard === "confirm"
+                          ? pendingRestoreSnapshotId === snapshot.id
+                            ? "Click again to confirm restore"
+                            : "Arm this snapshot for confirmation"
+                          : selectedSnapshotId === snapshot.id
+                            ? "Click again to restore after diff review"
+                            : "Select this snapshot first to review diff"
+                    }
+                  >
+                    {pendingRestoreSnapshotId === snapshot.id ? "Confirm restore" : "Restore"}
                   </button>
                 </article>
               ))}
@@ -5413,7 +8393,7 @@ function Workspace({
                   <span>{revisionSummary.deleted} removed</span>
                 </div>
                 <div className="diff-list">
-                  {focusedRevisionDiff.slice(0, 16).map((block, index) => (
+                  {focusedRevisionDiff.slice(0, selectedRevisionDiffDepth.limit).map((block, index) => (
                     <RevisionDiffView key={`${block.kind}-${index}`} block={block} />
                   ))}
                 </div>
@@ -5618,6 +8598,9 @@ function PanelSection({
   children,
   collapsed,
   onToggle,
+  onSolo,
+  onExpandAll,
+  guidanceLevel,
 }: {
   sectionId: string;
   title: string;
@@ -5625,8 +8608,12 @@ function PanelSection({
   children: React.ReactNode;
   collapsed: boolean;
   onToggle: () => void;
+  onSolo?: () => void;
+  onExpandAll?: () => void;
+  guidanceLevel?: GuidanceLevel;
 }) {
   const contentId = `${sectionId}-content`;
+  const guidanceLabel = guidanceLevel ? GUIDANCE_OPTIONS.find((option) => option.value === guidanceLevel)?.label : null;
 
   return (
     <section className={`panel-section ${collapsed ? "collapsed" : ""}`}>
@@ -5635,15 +8622,30 @@ function PanelSection({
           <h2>{title}</h2>
           <p>{copy}</p>
         </div>
-        <button
-          className="section-toggle"
-          type="button"
-          aria-expanded={!collapsed}
-          aria-controls={contentId}
-          onClick={onToggle}
-        >
-          {collapsed ? "Expand" : "Collapse"}
-        </button>
+        <div className="section-heading-tools">
+          {guidanceLabel ? <span className="section-guidance-badge">{guidanceLabel}</span> : null}
+          <div className="section-quick-actions">
+            {onSolo ? (
+              <button className="section-toggle" type="button" onClick={onSolo}>
+                Solo
+              </button>
+            ) : null}
+            {onExpandAll ? (
+              <button className="section-toggle" type="button" onClick={onExpandAll}>
+                Expand all
+              </button>
+            ) : null}
+            <button
+              className="section-toggle"
+              type="button"
+              aria-expanded={!collapsed}
+              aria-controls={contentId}
+              onClick={onToggle}
+            >
+              {collapsed ? "Expand" : "Collapse"}
+            </button>
+          </div>
+        </div>
       </div>
       {!collapsed ? <div id={contentId}>{children}</div> : null}
     </section>
@@ -6454,6 +9456,38 @@ function buildCommands(
       run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
     },
     {
+      id: "table-add-row",
+      label: "Table row below",
+      description: "Add a new row after the active table row.",
+      group: "insert",
+      surface: "palette",
+      run: () => editor.chain().focus().addRowAfter().run(),
+    },
+    {
+      id: "table-add-column",
+      label: "Table column right",
+      description: "Add a new column after the active table column.",
+      group: "insert",
+      surface: "palette",
+      run: () => editor.chain().focus().addColumnAfter().run(),
+    },
+    {
+      id: "table-merge-split",
+      label: "Table merge/split",
+      description: "Merge selected cells or split a merged cell.",
+      group: "format",
+      surface: "palette",
+      run: () => editor.chain().focus().mergeOrSplit().run(),
+    },
+    {
+      id: "table-delete",
+      label: "Delete table",
+      description: "Remove the current table from the document.",
+      group: "insert",
+      surface: "palette",
+      run: () => editor.chain().focus().deleteTable().run(),
+    },
+    {
       id: "divider",
       label: "Divider",
       description: "Create a visual break in the page.",
@@ -6805,9 +9839,8 @@ function shouldOpenSlash(editor: Editor | null) {
   if (!editor || !editor.state.selection.empty) {
     return false;
   }
-
-  const parentText = editor.state.selection.$anchor.parent.textContent.trim();
-  return parentText.length === 0;
+  const parent = editor.state.selection.$anchor.parent;
+  return parent.type.name !== "codeBlock";
 }
 
 function replaceEditorDocument(editor: Editor, content: JSONContent) {
@@ -6897,8 +9930,8 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
       div[data-callout="true"] { border-radius: 18px; padding: 1rem 1.1rem; background: var(--callout-bg, rgba(242, 109, 61, 0.12)); border: 1px solid var(--callout-border, rgba(242, 109, 61, 0.22)); }
       a { color: inherit; text-decoration-color: ${getAccentLinkColor(accent)}; }
       blockquote { border-left: 3px solid rgba(0,0,0,0.15); margin-left: 0; padding-left: 1rem; font-style: italic; }
-      table { border-collapse: collapse; width: 100%; }
-      td, th { border: 1px solid rgba(0,0,0,0.12); padding: 0.6rem; }
+      table { border-collapse: collapse; width: 100%; --table-grid-color: rgba(0,0,0,0.12); }
+      td, th { border: 1px solid var(--table-grid-color); padding: 0.6rem; position: relative; }
 ${chunkStyles}
     </style>
   </head>
@@ -7400,6 +10433,46 @@ function writeWorkspaceLayoutPreference(value: WorkspaceLayoutPreset) {
   }
 }
 
+function readWorkspaceIntentPreference(): WorkspaceIntentPresetId {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_INTENT_PREFS_KEY);
+    if (raw === "onboard-clarity" || raw === "balanced-production" || raw === "ship-readiness") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced-production";
+}
+
+function writeWorkspaceIntentPreference(value: WorkspaceIntentPresetId) {
+  try {
+    localStorage.setItem(WORKSPACE_INTENT_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readPanelFocusPresetPreference(): PanelFocusPresetId {
+  try {
+    const raw = localStorage.getItem(PANEL_FOCUS_PRESET_PREFS_KEY);
+    if (raw === "balanced-overview" || raw === "structure-sweep" || raw === "revision-sprint") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced-overview";
+}
+
+function writePanelFocusPresetPreference(value: PanelFocusPresetId) {
+  try {
+    localStorage.setItem(PANEL_FOCUS_PRESET_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readWorkspaceCoachPreference(): WorkspaceCoachPresetId {
   try {
     const raw = localStorage.getItem(WORKSPACE_COACH_PREFS_KEY);
@@ -7420,6 +10493,106 @@ function writeWorkspaceCoachPreference(value: WorkspaceCoachPresetId) {
   }
 }
 
+function readSessionGoalPreference(): SessionGoalPresetId {
+  try {
+    const raw = localStorage.getItem(SESSION_GOAL_PREFS_KEY);
+    if (raw === "draft-momentum" || raw === "structure-tune" || raw === "ship-check") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "structure-tune";
+}
+
+function writeSessionGoalPreference(value: SessionGoalPresetId) {
+  try {
+    localStorage.setItem(SESSION_GOAL_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readEditorCoachPreference(): EditorCoachPresetId {
+  try {
+    const raw = localStorage.getItem(EDITOR_COACH_PREFS_KEY);
+    if (raw === "learn-loop" || raw === "steady-shift" || raw === "ship-rigorous") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "steady-shift";
+}
+
+function writeEditorCoachPreference(value: EditorCoachPresetId) {
+  try {
+    localStorage.setItem(EDITOR_COACH_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readLearningLanePreference(): LearningLaneId {
+  try {
+    const raw = localStorage.getItem(LEARNING_LANE_PREFS_KEY);
+    if (raw === "teach-me" || raw === "steady-work" || raw === "ship-fast") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "steady-work";
+}
+
+function writeLearningLanePreference(value: LearningLaneId) {
+  try {
+    localStorage.setItem(LEARNING_LANE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readRevisionCadencePreference(): RevisionCadenceProfileId {
+  try {
+    const raw = localStorage.getItem(REVISION_CADENCE_PREFS_KEY);
+    if (raw === "gentle" || raw === "balanced" || raw === "intensive") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced";
+}
+
+function writeRevisionCadencePreference(value: RevisionCadenceProfileId) {
+  try {
+    localStorage.setItem(REVISION_CADENCE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readSessionTempoPreference(): SessionTempoPresetId {
+  try {
+    const raw = localStorage.getItem(SESSION_TEMPO_PREFS_KEY);
+    if (raw === "steady-atelier" || raw === "focus-sprint" || raw === "handoff-runway") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "steady-atelier";
+}
+
+function writeSessionTempoPreference(value: SessionTempoPresetId) {
+  try {
+    localStorage.setItem(SESSION_TEMPO_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readModeScenePreference(): ModeScenePresetId {
   try {
     const raw = localStorage.getItem(MODE_SCENE_PREFS_KEY);
@@ -7435,6 +10608,66 @@ function readModeScenePreference(): ModeScenePresetId {
 function writeModeScenePreference(value: ModeScenePresetId) {
   try {
     localStorage.setItem(MODE_SCENE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readModeStrategyPreference(): ModeStrategyId {
+  try {
+    const raw = localStorage.getItem(MODE_STRATEGY_PREFS_KEY);
+    if (raw === "momentum-lane" || raw === "sprint-recovery" || raw === "qa-rails") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "sprint-recovery";
+}
+
+function writeModeStrategyPreference(value: ModeStrategyId) {
+  try {
+    localStorage.setItem(MODE_STRATEGY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readModeRecoveryCuePreference(): ModeRecoveryCue {
+  try {
+    const raw = localStorage.getItem(MODE_RECOVERY_CUE_PREFS_KEY);
+    if (raw === "checkpoint-first" || raw === "open-structure" || raw === "focus-reset") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "open-structure";
+}
+
+function writeModeRecoveryCuePreference(value: ModeRecoveryCue) {
+  try {
+    localStorage.setItem(MODE_RECOVERY_CUE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readModeGuidanceLanePreference(): ModeGuidanceLaneId {
+  try {
+    const raw = localStorage.getItem(MODE_GUIDANCE_LANE_PREFS_KEY);
+    if (raw === "orient-and-write" || raw === "sustain-flow" || raw === "handoff-guard") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "sustain-flow";
+}
+
+function writeModeGuidanceLanePreference(value: ModeGuidanceLaneId) {
+  try {
+    localStorage.setItem(MODE_GUIDANCE_LANE_PREFS_KEY, value);
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
@@ -7500,6 +10733,66 @@ function writeMinimapHighlightPreference(value: MinimapHighlightMode) {
   }
 }
 
+function readMinimapStrategyPreference(): MinimapStrategyId {
+  try {
+    const raw = localStorage.getItem(MINIMAP_STRATEGY_PREFS_KEY);
+    if (raw === "context-ladder" || raw === "fast-scan" || raw === "ship-verifier") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "fast-scan";
+}
+
+function writeMinimapStrategyPreference(value: MinimapStrategyId) {
+  try {
+    localStorage.setItem(MINIMAP_STRATEGY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readMinimapJumpStridePreference(): MinimapJumpStride {
+  try {
+    const raw = localStorage.getItem(MINIMAP_JUMP_STRIDE_PREFS_KEY);
+    if (raw === "1" || raw === "2" || raw === "3") {
+      return Number(raw) as MinimapJumpStride;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return 1;
+}
+
+function writeMinimapJumpStridePreference(value: MinimapJumpStride) {
+  try {
+    localStorage.setItem(MINIMAP_JUMP_STRIDE_PREFS_KEY, String(value));
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readMinimapCoachLanePreference(): MinimapCoachLaneId {
+  try {
+    const raw = localStorage.getItem(MINIMAP_COACH_LANE_PREFS_KEY);
+    if (raw === "map-learn" || raw === "scan-balance" || raw === "audit-handoff") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "scan-balance";
+}
+
+function writeMinimapCoachLanePreference(value: MinimapCoachLaneId) {
+  try {
+    localStorage.setItem(MINIMAP_COACH_LANE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readPulseLensPreference(): PulseLens {
   try {
     const raw = localStorage.getItem(PULSE_LENS_PREFS_KEY);
@@ -7535,6 +10828,46 @@ function readPulseTargetPreference(): PulseCadenceTarget {
 function writePulseTargetPreference(value: PulseCadenceTarget) {
   try {
     localStorage.setItem(PULSE_TARGET_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readPulseCoachPreference(): PulseCoachPresetId {
+  try {
+    const raw = localStorage.getItem(PULSE_COACH_PREFS_KEY);
+    if (raw === "cadence-guard" || raw === "structure-shape" || raw === "release-readiness") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "cadence-guard";
+}
+
+function writePulseCoachPreference(value: PulseCoachPresetId) {
+  try {
+    localStorage.setItem(PULSE_COACH_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readPulseInterventionPreference(): PulseInterventionId {
+  try {
+    const raw = localStorage.getItem(PULSE_INTERVENTION_PREFS_KEY);
+    if (raw === "stabilize-flow" || raw === "rebalance-structure" || raw === "prep-handoff") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "rebalance-structure";
+}
+
+function writePulseInterventionPreference(value: PulseInterventionId) {
+  try {
+    localStorage.setItem(PULSE_INTERVENTION_PREFS_KEY, value);
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
@@ -7580,6 +10913,86 @@ function writeRevisionDiffFocusPreference(value: RevisionDiffFocus) {
   }
 }
 
+function readRevisionStrategyPreference(): RevisionStrategyId {
+  try {
+    const raw = localStorage.getItem(REVISION_STRATEGY_PREFS_KEY);
+    if (raw === "checkpoint-qa" || raw === "growth-audit" || raw === "trim-pass") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "checkpoint-qa";
+}
+
+function writeRevisionStrategyPreference(value: RevisionStrategyId) {
+  try {
+    localStorage.setItem(REVISION_STRATEGY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readRevisionDiffDepthPreference(): RevisionDiffDepth {
+  try {
+    const raw = localStorage.getItem(REVISION_DIFF_DEPTH_PREFS_KEY);
+    if (raw === "tight" || raw === "balanced" || raw === "extended") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced";
+}
+
+function writeRevisionDiffDepthPreference(value: RevisionDiffDepth) {
+  try {
+    localStorage.setItem(REVISION_DIFF_DEPTH_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readRevisionRestoreGuardPreference(): RevisionRestoreGuard {
+  try {
+    const raw = localStorage.getItem(REVISION_RESTORE_GUARD_PREFS_KEY);
+    if (raw === "fast" || raw === "confirm" || raw === "diff-first") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "confirm";
+}
+
+function writeRevisionRestoreGuardPreference(value: RevisionRestoreGuard) {
+  try {
+    localStorage.setItem(REVISION_RESTORE_GUARD_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readRevisionTimelineLensPreference(): RevisionTimelineLens {
+  try {
+    const raw = localStorage.getItem(REVISION_TIMELINE_LENS_PREFS_KEY);
+    if (raw === "all" || raw === "last-hour" || raw === "latest-three") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "all";
+}
+
+function writeRevisionTimelineLensPreference(value: RevisionTimelineLens) {
+  try {
+    localStorage.setItem(REVISION_TIMELINE_LENS_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readFindStrategyPreference(): FindStrategyId {
   try {
     const raw = localStorage.getItem(FIND_STRATEGY_PREFS_KEY);
@@ -7595,6 +11008,46 @@ function readFindStrategyPreference(): FindStrategyId {
 function writeFindStrategyPreference(value: FindStrategyId) {
   try {
     localStorage.setItem(FIND_STRATEGY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readFindCoachModePreference(): FindCoachMode {
+  try {
+    const raw = localStorage.getItem(FIND_COACH_MODE_PREFS_KEY);
+    if (raw === "quick" || raw === "guided" || raw === "audit") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "guided";
+}
+
+function writeFindCoachModePreference(value: FindCoachMode) {
+  try {
+    localStorage.setItem(FIND_COACH_MODE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readFindPreviewLimitPreference(): FindPreviewLimit {
+  try {
+    const raw = localStorage.getItem(FIND_PREVIEW_LIMIT_PREFS_KEY);
+    if (raw === "3" || raw === "6" || raw === "10") {
+      return Number(raw) as FindPreviewLimit;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return 6;
+}
+
+function writeFindPreviewLimitPreference(value: FindPreviewLimit) {
+  try {
+    localStorage.setItem(FIND_PREVIEW_LIMIT_PREFS_KEY, String(value));
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
@@ -7620,6 +11073,66 @@ function writeChunkBuildStrategyPreference(value: ChunkBuildStrategyId) {
   }
 }
 
+function readChunkCoachModePreference(): ChunkCoachMode {
+  try {
+    const raw = localStorage.getItem(CHUNK_COACH_MODE_PREFS_KEY);
+    if (raw === "learn-safe" || raw === "balanced-flow" || raw === "ship-control") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced-flow";
+}
+
+function writeChunkCoachModePreference(value: ChunkCoachMode) {
+  try {
+    localStorage.setItem(CHUNK_COACH_MODE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readChunkDeliveryModePreference(): ChunkDeliveryModeId {
+  try {
+    const raw = localStorage.getItem(CHUNK_DELIVERY_MODE_PREFS_KEY);
+    if (raw === "lesson-safe" || raw === "demo-live" || raw === "publish-proof") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "demo-live";
+}
+
+function writeChunkDeliveryModePreference(value: ChunkDeliveryModeId) {
+  try {
+    localStorage.setItem(CHUNK_DELIVERY_MODE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readChunkLaunchPlanPreference(): ChunkLaunchPlanId {
+  try {
+    const raw = localStorage.getItem(CHUNK_LAUNCH_PLAN_PREFS_KEY);
+    if (raw === "selected-first" || raw === "delivery-first" || raw === "intent-lab") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "selected-first";
+}
+
+function writeChunkLaunchPlanPreference(value: ChunkLaunchPlanId) {
+  try {
+    localStorage.setItem(CHUNK_LAUNCH_PLAN_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readOutlineStrategyPreference(): OutlineStrategyId {
   try {
     const raw = localStorage.getItem(OUTLINE_STRATEGY_PREFS_KEY);
@@ -7635,6 +11148,106 @@ function readOutlineStrategyPreference(): OutlineStrategyId {
 function writeOutlineStrategyPreference(value: OutlineStrategyId) {
   try {
     localStorage.setItem(OUTLINE_STRATEGY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readOutlineFocusLensPreference(): OutlineFocusLens {
+  try {
+    const raw = localStorage.getItem(OUTLINE_FOCUS_LENS_PREFS_KEY);
+    if (raw === "all-visible" || raw === "active-window" || raw === "active-trail") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "all-visible";
+}
+
+function writeOutlineFocusLensPreference(value: OutlineFocusLens) {
+  try {
+    localStorage.setItem(OUTLINE_FOCUS_LENS_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readOutlineFocusWindowPreference(): OutlineFocusWindow {
+  try {
+    const raw = localStorage.getItem(OUTLINE_FOCUS_WINDOW_PREFS_KEY);
+    if (raw === "1" || raw === "2" || raw === "3") {
+      return Number(raw) as OutlineFocusWindow;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return 2;
+}
+
+function writeOutlineFocusWindowPreference(value: OutlineFocusWindow) {
+  try {
+    localStorage.setItem(OUTLINE_FOCUS_WINDOW_PREFS_KEY, String(value));
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readStyleReadabilityPreference(): StyleReadabilityTargetId {
+  try {
+    const raw = localStorage.getItem(STYLE_READABILITY_PREFS_KEY);
+    if (raw === "scan-light" || raw === "narrative-flow" || raw === "dense-brief") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "narrative-flow";
+}
+
+function writeStyleReadabilityPreference(value: StyleReadabilityTargetId) {
+  try {
+    localStorage.setItem(STYLE_READABILITY_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readStyleLanePreference(): StyleLaneId {
+  try {
+    const raw = localStorage.getItem(STYLE_LANE_PREFS_KEY);
+    if (raw === "teach-clarity" || raw === "steady-narrative" || raw === "ship-contrast") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "steady-narrative";
+}
+
+function writeStyleLanePreference(value: StyleLaneId) {
+  try {
+    localStorage.setItem(STYLE_LANE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readStyleAssistPreference(): StyleAssistPresetId {
+  try {
+    const raw = localStorage.getItem(STYLE_ASSIST_PREFS_KEY);
+    if (raw === "clarify-lesson" || raw === "narrative-flow" || raw === "contrast-qa") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "narrative-flow";
+}
+
+function writeStyleAssistPreference(value: StyleAssistPresetId) {
+  try {
+    localStorage.setItem(STYLE_ASSIST_PREFS_KEY, value);
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
@@ -7758,6 +11371,28 @@ function transformReplacement(value: string, mode: ReplaceTransform): string {
   }
 
   return value;
+}
+
+function buildReplacementPreview(
+  excerpt: string,
+  query: string,
+  replacementValue: string,
+  caseSensitive: boolean,
+  mode: ReplaceTransform,
+) {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) {
+    return excerpt;
+  }
+  const replacement = transformReplacement(replacementValue, mode);
+  const flags = caseSensitive ? "g" : "gi";
+  const pattern = new RegExp(escapeRegExp(normalizedQuery), flags);
+  const replaced = excerpt.replace(pattern, replacement);
+  return replaced === excerpt ? excerpt : replaced;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function slug(value: string) {
@@ -8249,6 +11884,87 @@ function resolveNumericFontWeight(value: string) {
   }
 
   return 400;
+}
+
+function resolveLengthValueToPx(value: string, fallbackPx: number) {
+  const normalized = value.trim().toLowerCase();
+  const match = normalized.match(/^(-?\d*\.?\d+)(px|em|rem|pt)$/);
+  if (!match) {
+    return fallbackPx;
+  }
+
+  const numeric = Number.parseFloat(match[1]);
+  if (!Number.isFinite(numeric)) {
+    return fallbackPx;
+  }
+  const unit = match[2];
+  if (unit === "em" || unit === "rem") {
+    return numeric * 16;
+  }
+  if (unit === "pt") {
+    return numeric * (4 / 3);
+  }
+  return numeric;
+}
+
+function resolveLineHeightToRatio(value: string, fontSizePx: number) {
+  const parsed = parseLineHeightValue(value, "1.7");
+  const numeric = Number.parseFloat(parsed.numberValue);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return 1.7;
+  }
+  if (parsed.unit === "unitless") {
+    return numeric;
+  }
+  if (parsed.unit === "%") {
+    return numeric / 100;
+  }
+  const pixelEquivalent = resolveLengthValueToPx(`${parsed.numberValue}${parsed.unit}`, fontSizePx * 1.7);
+  return fontSizePx > 0 ? pixelEquivalent / fontSizePx : 1.7;
+}
+
+function resolveLengthValueToEm(value: string, fontSizePx: number) {
+  const normalized = value.trim().toLowerCase();
+  const match = normalized.match(/^(-?\d*\.?\d+)(px|em|rem|pt|%)$/);
+  if (!match) {
+    return 0;
+  }
+
+  const numeric = Number.parseFloat(match[1]);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  const unit = match[2];
+  if (unit === "em" || unit === "rem") {
+    return numeric;
+  }
+  if (unit === "%") {
+    return numeric / 100;
+  }
+  const pxValue = unit === "pt" ? numeric * (4 / 3) : numeric;
+  return fontSizePx > 0 ? pxValue / fontSizePx : 0;
+}
+
+function scoreRange(value: number, min: number, max: number, weight: number) {
+  if (!Number.isFinite(value) || max <= min) {
+    return 0;
+  }
+  if (value >= min && value <= max) {
+    return weight;
+  }
+  const distance = value < min ? min - value : value - max;
+  const span = max - min;
+  const falloff = Math.max(0, 1 - distance / span);
+  return weight * falloff;
+}
+
+function scoreCenter(value: number, center: number, tolerance: number, weight: number) {
+  if (!Number.isFinite(value) || tolerance <= 0) {
+    return 0;
+  }
+  const distance = Math.abs(value - center);
+  const falloff = Math.max(0, 1 - distance / tolerance);
+  return weight * falloff;
 }
 
 function clampChannel(value: number) {
