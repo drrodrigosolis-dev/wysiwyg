@@ -287,6 +287,24 @@ type TableCellFormat = {
   borderColor: string | null;
 };
 
+type CopiedFormatSnapshot = {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strike: boolean;
+  code: boolean;
+  superscript: boolean;
+  textColor: string | null;
+  highlightColor: string | null;
+  fontSize: string | null;
+  fontFamily: string | null;
+  fontWeight: string | null;
+  letterSpacing: string | null;
+  lineHeight: string | null;
+  textAlign: "left" | "center" | "right" | "justify" | null;
+  tableCell: TableCellFormat;
+};
+
 type SavedDocumentEntry = {
   id: string;
   name: string;
@@ -2250,7 +2268,7 @@ function Workspace({
   const [tableMarginRightPx, setTableMarginRightPx] = useState(0);
   const [tableMarginBottomPx, setTableMarginBottomPx] = useState(12);
   const [tableMarginLeftPx, setTableMarginLeftPx] = useState(0);
-  const [copiedTableCellFormat, setCopiedTableCellFormat] = useState<TableCellFormat | null>(null);
+  const [copiedFormatSnapshot, setCopiedFormatSnapshot] = useState<CopiedFormatSnapshot | null>(null);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
   const [lineHeightNumberDraft, setLineHeightNumberDraft] = useState("1.8");
@@ -2610,10 +2628,10 @@ function Workspace({
       openRevisions: () => setRightRailOpen(true),
       insertChunk: (templateId) => insertStructuredChunk(templateId),
       insertRawChunk: () => insertRawChunk(),
-      copyTableCellFormat: () => copyTableCellFormat(),
-      pasteTableCellFormat: () => pasteTableCellFormat(),
+      copyFormat: () => copySelectionFormat(),
+      pasteFormat: () => pasteSelectionFormat(),
     });
-  }, [editor, title, accent, copiedTableCellFormat]);
+  }, [editor, title, accent, copiedFormatSnapshot]);
 
   useEffect(() => {
     if (!editor) {
@@ -4225,31 +4243,121 @@ function Workspace({
     updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
   }
 
-  function copyTableCellFormat() {
-    if (!activeEditor.isActive("table")) {
-      return;
-    }
+  function copySelectionFormat() {
+    const readOptionalString = (value: unknown) => (typeof value === "string" && value.trim().length > 0 ? value : null);
+    const readAlignment = (value: unknown) =>
+      value === "left" || value === "center" || value === "right" || value === "justify" ? value : null;
 
-    const readOptionalColor = (value: unknown) => (typeof value === "string" && value.trim().length > 0 ? value : null);
     const tableCellAttrs = activeEditor.getAttributes("tableCell");
     const tableHeaderAttrs = activeEditor.getAttributes("tableHeader");
-    setCopiedTableCellFormat({
-      backgroundColor: readOptionalColor(tableCellAttrs.backgroundColor) ?? readOptionalColor(tableHeaderAttrs.backgroundColor),
-      borderColor: readOptionalColor(tableCellAttrs.borderColor) ?? readOptionalColor(tableHeaderAttrs.borderColor),
+    const textStyleAttrs = activeEditor.getAttributes("textStyle");
+    const highlightAttrs = activeEditor.getAttributes("highlight");
+    const headingAttrs = activeEditor.getAttributes("heading");
+    const paragraphAttrs = activeEditor.getAttributes("paragraph");
+
+    setCopiedFormatSnapshot({
+      bold: activeEditor.isActive("bold"),
+      italic: activeEditor.isActive("italic"),
+      underline: activeEditor.isActive("underline"),
+      strike: activeEditor.isActive("strike"),
+      code: activeEditor.isActive("code"),
+      superscript: activeEditor.isActive("superscript"),
+      textColor: readOptionalString(textStyleAttrs.color),
+      highlightColor: readOptionalString(highlightAttrs.color),
+      fontSize: readOptionalString(textStyleAttrs.fontSize),
+      fontFamily: readOptionalString(textStyleAttrs.fontFamily),
+      fontWeight: readOptionalString(textStyleAttrs.fontWeight),
+      letterSpacing: readOptionalString(textStyleAttrs.letterSpacing),
+      lineHeight: readOptionalString(resolveLineHeight(activeEditor)),
+      textAlign: readAlignment(headingAttrs.textAlign) ?? readAlignment(paragraphAttrs.textAlign),
+      tableCell: {
+        backgroundColor: readOptionalString(tableCellAttrs.backgroundColor) ?? readOptionalString(tableHeaderAttrs.backgroundColor),
+        borderColor: readOptionalString(tableCellAttrs.borderColor) ?? readOptionalString(tableHeaderAttrs.borderColor),
+      },
     });
   }
 
-  function pasteTableCellFormat() {
-    if (!activeEditor.isActive("table") || !copiedTableCellFormat) {
+  function pasteSelectionFormat() {
+    if (!copiedFormatSnapshot) {
       return;
     }
 
-    activeEditor
-      .chain()
-      .focus()
-      .setCellAttribute("backgroundColor", copiedTableCellFormat.backgroundColor)
-      .setCellAttribute("borderColor", copiedTableCellFormat.borderColor)
-      .run();
+    const chain = activeEditor.chain().focus();
+
+    if (activeEditor.isActive("bold") !== copiedFormatSnapshot.bold) {
+      chain.toggleBold();
+    }
+    if (activeEditor.isActive("italic") !== copiedFormatSnapshot.italic) {
+      chain.toggleItalic();
+    }
+    if (activeEditor.isActive("underline") !== copiedFormatSnapshot.underline) {
+      chain.toggleUnderline();
+    }
+    if (activeEditor.isActive("strike") !== copiedFormatSnapshot.strike) {
+      chain.toggleStrike();
+    }
+    if (activeEditor.isActive("code") !== copiedFormatSnapshot.code) {
+      chain.toggleCode();
+    }
+    if (activeEditor.isActive("superscript") !== copiedFormatSnapshot.superscript) {
+      chain.toggleSuperscript();
+    }
+
+    if (copiedFormatSnapshot.textColor) {
+      chain.setColor(copiedFormatSnapshot.textColor);
+    } else {
+      chain.unsetColor();
+    }
+
+    if (copiedFormatSnapshot.highlightColor) {
+      chain.setHighlight({ color: copiedFormatSnapshot.highlightColor });
+    } else {
+      chain.unsetHighlight();
+    }
+
+    if (copiedFormatSnapshot.fontSize) {
+      chain.setFontSize(copiedFormatSnapshot.fontSize);
+    } else {
+      chain.unsetFontSize();
+    }
+
+    if (copiedFormatSnapshot.fontFamily) {
+      chain.setFontFamily(copiedFormatSnapshot.fontFamily);
+    } else {
+      chain.unsetFontFamily();
+    }
+
+    if (copiedFormatSnapshot.fontWeight) {
+      chain.setFontWeight(copiedFormatSnapshot.fontWeight);
+    } else {
+      chain.unsetFontWeight();
+    }
+
+    if (copiedFormatSnapshot.letterSpacing) {
+      chain.setLetterSpacing(copiedFormatSnapshot.letterSpacing);
+    } else {
+      chain.unsetLetterSpacing();
+    }
+
+    if (copiedFormatSnapshot.lineHeight) {
+      chain.setLineHeight(copiedFormatSnapshot.lineHeight);
+    } else {
+      chain.unsetLineHeight();
+    }
+
+    if (copiedFormatSnapshot.textAlign) {
+      chain.setTextAlign(copiedFormatSnapshot.textAlign);
+    } else {
+      chain.unsetTextAlign();
+    }
+
+    if (activeEditor.isActive("table")) {
+      chain
+        .setCellAttribute("backgroundColor", copiedFormatSnapshot.tableCell.backgroundColor)
+        .setCellAttribute("borderColor", copiedFormatSnapshot.tableCell.borderColor);
+    }
+
+    chain.run();
   }
 
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
@@ -8249,13 +8357,6 @@ function Workspace({
                   <ToolbarButton label="Col+" active={false} disabled={!activeEditor.can().addColumnAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())} />
                   <ToolbarButton label="Row-" active={false} disabled={!activeEditor.can().deleteRow()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())} />
                   <ToolbarButton label="Col-" active={false} disabled={!activeEditor.can().deleteColumn()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())} />
-                  <ToolbarButton label="Copy fmt" active={false} disabled={!activeEditor.isActive("table")} onClick={() => handleToolbar(copyTableCellFormat)} />
-                  <ToolbarButton
-                    label="Paste fmt"
-                    active={false}
-                    disabled={!activeEditor.isActive("table") || !copiedTableCellFormat}
-                    onClick={() => handleToolbar(pasteTableCellFormat)}
-                  />
                   <ToolbarButton
                     label="Merge/Split"
                     active={false}
@@ -8280,6 +8381,13 @@ function Workspace({
                   />
                 </>
               ) : null}
+              <ToolbarButton label="Copy fmt" active={false} onClick={() => handleToolbar(copySelectionFormat)} />
+              <ToolbarButton
+                label="Paste fmt"
+                active={false}
+                disabled={!copiedFormatSnapshot}
+                onClick={() => handleToolbar(pasteSelectionFormat)}
+              />
               <ToolbarButton
                 label="Clear format"
                 active={false}
@@ -10292,8 +10400,8 @@ function buildCommands(
     insertFootnote: () => void;
     insertChunk: (templateId: string) => void;
     insertRawChunk: () => void;
-    copyTableCellFormat: () => void;
-    pasteTableCellFormat: () => void;
+    copyFormat: () => void;
+    pasteFormat: () => void;
     copyMarkdown: () => Promise<void>;
     exportHtml: () => void;
     openRevisions: () => void;
@@ -10467,20 +10575,20 @@ function buildCommands(
       run: () => editor.chain().focus().deleteColumn().run(),
     },
     {
-      id: "table-copy-format",
-      label: "Table copy format",
-      description: "Copy background and grid formatting from the active table cell.",
+      id: "copy-format",
+      label: "Copy format",
+      description: "Copy current text and block formatting from the active selection.",
       group: "format",
       surface: "palette",
-      run: actions.copyTableCellFormat,
+      run: actions.copyFormat,
     },
     {
-      id: "table-paste-format",
-      label: "Table paste format",
-      description: "Paste copied formatting into the active table cell.",
+      id: "paste-format",
+      label: "Paste format",
+      description: "Apply copied formatting to the current selection or block.",
       group: "format",
       surface: "palette",
-      run: actions.pasteTableCellFormat,
+      run: actions.pasteFormat,
     },
     {
       id: "table-merge-split",
