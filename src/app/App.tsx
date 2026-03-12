@@ -11564,11 +11564,9 @@ function buildTableStyleAttribute(attrs: Record<string, unknown>) {
   const columnWidthUnits = resolveTableWidthUnits(attrs.columnWidthUnits, 3);
   if (columnWidthMode === "fixed") {
     parts.push("--table-layout-mode: fixed");
-    parts.push(`--table-cell-fixed-width: calc((100% / 12) * ${columnWidthUnits})`);
     parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
   } else {
     parts.push("--table-layout-mode: auto");
-    parts.push("--table-cell-fixed-width: auto");
     parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
   }
 
@@ -11738,7 +11736,6 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
         width: 100%;
         table-layout: var(--table-layout-mode, auto);
         --table-grid-color: rgba(0,0,0,0.12);
-        --table-cell-fixed-width: auto;
         --table-cell-min-width: 0px;
         --table-cell-padding-top: 10px;
         --table-cell-padding-right: 10px;
@@ -11757,7 +11754,6 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
         padding-right: calc(var(--cell-padding-right, var(--table-cell-padding-right)) + var(--cell-margin-right, 0px));
         padding-bottom: calc(var(--cell-padding-bottom, var(--table-cell-padding-bottom)) + var(--cell-margin-bottom, 0px));
         padding-left: calc(var(--cell-padding-left, var(--table-cell-padding-left)) + var(--cell-margin-left, 0px));
-        width: var(--cell-fixed-width, var(--table-cell-fixed-width, auto));
         min-width: var(--cell-min-width, var(--table-cell-min-width, 0px));
         overflow-wrap: var(--cell-overflow-wrap, var(--table-cell-overflow-wrap, normal));
         word-break: var(--cell-word-break, var(--table-cell-word-break, normal));

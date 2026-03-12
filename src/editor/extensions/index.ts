@@ -73,11 +73,9 @@ const StyledTable = Table.extend({
     const columnWidthUnits = normalizeTableWidthUnits(node.attrs.columnWidthUnits, 3);
     if (columnWidthMode === "fixed") {
       styleParts.push("--table-layout-mode: fixed");
-      styleParts.push(`--table-cell-fixed-width: calc((100% / 12) * ${columnWidthUnits})`);
       styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
     } else {
       styleParts.push("--table-layout-mode: auto");
-      styleParts.push("--table-cell-fixed-width: auto");
       styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
     }
 
@@ -375,10 +373,7 @@ const StyledTableCell = TableCell.extend({
         parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
         renderHTML: (attributes) => ({
           "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
-          style:
-            attributes.widthMode === "fixed"
-              ? `--cell-fixed-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)}); --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`
-              : `--cell-fixed-width: auto; --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
+          style: `--cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
         }),
       },
       widthUnits: {
@@ -495,10 +490,7 @@ const StyledTableHeader = TableHeader.extend({
         parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
         renderHTML: (attributes) => ({
           "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
-          style:
-            attributes.widthMode === "fixed"
-              ? `--cell-fixed-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)}); --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`
-              : `--cell-fixed-width: auto; --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
+          style: `--cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
         }),
       },
       widthUnits: {
