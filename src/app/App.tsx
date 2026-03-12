@@ -71,7 +71,8 @@ const editorExtensions = buildEditorExtensions();
 const SAVE_DELAY = 350;
 const RAIL_PREFS_KEY = "velvet-ink/rail-prefs/v2";
 const THEME_PREFS_KEY = "velvet-ink/theme-prefs/v1";
-const SECTION_PREFS_KEY = "velvet-ink/section-prefs/v1";
+const SECTION_PREFS_KEY = "velvet-ink/section-prefs/v2";
+const SAVED_DOCUMENTS_PREFS_KEY = "velvet-ink/saved-documents/v1";
 const CHUNK_BUILDER_LAYOUT_PREFS_KEY = "velvet-ink/chunk-builder-layout/v1";
 const CHUNK_BUILDER_DENSITY_PREFS_KEY = "velvet-ink/chunk-builder-density/v1";
 const CHUNK_BUILDER_DENSITY_PROFILE_PREFS_KEY = "velvet-ink/chunk-builder-density-profile/v1";
@@ -232,6 +233,17 @@ const PANEL_SECTION_IDS = [
   "right-revisions",
 ] as const;
 
+const DEFAULT_PANEL_COLLAPSE_PREFS: PanelCollapsePrefs = {
+  "left-mode": true,
+  "left-style-lab": false,
+  "left-outline": false,
+  "left-minimap": true,
+  "right-document-pulse": true,
+  "right-find-replace": false,
+  "right-interaction-block": true,
+  "right-revisions": false,
+};
+
 type ChunkBuilderTarget =
   | {
       mode: "insert";
@@ -262,6 +274,13 @@ type RgbaValue = {
   g: number;
   b: number;
   a: number;
+};
+
+type SavedDocumentEntry = {
+  id: string;
+  name: string;
+  savedAt: string;
+  document: EditorDocument;
 };
 
 type ViewMode = "rich" | "html" | "exportable";
@@ -1852,6 +1871,8 @@ function Workspace({
   const [stats, setStats] = useState<StatsSnapshot>(() => computeStats(initialDocument.content));
   const [selectionLabel, setSelectionLabel] = useState("Cursor ready");
   const [saveLabel, setSaveLabel] = useState(storage.usingIndexedDb ? "Ready with IndexedDB" : "Local fallback active");
+  const [savedDocuments, setSavedDocuments] = useState<SavedDocumentEntry[]>(() => readSavedDocuments());
+  const [selectedSavedDocumentId, setSelectedSavedDocumentId] = useState("");
   const [leftRailOpen, setLeftRailOpen] = useState(() => readRailPref("left"));
   const [rightRailOpen, setRightRailOpen] = useState(() => readRailPref("right"));
   const [panelCollapsePrefs, setPanelCollapsePrefs] = useState<PanelCollapsePrefs>(() => readSectionPrefs());
@@ -1982,6 +2003,8 @@ function Workspace({
   const [blockBackgroundRgba, setBlockBackgroundRgba] = useState<RgbaValue>(DEFAULT_BLOCK_RGBA);
   const [tableCellBackgroundRgba, setTableCellBackgroundRgba] = useState<RgbaValue>(DEFAULT_TABLE_CELL_RGBA);
   const [tableGridRgba, setTableGridRgba] = useState<RgbaValue>(DEFAULT_TABLE_GRID_RGBA);
+  const [tableCellPaddingPx, setTableCellPaddingPx] = useState(10);
+  const [tableMarginYPx, setTableMarginYPx] = useState(12);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
   const [lineHeightNumberDraft, setLineHeightNumberDraft] = useState("1.8");
@@ -2791,6 +2814,8 @@ function Workspace({
       editor?.getAttributes("table").borderColor ??
       "",
   );
+  const currentTableCellPaddingPx = Number(editor?.getAttributes("table").cellPaddingPx ?? 10);
+  const currentTableMarginYPx = Number(editor?.getAttributes("table").marginYPx ?? 12);
   const currentAlignment = String(editor?.getAttributes("heading").textAlign ?? editor?.getAttributes("paragraph").textAlign ?? "left");
   const currentLineHeight = resolveLineHeight(editor);
   const currentCalloutTone = editor?.isActive("callout") ? String(editor.getAttributes("callout").tone ?? "note") : "none";
@@ -2819,6 +2844,20 @@ function Workspace({
   useEffect(() => {
     setTableGridRgba(parseCssColor(currentTableGridColor, DEFAULT_TABLE_GRID_RGBA));
   }, [currentTableGridColor]);
+
+  useEffect(() => {
+    if (!Number.isFinite(currentTableCellPaddingPx)) {
+      return;
+    }
+    setTableCellPaddingPx(Math.max(0, Math.round(currentTableCellPaddingPx)));
+  }, [currentTableCellPaddingPx]);
+
+  useEffect(() => {
+    if (!Number.isFinite(currentTableMarginYPx)) {
+      return;
+    }
+    setTableMarginYPx(Math.max(0, Math.round(currentTableMarginYPx)));
+  }, [currentTableMarginYPx]);
 
   useEffect(() => {
     const parsed = parseLengthValue(currentFontSize, "16", "px");
@@ -3247,6 +3286,7 @@ function Workspace({
   const codeIsDirty = codeDrafts[activeCodeMode] !== null && codeDrafts[activeCodeMode] !== generatedCodeValue;
   const showRichView = sideBySide || viewMode === "rich";
   const showCodeView = sideBySide || viewMode !== "rich";
+  const topbarViewMode = sideBySide ? "split" : viewMode;
   const workspaceClassName = `workspace workspace-layout-${workspaceLayoutPreset} ${leftRailOpen ? "left-open" : "left-closed"} ${rightRailOpen ? "right-open" : "right-closed"}`;
   const chunkCapabilityTags = getChunkCapabilityTags({ engine: chunkTemplateEngineFilter });
   const filteredChunkConcepts = getChunkTemplateConcepts({
@@ -3435,6 +3475,95 @@ function Workspace({
   function handleToolbar(action: () => void) {
     action();
     activeEditor.commands.focus();
+  }
+
+  function clearSelectionFormatting() {
+    activeEditor
+      .chain()
+      .focus()
+      .unsetAllMarks()
+      .clearNodes()
+      .unsetTextAlign()
+      .unsetLineHeight()
+      .unsetFontSize()
+      .unsetFontFamily()
+      .unsetFontWeight()
+      .unsetLetterSpacing()
+      .run();
+  }
+
+  function applyWorkspaceDocument(document: EditorDocument) {
+    setTitle(document.title);
+    setWordGoal(document.wordGoal);
+    setCharacterGoal(document.characterGoal);
+    setAccent(document.accent);
+    setFocusMode(document.focusMode);
+    setTypewriterMode(document.typewriterMode);
+    setCodeDrafts({ html: null, exportable: null });
+    setCodeErrors({ html: null, exportable: null });
+    setCodeEditing({ html: false, exportable: false });
+    replaceEditorDocument(activeEditor, ensureDocumentHasContent(document.content));
+  }
+
+  async function saveCurrentDocumentEntry() {
+    const document = buildDocument(activeEditor.getJSON());
+    await storage.saveDocument(document);
+    const savedAt = new Date().toISOString();
+    const name = document.title.trim() || "Untitled document";
+    const entry: SavedDocumentEntry = {
+      id: `saved-${Date.now()}-${Math.round(Math.random() * 1_000_000)}`,
+      name,
+      savedAt,
+      document,
+    };
+
+    setSavedDocuments((current) => {
+      const next = [entry, ...current].slice(0, 25);
+      writeSavedDocuments(next);
+      return next;
+    });
+    setSelectedSavedDocumentId(entry.id);
+    setSaveLabel(`${storage.usingIndexedDb ? "Saved to IndexedDB" : "Saved locally"} at ${formatTime(savedAt)}`);
+  }
+
+  function loadSavedDocumentEntry(entryId: string) {
+    const entry = savedDocuments.find((item) => item.id === entryId);
+    if (!entry) {
+      return;
+    }
+
+    applyWorkspaceDocument(entry.document);
+    setSelectedSavedDocumentId(entry.id);
+    setSaveLabel(`Loaded "${entry.name}" from ${formatTime(entry.savedAt)}`);
+  }
+
+  async function resetToBlankDocument() {
+    const confirmed = window.confirm("Start a new blank document? This replaces current content.");
+    if (!confirmed) {
+      return;
+    }
+
+    const blankContent: JSONContent = {
+      ...sampleDocument.content,
+      content: [{ type: "paragraph" }],
+    };
+
+    const blankDocument: EditorDocument = {
+      id: "local-default",
+      title: "Untitled document",
+      content: blankContent,
+      wordGoal: sampleDocument.wordGoal,
+      characterGoal: sampleDocument.characterGoal,
+      accent: sampleDocument.accent,
+      focusMode: false,
+      typewriterMode: false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    applyWorkspaceDocument(blankDocument);
+    await storage.saveDocument(blankDocument);
+    setSelectedSavedDocumentId("");
+    setSaveLabel("Started a new blank document");
   }
 
   function applyLink() {
@@ -3659,6 +3788,24 @@ function Workspace({
     }
 
     activeEditor.chain().focus().setCellAttribute("borderColor", color).updateAttributes("table", { borderColor: color }).run();
+  }
+
+  function applyTableCellPadding(value: number) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    const nextValue = Math.max(0, Math.round(value));
+    activeEditor.chain().focus().updateAttributes("table", { cellPaddingPx: nextValue }).run();
+  }
+
+  function applyTableMarginY(value: number) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    const nextValue = Math.max(0, Math.round(value));
+    activeEditor.chain().focus().updateAttributes("table", { marginYPx: nextValue }).run();
   }
 
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
@@ -4993,7 +5140,7 @@ function Workspace({
 
   return (
     <div
-      className={`app-shell accent-${accent} density-${interfaceDensity} workflow-${workflowTrack} nav-${navigationProfile} workspace-layout-${workspaceLayoutPreset} workspace-intent-${workspaceIntentPresetId} panel-focus-${panelFocusPresetId} session-tempo-${sessionTempoPresetId} mode-lane-${modeGuidanceLaneId} minimap-lane-${minimapCoachLaneId} ${focusMode ? "focus-mode" : ""}`}
+      className={`app-shell ui-simple accent-${accent} density-${interfaceDensity} workflow-${workflowTrack} nav-${navigationProfile} workspace-layout-${workspaceLayoutPreset} workspace-intent-${workspaceIntentPresetId} panel-focus-${panelFocusPresetId} session-tempo-${sessionTempoPresetId} mode-lane-${modeGuidanceLaneId} minimap-lane-${minimapCoachLaneId} ${focusMode ? "focus-mode" : ""}`}
     >
       <div className="ambient ambient-one"></div>
       <div className="ambient ambient-two"></div>
@@ -5033,70 +5180,6 @@ function Workspace({
               <option value="system">System</option>
             </select>
           </label>
-          <label className="theme-selector guidance-selector" htmlFor="guidance-selector">
-            <span>Guidance</span>
-            <select
-              id="guidance-selector"
-              value={guidanceLevel}
-              aria-label="Guidance level"
-              title={selectedGuidanceOption.copy}
-              onChange={(event) => setGuidanceLevel(event.target.value as GuidanceLevel)}
-            >
-              {GUIDANCE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="theme-selector density-selector" htmlFor="density-selector">
-            <span>Density</span>
-            <select
-              id="density-selector"
-              value={interfaceDensity}
-              aria-label="Interface density"
-              title={selectedDensityOption.copy}
-              onChange={(event) => setInterfaceDensity(event.target.value as InterfaceDensity)}
-            >
-              {DENSITY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="theme-selector workflow-selector" htmlFor="workflow-selector">
-            <span>Workflow</span>
-            <select
-              id="workflow-selector"
-              value={workflowTrack}
-              aria-label="Workflow track"
-              title={selectedWorkflowTrack.copy}
-              onChange={(event) => setWorkflowTrack(event.target.value as WorkflowTrack)}
-            >
-              {WORKFLOW_TRACK_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="theme-selector navigation-selector" htmlFor="navigation-selector">
-            <span>Navigation</span>
-            <select
-              id="navigation-selector"
-              value={navigationProfile}
-              aria-label="Navigation profile"
-              title={selectedNavigationProfile.copy}
-              onChange={(event) => setNavigationProfile(event.target.value as NavigationProfile)}
-            >
-              {NAVIGATION_PROFILE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <label className="theme-selector layout-selector" htmlFor="workspace-layout-selector">
             <span>Layout</span>
             <select
@@ -5113,52 +5196,14 @@ function Workspace({
               ))}
             </select>
           </label>
-          <label className="theme-selector panel-focus-selector" htmlFor="panel-focus-selector">
-            <span>Panel focus</span>
-            <select
-              id="panel-focus-selector"
-              value={panelFocusPresetId}
-              aria-label="Panel focus preset"
-              title={selectedPanelFocusPreset.summary}
-              onChange={(event) => setPanelFocusPresetId(event.target.value as PanelFocusPresetId)}
-            >
-              {PANEL_FOCUS_PRESET_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="ghost-action" type="button" title={selectedPanelFocusPreset.tip} onClick={() => applyPanelFocusPreset()}>
-            Apply panel focus
-          </button>
-          <label className="theme-selector coach-selector" htmlFor="workspace-coach-selector">
-            <span>Coach scene</span>
-            <select
-              id="workspace-coach-selector"
-              value={workspaceCoachPresetId}
-              aria-label="Workspace coach scene"
-              title={selectedWorkspaceCoach.summary}
-              onChange={(event) => setWorkspaceCoachPresetId(event.target.value as WorkspaceCoachPresetId)}
-            >
-              {WORKSPACE_COACH_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="ghost-action" type="button" title={selectedWorkspaceCoach.tip} onClick={() => applyWorkspaceCoachPreset()}>
-            Apply coach scene
-          </button>
           <label className="theme-selector workspace-intent-selector" htmlFor="workspace-intent-selector">
-            <span>Workspace intent</span>
+            <span>Workspace</span>
             <select
               id="workspace-intent-selector"
               value={workspaceIntentPresetId}
               aria-label="Workspace intent preset"
               title={selectedWorkspaceIntent.summary}
-              onChange={(event) => setWorkspaceIntentPresetId(event.target.value as WorkspaceIntentPresetId)}
+              onChange={(event) => applyWorkspaceIntentPreset(event.target.value as WorkspaceIntentPresetId)}
             >
               {WORKSPACE_INTENT_OPTIONS.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -5167,101 +5212,79 @@ function Workspace({
               ))}
             </select>
           </label>
-          <button className="ghost-action" type="button" title={selectedWorkspaceIntent.tip} onClick={() => applyWorkspaceIntentPreset()}>
-            Apply workspace intent
-          </button>
-          <label className="theme-selector session-goal-selector" htmlFor="session-goal-selector">
-            <span>Session goal</span>
+          <label className="theme-selector" htmlFor="view-mode-selector">
+            <span>View</span>
             <select
-              id="session-goal-selector"
-              value={sessionGoalPresetId}
-              aria-label="Session goal"
-              title={selectedSessionGoal.summary}
-              onChange={(event) => setSessionGoalPresetId(event.target.value as SessionGoalPresetId)}
+              id="view-mode-selector"
+              value={topbarViewMode}
+              aria-label="Editor view mode"
+              onChange={(event) => {
+                const nextMode = event.target.value;
+                if (nextMode === "split") {
+                  setSideBySide(true);
+                  setViewMode("rich");
+                  return;
+                }
+
+                setSideBySide(false);
+                setViewMode(nextMode as ViewMode);
+              }}
             >
-              {SESSION_GOAL_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
+              <option value="rich">Rich text</option>
+              <option value="html">HTML source</option>
+              <option value="exportable">Exportable HTML</option>
+              <option value="split">Split view</option>
+            </select>
+          </label>
+
+          {showCodeView ? (
+            <button
+              className="ghost-action"
+              type="button"
+              aria-pressed={htmlCodeLayout === "oneline"}
+              onClick={() =>
+                setHtmlCodeLayout((current) => (current === "paragraphs" ? "oneline" : "paragraphs"))
+              }
+            >
+              HTML: {htmlCodeLayout === "paragraphs" ? "Paragraphs" : "One line"}
+            </button>
+          ) : null}
+
+          <label className="theme-selector" htmlFor="saved-documents-selector">
+            <span>Load</span>
+            <select
+              id="saved-documents-selector"
+              value={selectedSavedDocumentId}
+              aria-label="Load saved document"
+              onChange={(event) => {
+                const entryId = event.target.value;
+                setSelectedSavedDocumentId(entryId);
+                if (!entryId) {
+                  return;
+                }
+
+                loadSavedDocumentEntry(entryId);
+              }}
+            >
+              <option value="">Saved documents</option>
+              {savedDocuments.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name} · {formatTime(entry.savedAt)}
                 </option>
               ))}
             </select>
           </label>
-          <button className="ghost-action" type="button" title={selectedSessionGoal.tip} onClick={() => applySessionGoalPreset()}>
-            Apply session goal
+
+          <button className="ghost-action" type="button" onClick={() => void saveCurrentDocumentEntry()}>
+            Save
           </button>
-          <label className="theme-selector editor-coach-selector" htmlFor="editor-coach-selector">
-            <span>Editor coach</span>
-            <select
-              id="editor-coach-selector"
-              value={editorCoachPresetId}
-              aria-label="Editor coach"
-              title={selectedEditorCoach.summary}
-              onChange={(event) => setEditorCoachPresetId(event.target.value as EditorCoachPresetId)}
-            >
-              {EDITOR_COACH_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="ghost-action" type="button" title={selectedEditorCoach.tip} onClick={() => applyEditorCoachPreset()}>
-            Apply editor coach
+          <button className="ghost-action" type="button" onClick={() => void resetToBlankDocument()}>
+            New blank
           </button>
-          <label className="theme-selector learning-lane-selector" htmlFor="learning-lane-selector">
-            <span>Learning lane</span>
-            <select
-              id="learning-lane-selector"
-              value={learningLaneId}
-              aria-label="Learning lane"
-              title={selectedLearningLane.summary}
-              onChange={(event) => setLearningLaneId(event.target.value as LearningLaneId)}
-            >
-              {LEARNING_LANE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="ghost-action" type="button" title={selectedLearningLane.tip} onClick={() => applyLearningLane()}>
-            Apply learning lane
+          <button className="ghost-action" type="button" onClick={clearSelectionFormatting}>
+            Clear formatting
           </button>
-          <label className="theme-selector cadence-selector" htmlFor="revision-cadence-selector">
-            <span>Revision cadence</span>
-            <select
-              id="revision-cadence-selector"
-              value={revisionCadenceProfileId}
-              aria-label="Revision cadence profile"
-              title={selectedRevisionCadence.summary}
-              onChange={(event) => setRevisionCadenceProfileId(event.target.value as RevisionCadenceProfileId)}
-            >
-              {REVISION_CADENCE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="theme-selector session-tempo-selector" htmlFor="session-tempo-selector">
-            <span>Session tempo</span>
-            <select
-              id="session-tempo-selector"
-              value={sessionTempoPresetId}
-              aria-label="Session tempo"
-              title={selectedSessionTempo.summary}
-              onChange={(event) => setSessionTempoPresetId(event.target.value as SessionTempoPresetId)}
-            >
-              {SESSION_TEMPO_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="ghost-action" type="button" title={selectedSessionTempo.tip} onClick={() => applySessionTempo()}>
-            Apply tempo
-          </button>
+
           <button
             className={`ghost-action ${focusMode ? "active" : ""}`}
             type="button"
@@ -5276,7 +5299,7 @@ function Workspace({
             aria-pressed={leftRailOpen}
             onClick={() => setLeftRailOpen((current) => !current)}
           >
-            Structure
+            Left panel
           </button>
           <button
             className="ghost-action"
@@ -5286,7 +5309,7 @@ function Workspace({
               setCommandQuery("");
             }}
           >
-            Command
+            Commands
           </button>
           <button className="ghost-action" type="button" onClick={() => setFindPanelOpen(true)}>
             Find
@@ -5343,7 +5366,7 @@ function Workspace({
             aria-pressed={rightRailOpen}
             onClick={() => setRightRailOpen((current) => !current)}
           >
-            Revisions
+            Right panel
           </button>
           <button className="primary-action" type="button" onClick={() => exportHtml(activeEditor, title, accent)}>
             Export HTML
@@ -6499,9 +6522,13 @@ function Workspace({
                 <RgbaEditor
                   label="Selected text"
                   value={textColorRgba}
-                  onChange={setTextColorRgba}
+                  onChange={(nextValue) => {
+                    setTextColorRgba(nextValue);
+                    applyTextColor(toRgbaString(nextValue));
+                  }}
                   onApply={() => applyTextColor(toRgbaString(textColorRgba))}
                   onReset={() => applyTextColor(null)}
+                  realtime
                 />
               </div>
 
@@ -6510,9 +6537,13 @@ function Workspace({
                 <RgbaEditor
                   label="Selected text"
                   value={highlightRgba}
-                  onChange={setHighlightRgba}
+                  onChange={(nextValue) => {
+                    setHighlightRgba(nextValue);
+                    applyTextBackground(toRgbaString(nextValue));
+                  }}
                   onApply={() => applyTextBackground(toRgbaString(highlightRgba))}
                   onReset={() => applyTextBackground(null)}
+                  realtime
                 />
               </div>
 
@@ -6521,9 +6552,13 @@ function Workspace({
                 <RgbaEditor
                   label="Current block"
                   value={blockBackgroundRgba}
-                  onChange={setBlockBackgroundRgba}
+                  onChange={(nextValue) => {
+                    setBlockBackgroundRgba(nextValue);
+                    applyBlockBackgroundColor(toRgbaString(nextValue));
+                  }}
                   onApply={() => applyBlockBackgroundColor(toRgbaString(blockBackgroundRgba))}
                   onReset={() => applyBlockBackgroundColor(null)}
+                  realtime
                 />
               </div>
 
@@ -7447,6 +7482,42 @@ function Workspace({
                       }}
                     />
                   </ToolbarInput>
+                  <ToolbarInput label="Cell pad">
+                    <input
+                      type="number"
+                      min="0"
+                      max="64"
+                      step="1"
+                      value={String(tableCellPaddingPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = Math.max(0, Math.round(parsed));
+                        setTableCellPaddingPx(nextValue);
+                        applyTableCellPadding(nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Tbl margin">
+                    <input
+                      type="number"
+                      min="0"
+                      max="80"
+                      step="1"
+                      value={String(tableMarginYPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = Math.max(0, Math.round(parsed));
+                        setTableMarginYPx(nextValue);
+                        applyTableMarginY(nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
                   <ToolbarButton label="Row+" active={false} disabled={!activeEditor.can().addRowAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())} />
                   <ToolbarButton label="Col+" active={false} disabled={!activeEditor.can().addColumnAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())} />
                   <ToolbarButton
@@ -7474,24 +7545,9 @@ function Workspace({
                 </>
               ) : null}
               <ToolbarButton
-                label="Clear"
+                label="Clear format"
                 active={false}
-                onClick={() =>
-                  handleToolbar(() =>
-                    activeEditor
-                      .chain()
-                      .focus()
-                      .unsetAllMarks()
-                      .clearNodes()
-                      .unsetTextAlign()
-                      .unsetLineHeight()
-                      .unsetFontSize()
-                      .unsetFontFamily()
-                      .unsetFontWeight()
-                      .unsetLetterSpacing()
-                      .run(),
-                  )
-                }
+                onClick={() => handleToolbar(clearSelectionFormatting)}
               />
             </div>
 
@@ -8829,12 +8885,14 @@ function RgbaEditor({
   onChange,
   onApply,
   onReset,
+  realtime = false,
 }: {
   label: string;
   value: RgbaValue;
   onChange: (value: RgbaValue) => void;
   onApply: () => void;
   onReset: () => void;
+  realtime?: boolean;
 }) {
   const cssValue = toRgbaString(value);
 
@@ -8941,9 +8999,11 @@ function RgbaEditor({
       </div>
 
       <div className="rgba-actions">
-        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onApply}>
-          Apply
-        </button>
+        {!realtime ? (
+          <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onApply}>
+            Apply
+          </button>
+        ) : null}
         <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={onReset}>
           Reset
         </button>
@@ -9978,8 +10038,8 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
       div[data-callout="true"] { border-radius: 18px; padding: 1rem 1.1rem; background: var(--callout-bg, rgba(242, 109, 61, 0.12)); border: 1px solid var(--callout-border, rgba(242, 109, 61, 0.22)); }
       a { color: inherit; text-decoration-color: ${getAccentLinkColor(accent)}; }
       blockquote { border-left: 3px solid rgba(0,0,0,0.15); margin-left: 0; padding-left: 1rem; font-style: italic; }
-      table { border-collapse: collapse; width: 100%; --table-grid-color: rgba(0,0,0,0.12); }
-      td, th { border: 1px solid var(--table-grid-color); padding: 0.6rem; position: relative; }
+      table { border-collapse: collapse; width: 100%; --table-grid-color: rgba(0,0,0,0.12); --table-cell-padding: 10px; --table-margin-y: 12px; margin: var(--table-margin-y) 0; }
+      td, th { border: 1px solid var(--table-grid-color); padding: var(--table-cell-padding); position: relative; }
 ${chunkStyles}
     </style>
   </head>
@@ -10112,23 +10172,25 @@ function readSectionPrefs(): PanelCollapsePrefs {
   try {
     const raw = localStorage.getItem(SECTION_PREFS_KEY);
     if (!raw) {
-      return {};
+      return { ...DEFAULT_PANEL_COLLAPSE_PREFS };
     }
 
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
+      return { ...DEFAULT_PANEL_COLLAPSE_PREFS };
     }
 
-    return Object.entries(parsed).reduce<PanelCollapsePrefs>((accumulator, [key, value]) => {
+    const merged = Object.entries(parsed).reduce<PanelCollapsePrefs>((accumulator, [key, value]) => {
       if (typeof value === "boolean") {
         accumulator[key] = value;
       }
 
       return accumulator;
-    }, {});
+    }, { ...DEFAULT_PANEL_COLLAPSE_PREFS });
+
+    return merged;
   } catch {
-    return {};
+    return { ...DEFAULT_PANEL_COLLAPSE_PREFS };
   }
 }
 
@@ -10138,6 +10200,94 @@ function writeSectionPrefs(value: PanelCollapsePrefs) {
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
+}
+
+function readSavedDocuments(): SavedDocumentEntry[] {
+  try {
+    const raw = localStorage.getItem(SAVED_DOCUMENTS_PREFS_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((entry) => normalizeSavedDocumentEntry(entry))
+      .filter((entry): entry is SavedDocumentEntry => entry !== null)
+      .slice(0, 25);
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedDocuments(value: SavedDocumentEntry[]) {
+  try {
+    localStorage.setItem(SAVED_DOCUMENTS_PREFS_KEY, JSON.stringify(value.slice(0, 25)));
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function normalizeSavedDocumentEntry(value: unknown): SavedDocumentEntry | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const documentValue = candidate.document;
+  if (!documentValue || typeof documentValue !== "object" || Array.isArray(documentValue)) {
+    return null;
+  }
+
+  const documentCandidate = documentValue as Partial<EditorDocument>;
+  const accentCandidate = String(documentCandidate.accent ?? sampleDocument.accent) as AccentName;
+  const normalizedAccent = ACCENT_OPTIONS.some((option) => option.value === accentCandidate)
+    ? accentCandidate
+    : sampleDocument.accent;
+  const normalizedWordGoal = Number.isFinite(Number(documentCandidate.wordGoal))
+    ? Math.max(100, Math.min(20_000, Math.round(Number(documentCandidate.wordGoal))))
+    : sampleDocument.wordGoal;
+  const normalizedCharacterGoal = Number.isFinite(Number(documentCandidate.characterGoal))
+    ? Math.max(100, Math.min(200_000, Math.round(Number(documentCandidate.characterGoal))))
+    : sampleDocument.characterGoal;
+  const normalizedDocument: EditorDocument = {
+    id: "local-default",
+    title:
+      typeof documentCandidate.title === "string" && documentCandidate.title.trim().length > 0
+        ? documentCandidate.title
+        : "Untitled document",
+    content:
+      documentCandidate.content && typeof documentCandidate.content === "object"
+        ? (documentCandidate.content as JSONContent)
+        : sampleDocument.content,
+    wordGoal: normalizedWordGoal,
+    characterGoal: normalizedCharacterGoal,
+    accent: normalizedAccent,
+    focusMode: typeof documentCandidate.focusMode === "boolean" ? documentCandidate.focusMode : false,
+    typewriterMode: typeof documentCandidate.typewriterMode === "boolean" ? documentCandidate.typewriterMode : false,
+    updatedAt:
+      typeof documentCandidate.updatedAt === "string" && documentCandidate.updatedAt.length > 0
+        ? documentCandidate.updatedAt
+        : new Date().toISOString(),
+  };
+
+  const savedAt =
+    typeof candidate.savedAt === "string" && candidate.savedAt.length > 0 ? candidate.savedAt : normalizedDocument.updatedAt;
+  const normalizedName =
+    typeof candidate.name === "string" && candidate.name.trim().length > 0 ? candidate.name.trim() : normalizedDocument.title;
+
+  return {
+    id:
+      typeof candidate.id === "string" && candidate.id.length > 0
+        ? candidate.id
+        : `saved-${Date.now()}-${Math.round(Math.random() * 1_000_000)}`,
+    name: normalizedName,
+    savedAt,
+    document: normalizedDocument,
+  };
 }
 
 function readChunkBuilderLayoutPreference(): ChunkBuilderLayoutMode {

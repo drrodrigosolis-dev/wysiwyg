@@ -47,6 +47,46 @@ const StyledTable = Table.extend({
           };
         },
       },
+      cellPaddingPx: {
+        default: null,
+        parseHTML: (element) => {
+          const rawValue = element.style.getPropertyValue("--table-cell-padding").trim();
+          const numeric = Number.parseFloat(rawValue);
+          if (!Number.isFinite(numeric)) {
+            return null;
+          }
+          return Math.max(0, Math.round(numeric));
+        },
+        renderHTML: (attributes) => {
+          const numeric = Number(attributes.cellPaddingPx);
+          if (!Number.isFinite(numeric)) {
+            return {};
+          }
+          return {
+            style: `--table-cell-padding: ${Math.max(0, Math.round(numeric))}px`,
+          };
+        },
+      },
+      marginYPx: {
+        default: null,
+        parseHTML: (element) => {
+          const rawValue = element.style.getPropertyValue("--table-margin-y").trim();
+          const numeric = Number.parseFloat(rawValue);
+          if (!Number.isFinite(numeric)) {
+            return null;
+          }
+          return Math.max(0, Math.round(numeric));
+        },
+        renderHTML: (attributes) => {
+          const numeric = Number(attributes.marginYPx);
+          if (!Number.isFinite(numeric)) {
+            return {};
+          }
+          return {
+            style: `--table-margin-y: ${Math.max(0, Math.round(numeric))}px`,
+          };
+        },
+      },
     };
   },
 });

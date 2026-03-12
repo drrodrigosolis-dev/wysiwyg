@@ -876,6 +876,18 @@ select {
   font-size: 0.8rem;
 }
 
+.app-shell.ui-simple .mode-scene-stack,
+.app-shell.ui-simple .mode-strategy-group,
+.app-shell.ui-simple .style-lane-group,
+.app-shell.ui-simple .style-assist-group,
+.app-shell.ui-simple .style-recipe-group,
+.app-shell.ui-simple .style-readability-group,
+.app-shell.ui-simple .pulse-coach-group,
+.app-shell.ui-simple .pulse-intervention-group,
+.app-shell.ui-simple .revision-strategy-group {
+  display: none;
+}
+
 .chunk-builder-stage {
   width: 100%;
   margin: 0;
@@ -2163,12 +2175,15 @@ select {
   width: 100%;
   border-collapse: collapse;
   --table-grid-color: rgba(64, 44, 28, 0.12);
+  --table-cell-padding: 10px;
+  --table-margin-y: 12px;
+  margin: var(--table-margin-y) 0;
 }
 
 .velvet-prosemirror td,
 .velvet-prosemirror th {
   border: 1px solid var(--table-grid-color);
-  padding: 0.65rem;
+  padding: var(--table-cell-padding);
   position: relative;
 }
 
