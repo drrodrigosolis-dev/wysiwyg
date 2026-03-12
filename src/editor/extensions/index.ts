@@ -73,10 +73,14 @@ const StyledTable = Table.extend({
     const columnWidthUnits = normalizeTableWidthUnits(node.attrs.columnWidthUnits, 3);
     if (columnWidthMode === "fixed") {
       styleParts.push("--table-layout-mode: fixed");
-      styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+      if (columnWidthUnits !== 3) {
+        styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+      }
     } else {
       styleParts.push("--table-layout-mode: auto");
-      styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+      if (columnWidthUnits !== 3) {
+        styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+      }
     }
 
     const cellWrapMode = resolveTableWrapMode(node.attrs.cellWrapMode, "auto");
@@ -371,17 +375,31 @@ const StyledTableCell = TableCell.extend({
       widthMode: {
         default: "flex",
         parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
-        renderHTML: (attributes) => ({
-          "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
-          style: `--cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
-        }),
+        renderHTML: (attributes) => {
+          const widthMode = attributes.widthMode === "fixed" ? "fixed" : "flex";
+          const widthUnits = normalizeTableWidthUnits(attributes.widthUnits, 3);
+          if (widthMode === "flex" && widthUnits === 3) {
+            return {};
+          }
+
+          return {
+            "data-width-mode": widthMode,
+            style: `--cell-min-width: calc((100% / 12) * ${widthUnits});`,
+          };
+        },
       },
       widthUnits: {
         default: 3,
         parseHTML: (element) => normalizeTableWidthUnits(element.getAttribute("data-width-units"), 3),
-        renderHTML: (attributes) => ({
-          "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
-        }),
+        renderHTML: (attributes) => {
+          const widthUnits = normalizeTableWidthUnits(attributes.widthUnits, 3);
+          if (widthUnits === 3) {
+            return {};
+          }
+          return {
+            "data-width-units": String(widthUnits),
+          };
+        },
       },
       wrapMode: {
         default: "auto",
@@ -392,10 +410,7 @@ const StyledTableCell = TableCell.extend({
                 "data-wrap-mode": "wrap",
                 style: "--cell-overflow-wrap: anywhere; --cell-word-break: break-word; --cell-white-space: normal;",
               }
-            : {
-                "data-wrap-mode": "auto",
-                style: "--cell-overflow-wrap: normal; --cell-word-break: normal; --cell-white-space: normal;",
-              },
+            : {},
       },
     };
   },
@@ -488,17 +503,31 @@ const StyledTableHeader = TableHeader.extend({
       widthMode: {
         default: "flex",
         parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
-        renderHTML: (attributes) => ({
-          "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
-          style: `--cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
-        }),
+        renderHTML: (attributes) => {
+          const widthMode = attributes.widthMode === "fixed" ? "fixed" : "flex";
+          const widthUnits = normalizeTableWidthUnits(attributes.widthUnits, 3);
+          if (widthMode === "flex" && widthUnits === 3) {
+            return {};
+          }
+
+          return {
+            "data-width-mode": widthMode,
+            style: `--cell-min-width: calc((100% / 12) * ${widthUnits});`,
+          };
+        },
       },
       widthUnits: {
         default: 3,
         parseHTML: (element) => normalizeTableWidthUnits(element.getAttribute("data-width-units"), 3),
-        renderHTML: (attributes) => ({
-          "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
-        }),
+        renderHTML: (attributes) => {
+          const widthUnits = normalizeTableWidthUnits(attributes.widthUnits, 3);
+          if (widthUnits === 3) {
+            return {};
+          }
+          return {
+            "data-width-units": String(widthUnits),
+          };
+        },
       },
       wrapMode: {
         default: "auto",
@@ -509,10 +538,7 @@ const StyledTableHeader = TableHeader.extend({
                 "data-wrap-mode": "wrap",
                 style: "--cell-overflow-wrap: anywhere; --cell-word-break: break-word; --cell-white-space: normal;",
               }
-            : {
-                "data-wrap-mode": "auto",
-                style: "--cell-overflow-wrap: normal; --cell-word-break: normal; --cell-white-space: normal;",
-              },
+            : {},
       },
     };
   },

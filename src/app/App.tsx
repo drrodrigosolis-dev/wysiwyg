@@ -11564,10 +11564,14 @@ function buildTableStyleAttribute(attrs: Record<string, unknown>) {
   const columnWidthUnits = resolveTableWidthUnits(attrs.columnWidthUnits, 3);
   if (columnWidthMode === "fixed") {
     parts.push("--table-layout-mode: fixed");
-    parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    if (columnWidthUnits !== 3) {
+      parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    }
   } else {
     parts.push("--table-layout-mode: auto");
-    parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    if (columnWidthUnits !== 3) {
+      parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    }
   }
 
   const cellWrapMode = resolveTableWrapMode(attrs.cellWrapMode, "auto");
