@@ -18,8 +18,11 @@ select {
 
 .app-shell {
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   padding: var(--ui-shell-padding, 1.25rem);
   --accent-rgb: 242, 109, 61;
   --accent-main: #f26d3d;
@@ -107,6 +110,7 @@ select {
   align-items: stretch;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .workspace.workspace-layout-focus {
@@ -1806,6 +1810,8 @@ select {
 .editor-stage {
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  display: grid;
 }
 
 .app-shell.focus-mode .editor-stage {
@@ -3009,12 +3015,19 @@ body[data-theme="dark"] textarea::placeholder {
 }
 
 @media (max-width: 1180px) {
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
   .workspace,
   .workspace.left-closed,
   .workspace.right-closed,
   .workspace.left-closed.right-closed {
     grid-template-columns: 1fr;
     height: auto;
+    overflow: visible;
   }
 
   .rail {

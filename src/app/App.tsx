@@ -7382,7 +7382,31 @@ function Workspace({
                       type="color"
                       value={toHexColor(tableCellBackgroundRgba)}
                       onChange={(event) => {
-                        const nextColor = parseCssColor(event.target.value, tableCellBackgroundRgba);
+                        const nextColor = {
+                          ...parseCssColor(event.target.value, tableCellBackgroundRgba),
+                          a: tableCellBackgroundRgba.a,
+                        };
+                        setTableCellBackgroundRgba(nextColor);
+                        applyTableCellBackgroundColor(toRgbaString(nextColor));
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Cell α">
+                    <input
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={formatAlpha(tableCellBackgroundRgba.a)}
+                      onChange={(event) => {
+                        const parsedAlpha = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsedAlpha)) {
+                          return;
+                        }
+                        const nextColor = {
+                          ...tableCellBackgroundRgba,
+                          a: clampAlpha(parsedAlpha),
+                        };
                         setTableCellBackgroundRgba(nextColor);
                         applyTableCellBackgroundColor(toRgbaString(nextColor));
                       }}
@@ -7393,7 +7417,31 @@ function Workspace({
                       type="color"
                       value={toHexColor(tableGridRgba)}
                       onChange={(event) => {
-                        const nextColor = parseCssColor(event.target.value, tableGridRgba);
+                        const nextColor = {
+                          ...parseCssColor(event.target.value, tableGridRgba),
+                          a: tableGridRgba.a,
+                        };
+                        setTableGridRgba(nextColor);
+                        applyTableGridColor(toRgbaString(nextColor));
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Grid α">
+                    <input
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={formatAlpha(tableGridRgba.a)}
+                      onChange={(event) => {
+                        const parsedAlpha = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsedAlpha)) {
+                          return;
+                        }
+                        const nextColor = {
+                          ...tableGridRgba,
+                          a: clampAlpha(parsedAlpha),
+                        };
                         setTableGridRgba(nextColor);
                         applyTableGridColor(toRgbaString(nextColor));
                       }}
