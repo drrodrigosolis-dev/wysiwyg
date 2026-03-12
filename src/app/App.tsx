@@ -124,6 +124,9 @@ const PANEL_FOCUS_PRESET_PREFS_KEY = "velvet-ink/panel-focus-preset/v1";
 const SESSION_TEMPO_PREFS_KEY = "velvet-ink/session-tempo/v1";
 const STYLE_ASSIST_PREFS_KEY = "velvet-ink/style-assist/v1";
 const PULSE_INTERVENTION_PREFS_KEY = "velvet-ink/pulse-intervention/v1";
+const GLOBAL_GUIDANCE_SYNC_PREFS_KEY = "velvet-ink/global-guidance-sync/v1";
+const FIND_GUARD_PREFS_KEY = "velvet-ink/find-guard/v1";
+const REVISION_REVIEW_LANE_PREFS_KEY = "velvet-ink/revision-review-lane/v1";
 const WORD_GOAL_MIN = 300;
 const WORD_GOAL_MAX = 2400;
 const WORD_GOAL_STEP = 25;
@@ -201,6 +204,7 @@ type ReplaceTransform = "as-typed" | "lower" | "upper" | "title";
 type FindStrategyId = "precision" | "sweep" | "normalize";
 type FindCoachMode = "quick" | "guided" | "audit";
 type FindPreviewLimit = 3 | 6 | 10;
+type FindGuardPresetId = "steady-review" | "balanced-batch" | "quick-ship";
 type OutlineDepthFilter = "all" | "h1" | "h2" | "h3";
 type OutlineJumpMode = "focus" | "focus-and-fold";
 type OutlineStrategyId = "structure-scan" | "active-draft" | "reorder-pass";
@@ -222,6 +226,7 @@ type RevisionStrategyId = "checkpoint-qa" | "growth-audit" | "trim-pass";
 type RevisionDiffDepth = "tight" | "balanced" | "extended";
 type RevisionRestoreGuard = "fast" | "confirm" | "diff-first";
 type RevisionTimelineLens = "all" | "last-hour" | "latest-three";
+type RevisionReviewLaneId = "rapid-verify" | "balanced-qa" | "handoff-audit";
 
 const PANEL_SECTION_IDS = [
   "left-mode",
@@ -275,6 +280,11 @@ type RgbaValue = {
   g: number;
   b: number;
   a: number;
+};
+
+type TableCellFormat = {
+  backgroundColor: string | null;
+  borderColor: string | null;
 };
 
 type SavedDocumentEntry = {
@@ -411,6 +421,39 @@ const GUIDANCE_OPTIONS: Array<{ label: string; value: GuidanceLevel; copy: strin
   { label: "Guided", value: "guided", copy: "Shows richer coaching cues and starter presets." },
   { label: "Balanced", value: "balanced", copy: "Keeps tips concise while preserving all controls." },
   { label: "Expert", value: "expert", copy: "Minimal coaching and denser utility surfaces." },
+];
+const GLOBAL_GUIDANCE_SYNC_OPTIONS: Array<{
+  value: GuidanceLevel;
+  label: string;
+  summary: string;
+  tip: string;
+  findGuard: FindGuardPresetId;
+  revisionLane: RevisionReviewLaneId;
+}> = [
+  {
+    value: "guided",
+    label: "Guided sync",
+    summary: "Education-forward defaults with extra checks before bulk actions.",
+    tip: "Use when coaching and safety are more important than speed.",
+    findGuard: "steady-review",
+    revisionLane: "balanced-qa",
+  },
+  {
+    value: "balanced",
+    label: "Balanced sync",
+    summary: "Middle lane for steady drafting, cleanup, and snapshot review.",
+    tip: "Use as the default lane for mixed drafting and review sessions.",
+    findGuard: "balanced-batch",
+    revisionLane: "balanced-qa",
+  },
+  {
+    value: "expert",
+    label: "Expert sync",
+    summary: "Lean lane with faster bulk actions and compact revision checks.",
+    tip: "Use when you already know the document and need speed.",
+    findGuard: "quick-ship",
+    revisionLane: "rapid-verify",
+  },
 ];
 const DENSITY_OPTIONS: Array<{ label: string; value: InterfaceDensity; copy: string }> = [
   { label: "Compact", value: "compact", copy: "Tighter spacing for high-density editing." },
@@ -1223,6 +1266,55 @@ const REVISION_TIMELINE_LENS_OPTIONS: Array<{ label: string; value: RevisionTime
   { label: "Last hour", value: "last-hour", tip: "Narrow to recent sessions for fast recovery choices." },
   { label: "Latest 3", value: "latest-three", tip: "Keep a compact triage list for rapid checkpoint review." },
 ];
+const REVISION_REVIEW_LANE_OPTIONS: Array<{
+  id: RevisionReviewLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: RevisionStrategyId;
+  filter: RevisionFilter;
+  focus: RevisionDiffFocus;
+  depth: RevisionDiffDepth;
+  timeline: RevisionTimelineLens;
+  guard: RevisionRestoreGuard;
+}> = [
+  {
+    id: "rapid-verify",
+    label: "Rapid verify",
+    summary: "Fast checkpoint triage with compact diffs and lighter restore friction.",
+    tip: "Use for quick stabilization passes between drafting bursts.",
+    strategy: "checkpoint-qa",
+    filter: "checkpoint",
+    focus: "balanced",
+    depth: "tight",
+    timeline: "latest-three",
+    guard: "confirm",
+  },
+  {
+    id: "balanced-qa",
+    label: "Balanced QA",
+    summary: "Steady quality lane that balances trend coverage and restore safety.",
+    tip: "Use for routine review loops and medium-risk edits.",
+    strategy: "checkpoint-qa",
+    filter: "all",
+    focus: "balanced",
+    depth: "balanced",
+    timeline: "all",
+    guard: "confirm",
+  },
+  {
+    id: "handoff-audit",
+    label: "Handoff audit",
+    summary: "High-scrutiny lane for release reviews and controlled restore checks.",
+    tip: "Use before handoff when diff context and restore assurance matter most.",
+    strategy: "growth-audit",
+    filter: "checkpoint",
+    focus: "additions",
+    depth: "extended",
+    timeline: "last-hour",
+    guard: "diff-first",
+  },
+];
 const REPLACE_TRANSFORM_OPTIONS: Array<{ label: string; value: ReplaceTransform }> = [
   { label: "As typed", value: "as-typed" },
   { label: "lowercase", value: "lower" },
@@ -1271,6 +1363,43 @@ const FIND_PREVIEW_LIMIT_OPTIONS: Array<{ label: string; value: FindPreviewLimit
   { label: "3 rows", value: 3 },
   { label: "6 rows", value: 6 },
   { label: "10 rows", value: 10 },
+];
+const FIND_GUARD_OPTIONS: Array<{
+  id: FindGuardPresetId;
+  label: string;
+  summary: string;
+  tip: string;
+  strategy: FindStrategyId;
+  coach: FindCoachMode;
+  previewLimit: FindPreviewLimit;
+}> = [
+  {
+    id: "steady-review",
+    label: "Steady review",
+    summary: "Wider previews and audit coaching for safer replace-all passes.",
+    tip: "Use while terminology or compliance language is still being validated.",
+    strategy: "precision",
+    coach: "audit",
+    previewLimit: 10,
+  },
+  {
+    id: "balanced-batch",
+    label: "Balanced batch",
+    summary: "Moderate preview depth with guided coaching for routine cleanup.",
+    tip: "Use for normal editing sessions with mixed precision and speed.",
+    strategy: "sweep",
+    coach: "guided",
+    previewLimit: 6,
+  },
+  {
+    id: "quick-ship",
+    label: "Quick ship",
+    summary: "Lean review overhead for low-risk bulk renames near release.",
+    tip: "Use after a mission preset is aligned and preview samples look clean.",
+    strategy: "normalize",
+    coach: "quick",
+    previewLimit: 3,
+  },
 ];
 const FIND_MISSION_PRESETS: Array<{
   id: "term-audit" | "tone-normalize" | "ship-rename";
@@ -2027,6 +2156,7 @@ function Workspace({
   );
   const [viewportWidth, setViewportWidth] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
   const [guidanceLevel, setGuidanceLevel] = useState<GuidanceLevel>(() => readGuidancePreference());
+  const [globalGuidanceSync, setGlobalGuidanceSync] = useState<GuidanceLevel>(() => readGlobalGuidanceSyncPreference());
   const [showEditorHud, setShowEditorHud] = useState(() => readEditorHudPreference());
   const [interfaceDensity, setInterfaceDensity] = useState<InterfaceDensity>(() => readDensityPreference());
   const [workflowTrack, setWorkflowTrack] = useState<WorkflowTrack>(() => readWorkflowTrackPreference());
@@ -2075,6 +2205,8 @@ function Workspace({
   const [findStrategyId, setFindStrategyId] = useState<FindStrategyId>(() => readFindStrategyPreference());
   const [findCoachMode, setFindCoachMode] = useState<FindCoachMode>(() => readFindCoachModePreference());
   const [findPreviewLimit, setFindPreviewLimit] = useState<FindPreviewLimit>(() => readFindPreviewLimitPreference());
+  const [findGuardPresetId, setFindGuardPresetId] = useState<FindGuardPresetId>(() => readFindGuardPreference());
+  const [findBulkReplaceArmed, setFindBulkReplaceArmed] = useState(false);
   const [recentFindQueries, setRecentFindQueries] = useState<string[]>(() => readRecentFindQueriesPreference());
   const [outlineDepthFilter, setOutlineDepthFilter] = useState<OutlineDepthFilter>("all");
   const [outlineActiveOnly, setOutlineActiveOnly] = useState(false);
@@ -2103,6 +2235,7 @@ function Workspace({
   const [revisionDiffDepth, setRevisionDiffDepth] = useState<RevisionDiffDepth>(() => readRevisionDiffDepthPreference());
   const [revisionRestoreGuard, setRevisionRestoreGuard] = useState<RevisionRestoreGuard>(() => readRevisionRestoreGuardPreference());
   const [revisionTimelineLens, setRevisionTimelineLens] = useState<RevisionTimelineLens>(() => readRevisionTimelineLensPreference());
+  const [revisionReviewLaneId, setRevisionReviewLaneId] = useState<RevisionReviewLaneId>(() => readRevisionReviewLanePreference());
   const [pendingRestoreSnapshotId, setPendingRestoreSnapshotId] = useState<string | null>(null);
   const [textColorRgba, setTextColorRgba] = useState<RgbaValue>(DEFAULT_TEXT_RGBA);
   const [highlightRgba, setHighlightRgba] = useState<RgbaValue>(DEFAULT_HIGHLIGHT_RGBA);
@@ -2117,6 +2250,7 @@ function Workspace({
   const [tableMarginRightPx, setTableMarginRightPx] = useState(0);
   const [tableMarginBottomPx, setTableMarginBottomPx] = useState(12);
   const [tableMarginLeftPx, setTableMarginLeftPx] = useState(0);
+  const [copiedTableCellFormat, setCopiedTableCellFormat] = useState<TableCellFormat | null>(null);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
   const [lineHeightNumberDraft, setLineHeightNumberDraft] = useState("1.8");
@@ -2476,8 +2610,10 @@ function Workspace({
       openRevisions: () => setRightRailOpen(true),
       insertChunk: (templateId) => insertStructuredChunk(templateId),
       insertRawChunk: () => insertRawChunk(),
+      copyTableCellFormat: () => copyTableCellFormat(),
+      pasteTableCellFormat: () => pasteTableCellFormat(),
     });
-  }, [editor, title, accent]);
+  }, [editor, title, accent, copiedTableCellFormat]);
 
   useEffect(() => {
     if (!editor) {
@@ -2656,6 +2792,10 @@ function Workspace({
   }, [guidanceLevel]);
 
   useEffect(() => {
+    writeGlobalGuidanceSyncPreference(globalGuidanceSync);
+  }, [globalGuidanceSync]);
+
+  useEffect(() => {
     writeEditorHudPreference(showEditorHud);
   }, [showEditorHud]);
 
@@ -2788,6 +2928,10 @@ function Workspace({
   }, [revisionTimelineLens]);
 
   useEffect(() => {
+    writeRevisionReviewLanePreference(revisionReviewLaneId);
+  }, [revisionReviewLaneId]);
+
+  useEffect(() => {
     setPendingRestoreSnapshotId(null);
   }, [revisionFilter, revisionTimelineLens, revisionDiffFocus]);
 
@@ -2802,6 +2946,14 @@ function Workspace({
   useEffect(() => {
     writeFindPreviewLimitPreference(findPreviewLimit);
   }, [findPreviewLimit]);
+
+  useEffect(() => {
+    writeFindGuardPreference(findGuardPresetId);
+  }, [findGuardPresetId]);
+
+  useEffect(() => {
+    setFindBulkReplaceArmed(false);
+  }, [findQuery, replaceValue, findCaseSensitive, findWholeWord, findStrategyId, replaceTransform, findGuardPresetId]);
 
   useEffect(() => {
     writeRecentFindQueriesPreference(recentFindQueries);
@@ -3050,6 +3202,8 @@ function Workspace({
   const parsedLetterSpacingDraft = parseLengthDraft(letterSpacingNumberDraft, letterSpacingUnitDraft, true);
   const selectedGuidanceOption =
     GUIDANCE_OPTIONS.find((option) => option.value === guidanceLevel) ?? GUIDANCE_OPTIONS[1];
+  const selectedGlobalGuidanceSync =
+    GLOBAL_GUIDANCE_SYNC_OPTIONS.find((option) => option.value === globalGuidanceSync) ?? GLOBAL_GUIDANCE_SYNC_OPTIONS[1];
   const selectedDensityOption =
     DENSITY_OPTIONS.find((option) => option.value === interfaceDensity) ?? DENSITY_OPTIONS[1];
   const selectedWorkflowTrack =
@@ -3106,6 +3260,8 @@ function Workspace({
     REVISION_RESTORE_GUARD_OPTIONS.find((option) => option.value === revisionRestoreGuard) ?? REVISION_RESTORE_GUARD_OPTIONS[1];
   const selectedRevisionTimelineLens =
     REVISION_TIMELINE_LENS_OPTIONS.find((option) => option.value === revisionTimelineLens) ?? REVISION_TIMELINE_LENS_OPTIONS[0];
+  const selectedRevisionReviewLane =
+    REVISION_REVIEW_LANE_OPTIONS.find((option) => option.id === revisionReviewLaneId) ?? REVISION_REVIEW_LANE_OPTIONS[1];
   const selectedStyleRecipe = STYLE_RECIPES.find((recipe) => recipe.id === styleRecipeId) ?? STYLE_RECIPES[0];
   const selectedStylePersona = STYLE_PERSONA_OPTIONS.find((persona) => persona.id === stylePersonaId) ?? STYLE_PERSONA_OPTIONS[0];
   const selectedStyleReadabilityTarget =
@@ -3118,6 +3274,7 @@ function Workspace({
     FIND_COACH_MODE_OPTIONS.find((option) => option.value === findCoachMode) ?? FIND_COACH_MODE_OPTIONS[1];
   const selectedFindMissionPreset =
     FIND_MISSION_PRESETS.find((preset) => preset.id === findMissionPresetId) ?? FIND_MISSION_PRESETS[1];
+  const selectedFindGuard = FIND_GUARD_OPTIONS.find((option) => option.id === findGuardPresetId) ?? FIND_GUARD_OPTIONS[1];
   const selectedChunkIntentProfile =
     CHUNK_INTENT_PROFILES.find((profile) => profile.id === chunkIntentProfileId) ?? CHUNK_INTENT_PROFILES[1];
   const selectedChunkDeliveryMode =
@@ -3231,6 +3388,19 @@ function Workspace({
       : findMissionAlignmentScore >= 55
         ? "Mission partly aligned: apply mission to lock guardrails before replacing."
         : "Mission drifted: apply mission first, then run match previews.";
+  const findGuardAlignmentScore = clampPercent(
+    (findStrategyId === selectedFindGuard.strategy ? 34 : 0) +
+      (findCoachMode === selectedFindGuard.coach ? 33 : 0) +
+      (findPreviewLimit === selectedFindGuard.previewLimit ? 33 : 0),
+  );
+  const findBulkConfirmRequired =
+    findGuardPresetId === "steady-review" || (findGuardPresetId === "balanced-batch" && findRiskLevel !== "low");
+  const findGuardTip =
+    findGuardAlignmentScore >= 85
+      ? "Guard lane aligned: bulk replace behavior matches your review depth."
+      : findGuardAlignmentScore >= 55
+        ? "Guard lane partly aligned: apply guard lane before a bulk pass."
+        : "Guard lane drifted: re-apply lane to restore predictable bulk replacement safety.";
   const findPreviewStartIndex = matches.length
     ? Math.max(0, Math.min(matches.length - findPreviewLimit, activeMatchIndex - Math.floor(findPreviewLimit / 2)))
     : 0;
@@ -3435,6 +3605,25 @@ function Workspace({
       (minimapStrategyId === selectedWorkspaceIntent.minimapStrategy ? 15 : 0) +
       (sessionTempoPresetId === selectedWorkspaceIntent.sessionTempo ? 15 : 0),
   );
+  const globalGuidanceAlignmentScore = clampPercent(
+    (guidanceLevel === selectedGlobalGuidanceSync.value ? 34 : 0) +
+      (findGuardPresetId === selectedGlobalGuidanceSync.findGuard ? 33 : 0) +
+      (revisionReviewLaneId === selectedGlobalGuidanceSync.revisionLane ? 33 : 0),
+  );
+  const revisionReviewLaneAlignmentScore = clampPercent(
+    (revisionStrategyId === selectedRevisionReviewLane.strategy ? 16 : 0) +
+      (revisionFilter === selectedRevisionReviewLane.filter ? 17 : 0) +
+      (revisionDiffFocus === selectedRevisionReviewLane.focus ? 17 : 0) +
+      (revisionDiffDepth === selectedRevisionReviewLane.depth ? 17 : 0) +
+      (revisionTimelineLens === selectedRevisionReviewLane.timeline ? 16 : 0) +
+      (revisionRestoreGuard === selectedRevisionReviewLane.guard ? 17 : 0),
+  );
+  const revisionReviewLaneTip =
+    revisionReviewLaneAlignmentScore >= 85
+      ? "Review lane aligned: timeline, focus, and restore guard are synchronized."
+      : revisionReviewLaneAlignmentScore >= 55
+        ? "Review lane partly aligned: apply lane before major restore decisions."
+        : "Review lane drifted: apply lane to stabilize revision checks and restore behavior.";
   const chunkDeliveryScore = clampPercent(
     (chunkIntentProfileId === selectedChunkDeliveryMode.intentProfileId ? 34 : 0) +
       (chunkBuilderLayout === selectedChunkDeliveryMode.layout ? 33 : 0) +
@@ -4036,6 +4225,33 @@ function Workspace({
     updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
   }
 
+  function copyTableCellFormat() {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    const readOptionalColor = (value: unknown) => (typeof value === "string" && value.trim().length > 0 ? value : null);
+    const tableCellAttrs = activeEditor.getAttributes("tableCell");
+    const tableHeaderAttrs = activeEditor.getAttributes("tableHeader");
+    setCopiedTableCellFormat({
+      backgroundColor: readOptionalColor(tableCellAttrs.backgroundColor) ?? readOptionalColor(tableHeaderAttrs.backgroundColor),
+      borderColor: readOptionalColor(tableCellAttrs.borderColor) ?? readOptionalColor(tableHeaderAttrs.borderColor),
+    });
+  }
+
+  function pasteTableCellFormat() {
+    if (!activeEditor.isActive("table") || !copiedTableCellFormat) {
+      return;
+    }
+
+    activeEditor
+      .chain()
+      .focus()
+      .setCellAttribute("backgroundColor", copiedTableCellFormat.backgroundColor)
+      .setCellAttribute("borderColor", copiedTableCellFormat.borderColor)
+      .run();
+  }
+
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
     activeEditor.chain().focus().setTextAlign(alignment).run();
   }
@@ -4511,6 +4727,17 @@ function Workspace({
     applyStyleLane(preset.lane);
   }
 
+  function applyGlobalGuidanceSync(nextGuidance: GuidanceLevel = globalGuidanceSync) {
+    const syncProfile = GLOBAL_GUIDANCE_SYNC_OPTIONS.find((option) => option.value === nextGuidance);
+    if (!syncProfile) {
+      return;
+    }
+    setGlobalGuidanceSync(syncProfile.value);
+    setGuidanceLevel(syncProfile.value);
+    applyFindGuardPreset(syncProfile.findGuard);
+    applyRevisionReviewLane(syncProfile.revisionLane);
+  }
+
   function applyFindStrategy(nextStrategy: FindStrategyId = findStrategyId) {
     const strategy = FIND_STRATEGY_OPTIONS.find((option) => option.id === nextStrategy);
     if (!strategy) {
@@ -4535,6 +4762,26 @@ function Workspace({
     setFindCaseSensitive(preset.caseSensitive);
     setFindWholeWord(preset.wholeWord);
     setReplaceTransform(preset.replaceTransform);
+  }
+
+  function applyFindGuardPreset(nextPreset: FindGuardPresetId = findGuardPresetId) {
+    const preset = FIND_GUARD_OPTIONS.find((option) => option.id === nextPreset);
+    if (!preset) {
+      return;
+    }
+    setFindGuardPresetId(preset.id);
+    setFindCoachMode(preset.coach);
+    setFindPreviewLimit(preset.previewLimit);
+    applyFindStrategy(preset.strategy);
+  }
+
+  function handleReplaceEveryMatch() {
+    if (findBulkConfirmRequired && !findBulkReplaceArmed) {
+      setFindBulkReplaceArmed(true);
+      return;
+    }
+    replaceEveryMatch();
+    setFindBulkReplaceArmed(false);
   }
 
   function applyWorkspaceLayoutPreset(nextPreset: WorkspaceLayoutPreset = workspaceLayoutPreset) {
@@ -4958,6 +5205,22 @@ function Workspace({
     setRevisionFilter(strategy.filter);
     setRevisionDiffFocus(strategy.focus);
     setRevisionDiffDepth(strategy.depth);
+    setPendingRestoreSnapshotId(null);
+    setRightRailOpen(true);
+  }
+
+  function applyRevisionReviewLane(nextLane: RevisionReviewLaneId = revisionReviewLaneId) {
+    const lane = REVISION_REVIEW_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setRevisionReviewLaneId(lane.id);
+    setRevisionStrategyId(lane.strategy);
+    setRevisionFilter(lane.filter);
+    setRevisionDiffFocus(lane.focus);
+    setRevisionDiffDepth(lane.depth);
+    setRevisionTimelineLens(lane.timeline);
+    setRevisionRestoreGuard(lane.guard);
     setPendingRestoreSnapshotId(null);
     setRightRailOpen(true);
   }
@@ -5486,6 +5749,28 @@ function Workspace({
               ))}
             </select>
           </label>
+          <label className="theme-selector guidance-selector" htmlFor="guidance-sync-selector">
+            <span>Guidance</span>
+            <select
+              id="guidance-sync-selector"
+              value={globalGuidanceSync}
+              aria-label="Global guidance sync"
+              title={selectedGlobalGuidanceSync.summary}
+              onChange={(event) => setGlobalGuidanceSync(event.target.value as GuidanceLevel)}
+            >
+              {GLOBAL_GUIDANCE_SYNC_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="ghost-action" type="button" onClick={() => applyGlobalGuidanceSync()}>
+            Apply guidance sync
+          </button>
+          <span className="meta-pill guidance-sync-pill" title={selectedGlobalGuidanceSync.tip}>
+            Guidance sync {globalGuidanceAlignmentScore}%
+          </span>
           <label className="theme-selector" htmlFor="view-mode-selector">
             <span>View</span>
             <select
@@ -7962,6 +8247,15 @@ function Workspace({
                   </ToolbarInput>
                   <ToolbarButton label="Row+" active={false} disabled={!activeEditor.can().addRowAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())} />
                   <ToolbarButton label="Col+" active={false} disabled={!activeEditor.can().addColumnAfter()} onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())} />
+                  <ToolbarButton label="Row-" active={false} disabled={!activeEditor.can().deleteRow()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())} />
+                  <ToolbarButton label="Col-" active={false} disabled={!activeEditor.can().deleteColumn()} onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())} />
+                  <ToolbarButton label="Copy fmt" active={false} disabled={!activeEditor.isActive("table")} onClick={() => handleToolbar(copyTableCellFormat)} />
+                  <ToolbarButton
+                    label="Paste fmt"
+                    active={false}
+                    disabled={!activeEditor.isActive("table") || !copiedTableCellFormat}
+                    onClick={() => handleToolbar(pasteTableCellFormat)}
+                  />
                   <ToolbarButton
                     label="Merge/Split"
                     active={false}
@@ -8436,7 +8730,35 @@ function Workspace({
                     ))}
                   </select>
                 </label>
+                <label className="style-control">
+                  <span>Replace guard</span>
+                  <select
+                    value={findGuardPresetId}
+                    title={selectedFindGuard.summary}
+                    onChange={(event) => setFindGuardPresetId(event.target.value as FindGuardPresetId)}
+                  >
+                    {FIND_GUARD_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="compact-grid">
+                  {FIND_GUARD_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`chip ${findGuardPresetId === option.id ? "active" : ""}`}
+                      type="button"
+                      aria-pressed={findGuardPresetId === option.id}
+                      onClick={() => setFindGuardPresetId(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                  <button className="chip" type="button" onClick={() => applyFindGuardPreset()}>
+                    Apply guard lane
+                  </button>
                   <button
                     className={`chip ${findCaseSensitive ? "active" : ""}`}
                     type="button"
@@ -8460,6 +8782,27 @@ function Workspace({
                     Seed from selection
                   </button>
                 </div>
+                <article className="find-guard-card">
+                  <div className="meter-head">
+                    <span>{selectedFindGuard.label} alignment</span>
+                    <span>{findGuardAlignmentScore}%</span>
+                  </div>
+                  <div className="meter">
+                    <span style={{ width: `${findGuardAlignmentScore}%` }}></span>
+                  </div>
+                  <p className="small-copy">{selectedFindGuard.summary}</p>
+                  <p className="small-copy">
+                    Bulk replace:{" "}
+                    {findBulkConfirmRequired
+                      ? findBulkReplaceArmed
+                        ? "Confirmation armed. Click Replace all again to execute."
+                        : "Confirmation required before Replace all executes."
+                      : "Single-click Replace all is enabled for this guard lane."}
+                  </p>
+                  <p className="small-copy">
+                    Tip: {selectedFindGuard.tip} {findGuardTip}
+                  </p>
+                </article>
               </div>
               <input value={findQuery} onChange={(event) => setFindQuery(event.target.value)} placeholder="Find text" />
               <input value={replaceValue} onChange={(event) => setReplaceValue(event.target.value)} placeholder="Replace with" />
@@ -8490,8 +8833,8 @@ function Workspace({
                 <button type="button" onClick={replaceActiveMatch}>
                   Replace
                 </button>
-                <button type="button" onClick={replaceEveryMatch}>
-                  Replace all
+                <button type="button" onClick={handleReplaceEveryMatch}>
+                  {findBulkConfirmRequired && findBulkReplaceArmed ? "Confirm replace all" : "Replace all"}
                 </button>
               </div>
               {findPreviewMatches.length ? (
@@ -8806,6 +9149,50 @@ function Workspace({
                 </button>
               </div>
               <p className="small-copy">{selectedRevisionStrategy.summary}</p>
+            </div>
+            <div className="revision-review-lane-group">
+              <label className="style-control">
+                <span>Review lane</span>
+                <select
+                  value={revisionReviewLaneId}
+                  title={selectedRevisionReviewLane.summary}
+                  onChange={(event) => setRevisionReviewLaneId(event.target.value as RevisionReviewLaneId)}
+                >
+                  {REVISION_REVIEW_LANE_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {REVISION_REVIEW_LANE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${revisionReviewLaneId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={revisionReviewLaneId === option.id}
+                    onClick={() => setRevisionReviewLaneId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyRevisionReviewLane()}>
+                  Apply review lane
+                </button>
+              </div>
+              <article className="revision-review-lane-card">
+                <div className="meter-head">
+                  <span>{selectedRevisionReviewLane.label} alignment</span>
+                  <span>{revisionReviewLaneAlignmentScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${revisionReviewLaneAlignmentScore}%` }}></span>
+                </div>
+                <p className="small-copy">{selectedRevisionReviewLane.summary}</p>
+                <p className="small-copy">{revisionReviewLaneTip}</p>
+                <p className="small-copy">Tip: {selectedRevisionReviewLane.tip}</p>
+              </article>
             </div>
             <div className="revision-structured-controls">
               <label className="style-control">
@@ -9136,8 +9523,8 @@ function Workspace({
               <button type="button" onClick={replaceActiveMatch}>
                 Replace
               </button>
-              <button type="button" onClick={replaceEveryMatch}>
-                Replace all
+              <button type="button" onClick={handleReplaceEveryMatch}>
+                {findBulkConfirmRequired && findBulkReplaceArmed ? "Confirm replace all" : "Replace all"}
               </button>
             </div>
             <p className="small-copy">
@@ -9905,6 +10292,8 @@ function buildCommands(
     insertFootnote: () => void;
     insertChunk: (templateId: string) => void;
     insertRawChunk: () => void;
+    copyTableCellFormat: () => void;
+    pasteTableCellFormat: () => void;
     copyMarkdown: () => Promise<void>;
     exportHtml: () => void;
     openRevisions: () => void;
@@ -10060,6 +10449,38 @@ function buildCommands(
       group: "insert",
       surface: "palette",
       run: () => editor.chain().focus().addColumnAfter().run(),
+    },
+    {
+      id: "table-delete-row",
+      label: "Table row delete",
+      description: "Delete the row containing the active table cell.",
+      group: "insert",
+      surface: "palette",
+      run: () => editor.chain().focus().deleteRow().run(),
+    },
+    {
+      id: "table-delete-column",
+      label: "Table column delete",
+      description: "Delete the column containing the active table cell.",
+      group: "insert",
+      surface: "palette",
+      run: () => editor.chain().focus().deleteColumn().run(),
+    },
+    {
+      id: "table-copy-format",
+      label: "Table copy format",
+      description: "Copy background and grid formatting from the active table cell.",
+      group: "format",
+      surface: "palette",
+      run: actions.copyTableCellFormat,
+    },
+    {
+      id: "table-paste-format",
+      label: "Table paste format",
+      description: "Paste copied formatting into the active table cell.",
+      group: "format",
+      surface: "palette",
+      run: actions.pasteTableCellFormat,
     },
     {
       id: "table-merge-split",
@@ -11187,6 +11608,26 @@ function writeGuidancePreference(value: GuidanceLevel) {
   }
 }
 
+function readGlobalGuidanceSyncPreference(): GuidanceLevel {
+  try {
+    const raw = localStorage.getItem(GLOBAL_GUIDANCE_SYNC_PREFS_KEY);
+    if (raw === "guided" || raw === "balanced" || raw === "expert") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced";
+}
+
+function writeGlobalGuidanceSyncPreference(value: GuidanceLevel) {
+  try {
+    localStorage.setItem(GLOBAL_GUIDANCE_SYNC_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readDensityPreference(): InterfaceDensity {
   try {
     const raw = localStorage.getItem(DENSITY_PREFS_KEY);
@@ -11828,6 +12269,26 @@ function writeRevisionTimelineLensPreference(value: RevisionTimelineLens) {
   }
 }
 
+function readRevisionReviewLanePreference(): RevisionReviewLaneId {
+  try {
+    const raw = localStorage.getItem(REVISION_REVIEW_LANE_PREFS_KEY);
+    if (raw === "rapid-verify" || raw === "balanced-qa" || raw === "handoff-audit") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced-qa";
+}
+
+function writeRevisionReviewLanePreference(value: RevisionReviewLaneId) {
+  try {
+    localStorage.setItem(REVISION_REVIEW_LANE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readFindStrategyPreference(): FindStrategyId {
   try {
     const raw = localStorage.getItem(FIND_STRATEGY_PREFS_KEY);
@@ -11883,6 +12344,26 @@ function readFindPreviewLimitPreference(): FindPreviewLimit {
 function writeFindPreviewLimitPreference(value: FindPreviewLimit) {
   try {
     localStorage.setItem(FIND_PREVIEW_LIMIT_PREFS_KEY, String(value));
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readFindGuardPreference(): FindGuardPresetId {
+  try {
+    const raw = localStorage.getItem(FIND_GUARD_PREFS_KEY);
+    if (raw === "steady-review" || raw === "balanced-batch" || raw === "quick-ship") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "balanced-batch";
+}
+
+function writeFindGuardPreference(value: FindGuardPresetId) {
+  try {
+    localStorage.setItem(FIND_GUARD_PREFS_KEY, value);
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
