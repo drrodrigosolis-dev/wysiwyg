@@ -14,6 +14,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 
+import { BorderRadius } from "./BorderRadius";
 import { CalloutNode } from "./CalloutNode";
 import { FontFamily } from "./FontFamily";
 import { FontSize } from "./FontSize";
@@ -78,6 +79,18 @@ const StyledTable = Table.extend({
       styleParts.push("--table-layout-mode: auto");
       styleParts.push("--table-cell-fixed-width: auto");
       styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    }
+
+    const cellWrapMode = resolveTableWrapMode(node.attrs.cellWrapMode, "auto");
+    tableAttrs["data-cell-wrap-mode"] = cellWrapMode;
+    if (cellWrapMode === "wrap") {
+      styleParts.push("--table-cell-overflow-wrap: anywhere");
+      styleParts.push("--table-cell-word-break: break-word");
+      styleParts.push("--table-cell-white-space: normal");
+    } else {
+      styleParts.push("--table-cell-overflow-wrap: normal");
+      styleParts.push("--table-cell-word-break: normal");
+      styleParts.push("--table-cell-white-space: normal");
     }
 
     const legacyCellPadding = normalizeTableSpace(node.attrs.cellPaddingPx);
@@ -231,6 +244,15 @@ const StyledTable = Table.extend({
         parseHTML: () => 3,
         renderHTML: () => ({}),
       },
+      cellWrapMode: {
+        default: "auto",
+        parseHTML: (element) =>
+          resolveTableWrapMode(
+            element.getAttribute("data-cell-wrap-mode") ?? element.style.getPropertyValue("--table-cell-wrap-mode"),
+            "auto",
+          ),
+        renderHTML: () => ({}),
+      },
     };
   },
 });
@@ -258,6 +280,10 @@ function normalizeTableWidthUnits(value: unknown, fallback: number) {
     return fallback;
   }
   return Math.max(1, Math.min(12, Math.round(numeric)));
+}
+
+function resolveTableWrapMode(value: unknown, fallback: "auto" | "wrap") {
+  return value === "wrap" || value === "auto" ? value : fallback;
 }
 
 const StyledTableCell = TableCell.extend({
@@ -361,6 +387,20 @@ const StyledTableCell = TableCell.extend({
         renderHTML: (attributes) => ({
           "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
         }),
+      },
+      wrapMode: {
+        default: "auto",
+        parseHTML: (element) => resolveTableWrapMode(element.getAttribute("data-wrap-mode"), "auto"),
+        renderHTML: (attributes) =>
+          resolveTableWrapMode(attributes.wrapMode, "auto") === "wrap"
+            ? {
+                "data-wrap-mode": "wrap",
+                style: "--cell-overflow-wrap: anywhere; --cell-word-break: break-word; --cell-white-space: normal;",
+              }
+            : {
+                "data-wrap-mode": "auto",
+                style: "--cell-overflow-wrap: normal; --cell-word-break: normal; --cell-white-space: normal;",
+              },
       },
     };
   },
@@ -468,6 +508,20 @@ const StyledTableHeader = TableHeader.extend({
           "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
         }),
       },
+      wrapMode: {
+        default: "auto",
+        parseHTML: (element) => resolveTableWrapMode(element.getAttribute("data-wrap-mode"), "auto"),
+        renderHTML: (attributes) =>
+          resolveTableWrapMode(attributes.wrapMode, "auto") === "wrap"
+            ? {
+                "data-wrap-mode": "wrap",
+                style: "--cell-overflow-wrap: anywhere; --cell-word-break: break-word; --cell-white-space: normal;",
+              }
+            : {
+                "data-wrap-mode": "auto",
+                style: "--cell-overflow-wrap: normal; --cell-word-break: normal; --cell-white-space: normal;",
+              },
+      },
     };
   },
 });
@@ -506,6 +560,7 @@ export function buildEditorExtensions() {
     TextAlign.configure({
       types: ["heading", "paragraph"],
     }),
+    BorderRadius,
     LineHeight,
     TaskList,
     TaskItem.configure({

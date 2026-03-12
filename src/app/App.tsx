@@ -295,6 +295,7 @@ type TableCellFormat = {
 };
 type TableFormatScope = "cell" | "table";
 type TableWidthMode = "flex" | "fixed";
+type TableWrapMode = "auto" | "wrap";
 type BorderRadiusTargetNode =
   | "callout"
   | "interactiveChunk"
@@ -2444,6 +2445,8 @@ function Workspace({
   const [tableFormatScope, setTableFormatScope] = useState<TableFormatScope>("cell");
   const [tableWidthMode, setTableWidthMode] = useState<TableWidthMode>("flex");
   const [tableWidthUnits, setTableWidthUnits] = useState(3);
+  const [tableWrapMode, setTableWrapMode] = useState<TableWrapMode>("auto");
+  const [elementRoundnessDraftPx, setElementRoundnessDraftPx] = useState(0);
   const [copiedFormatSnapshot, setCopiedFormatSnapshot] = useState<CopiedFormatSnapshot | null>(null);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
@@ -3350,8 +3353,10 @@ function Workspace({
   );
   const currentCellWidthMode = resolveTableWidthMode(currentTableCellAttrs.widthMode, "flex");
   const currentCellWidthUnits = resolveTableWidthUnits(currentTableCellAttrs.widthUnits, 3);
+  const currentCellWrapMode = resolveTableWrapMode(currentTableCellAttrs.wrapMode ?? currentTableHeaderAttrs.wrapMode, "auto");
   const currentTableWidthMode = resolveTableWidthMode(activeTableNode?.node?.attrs?.columnWidthMode, "flex");
   const currentTableWidthUnits = resolveTableWidthUnits(activeTableNode?.node?.attrs?.columnWidthUnits, 3);
+  const currentTableWrapMode = resolveTableWrapMode(activeTableNode?.node?.attrs?.cellWrapMode, "auto");
   const currentTableBorderRadiusPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.borderRadiusPx, 0);
   const currentCellBorderRadiusPx = coerceTableSpaceValue(
     currentTableCellAttrs.borderRadiusPx ?? currentTableHeaderAttrs.borderRadiusPx,
@@ -3437,6 +3442,14 @@ function Workspace({
     setTableWidthMode(tableFormatScope === "cell" ? currentCellWidthMode : currentTableWidthMode);
     setTableWidthUnits(tableFormatScope === "cell" ? currentCellWidthUnits : currentTableWidthUnits);
   }, [currentCellWidthMode, currentCellWidthUnits, currentTableWidthMode, currentTableWidthUnits, tableFormatScope]);
+
+  useEffect(() => {
+    setTableWrapMode(tableFormatScope === "cell" ? currentCellWrapMode : currentTableWrapMode);
+  }, [currentCellWrapMode, currentTableWrapMode, tableFormatScope]);
+
+  useEffect(() => {
+    setElementRoundnessDraftPx(currentElementRoundnessPx);
+  }, [currentElementRoundnessPx, activeBorderRadiusTarget, tableFormatScope]);
 
   useEffect(() => {
     const parsed = parseLengthValue(currentFontSize, "16", "px");
@@ -4586,6 +4599,18 @@ function Workspace({
       .run();
   }
 
+  function applyTableTextWrap(mode: TableWrapMode, scope: TableFormatScope = tableFormatScope) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+    const nextMode = resolveTableWrapMode(mode, "auto");
+    if (scope === "table") {
+      updateActiveTableAttributes(activeEditor, { cellWrapMode: nextMode });
+      return;
+    }
+    activeEditor.chain().focus().setCellAttribute("wrapMode", nextMode).run();
+  }
+
   function copySelectionFormat() {
     const readOptionalString = (value: unknown) => (typeof value === "string" && value.trim().length > 0 ? value : null);
     const readAlignment = (value: unknown) =>
@@ -4871,6 +4896,7 @@ function Workspace({
   }
 
   function applyElementRoundness(value: number | null, scope: TableFormatScope = tableFormatScope) {
+    activeEditor.chain().focus().run();
     const target = resolveActiveBorderRadiusTarget(activeEditor, scope);
     if (!target) {
       return;
@@ -8287,14 +8313,19 @@ function Workspace({
                   min="0"
                   max={String(MAX_ELEMENT_ROUNDNESS_PX)}
                   step="1"
-                  value={String(currentElementRoundnessPx)}
+                  value={String(elementRoundnessDraftPx)}
                   disabled={!canEditElementRoundness}
+                  onFocus={() => {
+                    activeEditor.chain().focus().run();
+                  }}
                   onChange={(event) => {
                     const parsed = Number.parseFloat(event.target.value);
                     if (!Number.isFinite(parsed)) {
                       return;
                     }
-                    applyElementRoundness(parsed, tableFormatScope);
+                    const nextValue = Math.min(MAX_ELEMENT_ROUNDNESS_PX, coerceTableSpaceValue(parsed, 0));
+                    setElementRoundnessDraftPx(nextValue);
+                    applyElementRoundness(nextValue, tableFormatScope);
                   }}
                 />
               </ToolbarInput>
@@ -8303,7 +8334,12 @@ function Workspace({
                 icon="◻"
                 active={false}
                 disabled={!canEditElementRoundness}
-                onClick={() => handleToolbar(() => applyElementRoundness(null, tableFormatScope))}
+                onClick={() =>
+                  handleToolbar(() => {
+                    setElementRoundnessDraftPx(0);
+                    applyElementRoundness(null, tableFormatScope);
+                  })
+                }
               />
               <ToolbarSelect
                 label="Insert icon"
@@ -8673,6 +8709,19 @@ function Workspace({
                         applyTableCellWidth(tableWidthMode, nextUnits, tableFormatScope);
                       }}
                     />
+                  </ToolbarInput>
+                  <ToolbarInput label="Text wrap">
+                    <select
+                      value={tableWrapMode}
+                      onChange={(event) => {
+                        const nextMode = resolveTableWrapMode(event.target.value, "auto");
+                        setTableWrapMode(nextMode);
+                        applyTableTextWrap(nextMode, tableFormatScope);
+                      }}
+                    >
+                      <option value="auto">Auto width</option>
+                      <option value="wrap">Wrap to cell</option>
+                    </select>
                   </ToolbarInput>
                   <ToolbarButton
                     label="Add row"
@@ -11523,6 +11572,17 @@ function buildTableStyleAttribute(attrs: Record<string, unknown>) {
     parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
   }
 
+  const cellWrapMode = resolveTableWrapMode(attrs.cellWrapMode, "auto");
+  if (cellWrapMode === "wrap") {
+    parts.push("--table-cell-overflow-wrap: anywhere");
+    parts.push("--table-cell-word-break: break-word");
+    parts.push("--table-cell-white-space: normal");
+  } else {
+    parts.push("--table-cell-overflow-wrap: normal");
+    parts.push("--table-cell-word-break: normal");
+    parts.push("--table-cell-white-space: normal");
+  }
+
   const legacyPadding = resolveOptionalTableSpace(attrs.cellPaddingPx);
   const paddingTop = resolveOptionalTableSpace(attrs.cellPaddingTopPx) ?? legacyPadding;
   const paddingRight = resolveOptionalTableSpace(attrs.cellPaddingRightPx) ?? legacyPadding;
@@ -11580,6 +11640,10 @@ function resolveTableWidthUnits(value: unknown, fallback: number) {
     return fallback;
   }
   return Math.max(1, Math.min(12, Math.round(numeric)));
+}
+
+function resolveTableWrapMode(value: unknown, fallback: TableWrapMode): TableWrapMode {
+  return value === "wrap" || value === "auto" ? value : fallback;
 }
 
 function replaceEditorDocument(editor: Editor, content: JSONContent) {
@@ -11695,6 +11759,9 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
         padding-left: calc(var(--cell-padding-left, var(--table-cell-padding-left)) + var(--cell-margin-left, 0px));
         width: var(--cell-fixed-width, var(--table-cell-fixed-width, auto));
         min-width: var(--cell-min-width, var(--table-cell-min-width, 0px));
+        overflow-wrap: var(--cell-overflow-wrap, var(--table-cell-overflow-wrap, normal));
+        word-break: var(--cell-word-break, var(--table-cell-word-break, normal));
+        white-space: var(--cell-white-space, var(--table-cell-white-space, normal));
         position: relative;
         overflow: hidden;
         background-clip: padding-box;
