@@ -699,9 +699,17 @@ select {
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  padding: 0.72rem 0.86rem;
+  border: 1px solid rgba(64, 44, 28, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 251, 246, 0.92);
+  backdrop-filter: blur(14px);
 }
 
 .title-stack {
@@ -1828,8 +1836,8 @@ select {
 
 .app-shell.focus-mode .editor-stage {
   width: 100%;
-  max-width: 76rem;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .focus-mode-banner {
@@ -1851,6 +1859,14 @@ select {
 .editor-footer {
   padding: 0.82rem 0.96rem;
   align-items: center;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: rgba(255, 251, 246, 0.94);
+  backdrop-filter: blur(12px);
 }
 
 .toolbar,
@@ -2175,15 +2191,22 @@ select {
   width: 100%;
   border-collapse: collapse;
   --table-grid-color: rgba(64, 44, 28, 0.12);
-  --table-cell-padding: 10px;
-  --table-margin-y: 12px;
-  margin: var(--table-margin-y) 0;
+  --table-cell-padding-top: 10px;
+  --table-cell-padding-right: 10px;
+  --table-cell-padding-bottom: 10px;
+  --table-cell-padding-left: 10px;
+  --table-margin-top: 12px;
+  --table-margin-right: 0px;
+  --table-margin-bottom: 12px;
+  --table-margin-left: 0px;
+  margin: var(--table-margin-top) var(--table-margin-right) var(--table-margin-bottom) var(--table-margin-left);
 }
 
 .velvet-prosemirror td,
 .velvet-prosemirror th {
   border: 1px solid var(--table-grid-color);
-  padding: var(--table-cell-padding);
+  padding: var(--table-cell-padding-top) var(--table-cell-padding-right) var(--table-cell-padding-bottom)
+    var(--table-cell-padding-left);
   position: relative;
 }
 
@@ -2632,6 +2655,15 @@ body[data-theme="dark"] .modal {
   border-color: rgba(224, 213, 198, 0.16);
   background: rgba(24, 33, 46, 0.84);
   box-shadow: 0 24px 60px rgba(4, 9, 16, 0.45);
+}
+
+body[data-theme="dark"] .topbar {
+  border-color: rgba(224, 213, 198, 0.18);
+  background: rgba(24, 33, 46, 0.9);
+}
+
+body[data-theme="dark"] .toolbar {
+  background: rgba(24, 33, 46, 0.92);
 }
 
 body[data-theme="dark"] .meta-pill,

@@ -77,6 +77,7 @@ const CHUNK_BUILDER_LAYOUT_PREFS_KEY = "velvet-ink/chunk-builder-layout/v1";
 const CHUNK_BUILDER_DENSITY_PREFS_KEY = "velvet-ink/chunk-builder-density/v1";
 const CHUNK_BUILDER_DENSITY_PROFILE_PREFS_KEY = "velvet-ink/chunk-builder-density-profile/v1";
 const GUIDANCE_PREFS_KEY = "velvet-ink/guidance/v1";
+const EDITOR_HUD_PREFS_KEY = "velvet-ink/editor-hud/v1";
 const DENSITY_PREFS_KEY = "velvet-ink/density/v1";
 const WORKFLOW_TRACK_PREFS_KEY = "velvet-ink/workflow-track/v1";
 const NAVIGATION_PROFILE_PREFS_KEY = "velvet-ink/navigation-profile/v1";
@@ -1928,6 +1929,7 @@ function Workspace({
   );
   const [viewportWidth, setViewportWidth] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
   const [guidanceLevel, setGuidanceLevel] = useState<GuidanceLevel>(() => readGuidancePreference());
+  const [showEditorHud, setShowEditorHud] = useState(() => readEditorHudPreference());
   const [interfaceDensity, setInterfaceDensity] = useState<InterfaceDensity>(() => readDensityPreference());
   const [workflowTrack, setWorkflowTrack] = useState<WorkflowTrack>(() => readWorkflowTrackPreference());
   const [navigationProfile, setNavigationProfile] = useState<NavigationProfile>(() => readNavigationProfilePreference());
@@ -2003,8 +2005,14 @@ function Workspace({
   const [blockBackgroundRgba, setBlockBackgroundRgba] = useState<RgbaValue>(DEFAULT_BLOCK_RGBA);
   const [tableCellBackgroundRgba, setTableCellBackgroundRgba] = useState<RgbaValue>(DEFAULT_TABLE_CELL_RGBA);
   const [tableGridRgba, setTableGridRgba] = useState<RgbaValue>(DEFAULT_TABLE_GRID_RGBA);
-  const [tableCellPaddingPx, setTableCellPaddingPx] = useState(10);
-  const [tableMarginYPx, setTableMarginYPx] = useState(12);
+  const [tableCellPaddingTopPx, setTableCellPaddingTopPx] = useState(10);
+  const [tableCellPaddingRightPx, setTableCellPaddingRightPx] = useState(10);
+  const [tableCellPaddingBottomPx, setTableCellPaddingBottomPx] = useState(10);
+  const [tableCellPaddingLeftPx, setTableCellPaddingLeftPx] = useState(10);
+  const [tableMarginTopPx, setTableMarginTopPx] = useState(12);
+  const [tableMarginRightPx, setTableMarginRightPx] = useState(0);
+  const [tableMarginBottomPx, setTableMarginBottomPx] = useState(12);
+  const [tableMarginLeftPx, setTableMarginLeftPx] = useState(0);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
   const [lineHeightNumberDraft, setLineHeightNumberDraft] = useState("1.8");
@@ -2544,6 +2552,10 @@ function Workspace({
   }, [guidanceLevel]);
 
   useEffect(() => {
+    writeEditorHudPreference(showEditorHud);
+  }, [showEditorHud]);
+
+  useEffect(() => {
     writeDensityPreference(interfaceDensity);
   }, [interfaceDensity]);
 
@@ -2815,8 +2827,31 @@ function Workspace({
       "",
   );
   const activeTableNode = resolveActiveTableNode(editor);
-  const currentTableCellPaddingPx = Number(activeTableNode?.node?.attrs?.cellPaddingPx ?? 10);
-  const currentTableMarginYPx = Number(activeTableNode?.node?.attrs?.marginYPx ?? 12);
+  const legacyTableCellPaddingPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.cellPaddingPx, 10);
+  const currentTableCellPaddingTopPx = coerceTableSpaceValue(
+    activeTableNode?.node?.attrs?.cellPaddingTopPx,
+    legacyTableCellPaddingPx,
+  );
+  const currentTableCellPaddingRightPx = coerceTableSpaceValue(
+    activeTableNode?.node?.attrs?.cellPaddingRightPx,
+    legacyTableCellPaddingPx,
+  );
+  const currentTableCellPaddingBottomPx = coerceTableSpaceValue(
+    activeTableNode?.node?.attrs?.cellPaddingBottomPx,
+    legacyTableCellPaddingPx,
+  );
+  const currentTableCellPaddingLeftPx = coerceTableSpaceValue(
+    activeTableNode?.node?.attrs?.cellPaddingLeftPx,
+    legacyTableCellPaddingPx,
+  );
+  const legacyTableMarginYPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.marginYPx, 12);
+  const currentTableMarginTopPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.marginTopPx, legacyTableMarginYPx);
+  const currentTableMarginRightPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.marginRightPx, 0);
+  const currentTableMarginBottomPx = coerceTableSpaceValue(
+    activeTableNode?.node?.attrs?.marginBottomPx,
+    legacyTableMarginYPx,
+  );
+  const currentTableMarginLeftPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.marginLeftPx, 0);
   const currentAlignment = String(editor?.getAttributes("heading").textAlign ?? editor?.getAttributes("paragraph").textAlign ?? "left");
   const currentLineHeight = resolveLineHeight(editor);
   const currentCalloutTone = editor?.isActive("callout") ? String(editor.getAttributes("callout").tone ?? "note") : "none";
@@ -2847,18 +2882,36 @@ function Workspace({
   }, [currentTableGridColor]);
 
   useEffect(() => {
-    if (!Number.isFinite(currentTableCellPaddingPx)) {
-      return;
-    }
-    setTableCellPaddingPx(Math.max(0, Math.round(currentTableCellPaddingPx)));
-  }, [currentTableCellPaddingPx]);
+    setTableCellPaddingTopPx(currentTableCellPaddingTopPx);
+  }, [currentTableCellPaddingTopPx]);
 
   useEffect(() => {
-    if (!Number.isFinite(currentTableMarginYPx)) {
-      return;
-    }
-    setTableMarginYPx(Math.max(0, Math.round(currentTableMarginYPx)));
-  }, [currentTableMarginYPx]);
+    setTableCellPaddingRightPx(currentTableCellPaddingRightPx);
+  }, [currentTableCellPaddingRightPx]);
+
+  useEffect(() => {
+    setTableCellPaddingBottomPx(currentTableCellPaddingBottomPx);
+  }, [currentTableCellPaddingBottomPx]);
+
+  useEffect(() => {
+    setTableCellPaddingLeftPx(currentTableCellPaddingLeftPx);
+  }, [currentTableCellPaddingLeftPx]);
+
+  useEffect(() => {
+    setTableMarginTopPx(currentTableMarginTopPx);
+  }, [currentTableMarginTopPx]);
+
+  useEffect(() => {
+    setTableMarginRightPx(currentTableMarginRightPx);
+  }, [currentTableMarginRightPx]);
+
+  useEffect(() => {
+    setTableMarginBottomPx(currentTableMarginBottomPx);
+  }, [currentTableMarginBottomPx]);
+
+  useEffect(() => {
+    setTableMarginLeftPx(currentTableMarginLeftPx);
+  }, [currentTableMarginLeftPx]);
 
   useEffect(() => {
     const parsed = parseLengthValue(currentFontSize, "16", "px");
@@ -3538,6 +3591,33 @@ function Workspace({
     setSaveLabel(`Loaded "${entry.name}" from ${formatTime(entry.savedAt)}`);
   }
 
+  function deleteSavedDocumentEntry(entryId: string) {
+    if (!entryId) {
+      return;
+    }
+
+    const entry = savedDocuments.find((item) => item.id === entryId);
+    if (!entry) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete saved document "${entry.name}"? This cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setSavedDocuments((current) => {
+      const next = current.filter((item) => item.id !== entry.id);
+      writeSavedDocuments(next);
+      return next;
+    });
+
+    if (selectedSavedDocumentId === entry.id) {
+      setSelectedSavedDocumentId("");
+    }
+    setSaveLabel(`Deleted "${entry.name}"`);
+  }
+
   async function resetToBlankDocument() {
     const confirmed = window.confirm("Start a new blank document? This replaces current content.");
     if (!confirmed) {
@@ -3792,22 +3872,32 @@ function Workspace({
     updateActiveTableAttributes(activeEditor, { borderColor: color });
   }
 
-  function applyTableCellPadding(value: number) {
+  function applyTableCellPadding(side: "top" | "right" | "bottom" | "left", value: number) {
     if (!activeEditor.isActive("table")) {
       return;
     }
 
-    const nextValue = Math.max(0, Math.round(value));
-    updateActiveTableAttributes(activeEditor, { cellPaddingPx: nextValue });
+    const nextValue = coerceTableSpaceValue(value, 0);
+    const attributeName =
+      side === "top"
+        ? "cellPaddingTopPx"
+        : side === "right"
+          ? "cellPaddingRightPx"
+          : side === "bottom"
+            ? "cellPaddingBottomPx"
+            : "cellPaddingLeftPx";
+    updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
   }
 
-  function applyTableMarginY(value: number) {
+  function applyTableMargin(side: "top" | "right" | "bottom" | "left", value: number) {
     if (!activeEditor.isActive("table")) {
       return;
     }
 
-    const nextValue = Math.max(0, Math.round(value));
-    updateActiveTableAttributes(activeEditor, { marginYPx: nextValue });
+    const nextValue = coerceTableSpaceValue(value, 0);
+    const attributeName =
+      side === "top" ? "marginTopPx" : side === "right" ? "marginRightPx" : side === "bottom" ? "marginBottomPx" : "marginLeftPx";
+    updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
   }
 
   function applyAlignment(alignment: "left" | "center" | "right" | "justify") {
@@ -5280,6 +5370,14 @@ function Workspace({
           <button className="ghost-action" type="button" onClick={() => void saveCurrentDocumentEntry()}>
             Save
           </button>
+          <button
+            className="ghost-action"
+            type="button"
+            disabled={!selectedSavedDocumentId}
+            onClick={() => deleteSavedDocumentEntry(selectedSavedDocumentId)}
+          >
+            Delete saved
+          </button>
           <button className="ghost-action" type="button" onClick={() => void resetToBlankDocument()}>
             New blank
           </button>
@@ -5294,6 +5392,14 @@ function Workspace({
             onClick={() => setFocusMode((current) => !current)}
           >
             {focusMode ? "Exit focus" : "Focus"}
+          </button>
+          <button
+            className={`ghost-action ${showEditorHud ? "active" : ""}`}
+            type="button"
+            aria-pressed={showEditorHud}
+            onClick={() => setShowEditorHud((current) => !current)}
+          >
+            {showEditorHud ? "Hide HUD" : "Show HUD"}
           </button>
           <button
             className="ghost-action"
@@ -7484,39 +7590,147 @@ function Workspace({
                       }}
                     />
                   </ToolbarInput>
-                  <ToolbarInput label="Cell pad">
+                  <ToolbarInput label="Pad top">
                     <input
                       type="number"
                       min="0"
                       max="64"
                       step="1"
-                      value={String(tableCellPaddingPx)}
+                      value={String(tableCellPaddingTopPx)}
                       onChange={(event) => {
                         const parsed = Number.parseFloat(event.target.value);
                         if (!Number.isFinite(parsed)) {
                           return;
                         }
-                        const nextValue = Math.max(0, Math.round(parsed));
-                        setTableCellPaddingPx(nextValue);
-                        applyTableCellPadding(nextValue);
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableCellPaddingTopPx(nextValue);
+                        applyTableCellPadding("top", nextValue);
                       }}
                     />
                   </ToolbarInput>
-                  <ToolbarInput label="Tbl margin">
+                  <ToolbarInput label="Pad right">
+                    <input
+                      type="number"
+                      min="0"
+                      max="64"
+                      step="1"
+                      value={String(tableCellPaddingRightPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableCellPaddingRightPx(nextValue);
+                        applyTableCellPadding("right", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Pad bottom">
+                    <input
+                      type="number"
+                      min="0"
+                      max="64"
+                      step="1"
+                      value={String(tableCellPaddingBottomPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableCellPaddingBottomPx(nextValue);
+                        applyTableCellPadding("bottom", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Pad left">
+                    <input
+                      type="number"
+                      min="0"
+                      max="64"
+                      step="1"
+                      value={String(tableCellPaddingLeftPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableCellPaddingLeftPx(nextValue);
+                        applyTableCellPadding("left", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Margin top">
                     <input
                       type="number"
                       min="0"
                       max="80"
                       step="1"
-                      value={String(tableMarginYPx)}
+                      value={String(tableMarginTopPx)}
                       onChange={(event) => {
                         const parsed = Number.parseFloat(event.target.value);
                         if (!Number.isFinite(parsed)) {
                           return;
                         }
-                        const nextValue = Math.max(0, Math.round(parsed));
-                        setTableMarginYPx(nextValue);
-                        applyTableMarginY(nextValue);
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableMarginTopPx(nextValue);
+                        applyTableMargin("top", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Margin right">
+                    <input
+                      type="number"
+                      min="0"
+                      max="80"
+                      step="1"
+                      value={String(tableMarginRightPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableMarginRightPx(nextValue);
+                        applyTableMargin("right", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Margin bottom">
+                    <input
+                      type="number"
+                      min="0"
+                      max="80"
+                      step="1"
+                      value={String(tableMarginBottomPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableMarginBottomPx(nextValue);
+                        applyTableMargin("bottom", nextValue);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Margin left">
+                    <input
+                      type="number"
+                      min="0"
+                      max="80"
+                      step="1"
+                      value={String(tableMarginLeftPx)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextValue = coerceTableSpaceValue(parsed, 0);
+                        setTableMarginLeftPx(nextValue);
+                        applyTableMargin("left", nextValue);
                       }}
                     />
                   </ToolbarInput>
@@ -7553,53 +7767,55 @@ function Workspace({
               />
             </div>
 
-            <div className={`editor-hud editor-hud-${guidanceLevel}`}>
-              <span className="hud-pill">{selectedGuidanceOption.label} guidance</span>
-              <span className="hud-pill">{selectedWorkflowTrack.label} track</span>
-              <span className="hud-pill">{selectedNavigationProfile.label} navigation</span>
-              <span className="hud-pill">{selectedWorkspaceIntent.label} intent</span>
-              <span className="hud-pill">{selectedEditorCoach.label} coach</span>
-              <span className="hud-pill">{selectedLearningLane.label} lane</span>
-              <span className="hud-pill">{selectedSessionTempo.label} tempo</span>
-              <span>{selectedGuidanceOption.copy}</span>
-              <span>{selectedWorkflowTrack.copy}</span>
-              <span>{selectedNavigationProfile.copy}</span>
-              <span>{selectedWorkspaceIntent.summary}</span>
-              <span>{selectedEditorCoach.summary}</span>
-              <span>{selectedLearningLane.summary}</span>
-              <span>{selectedSessionTempo.summary}</span>
-              <span>Density: {selectedDensityOption.label}</span>
-              <span>Tempo alignment: {sessionTempoAlignmentScore}%</span>
-              <span>Workspace intent alignment: {workspaceIntentAlignmentScore}%</span>
-              <span>Press <kbd>/</kbd> on an empty line for block commands.</span>
-              <span>Cmd/Ctrl+K opens the command deck (or use the Command button).</span>
-              {guidanceLevel !== "expert" ? (
+            {showEditorHud ? (
+              <div className={`editor-hud editor-hud-${guidanceLevel}`}>
+                <span className="hud-pill">{selectedGuidanceOption.label} guidance</span>
+                <span className="hud-pill">{selectedWorkflowTrack.label} track</span>
+                <span className="hud-pill">{selectedNavigationProfile.label} navigation</span>
+                <span className="hud-pill">{selectedWorkspaceIntent.label} intent</span>
+                <span className="hud-pill">{selectedEditorCoach.label} coach</span>
+                <span className="hud-pill">{selectedLearningLane.label} lane</span>
+                <span className="hud-pill">{selectedSessionTempo.label} tempo</span>
+                <span>{selectedGuidanceOption.copy}</span>
+                <span>{selectedWorkflowTrack.copy}</span>
+                <span>{selectedNavigationProfile.copy}</span>
+                <span>{selectedWorkspaceIntent.summary}</span>
+                <span>{selectedEditorCoach.summary}</span>
+                <span>{selectedLearningLane.summary}</span>
+                <span>{selectedSessionTempo.summary}</span>
+                <span>Density: {selectedDensityOption.label}</span>
+                <span>Tempo alignment: {sessionTempoAlignmentScore}%</span>
+                <span>Workspace intent alignment: {workspaceIntentAlignmentScore}%</span>
+                <span>Press <kbd>/</kbd> on an empty line for block commands.</span>
+                <span>Cmd/Ctrl+K opens the command deck (or use the Command button).</span>
+                {guidanceLevel !== "expert" ? (
+                  <span>
+                    Alt+↑/↓ size, Alt+Shift+↑/↓ weight, Alt+./, tracking.
+                  </span>
+                ) : null}
                 <span>
-                  Alt+↑/↓ size, Alt+Shift+↑/↓ weight, Alt+./, tracking.
+                  Goals: {wordGoal.toLocaleString()} words, {characterGoal.toLocaleString()} chars
                 </span>
-              ) : null}
-              <span>
-                Goals: {wordGoal.toLocaleString()} words, {characterGoal.toLocaleString()} chars
-              </span>
-              <button className="chip hud-action" type="button" onClick={() => applyWorkflowTrackPreset()}>
-                Apply track preset
-              </button>
-              <button className="chip" type="button" onClick={() => applyNavigationProfilePreset()}>
-                Apply navigation preset
-              </button>
-              <button className="chip" type="button" onClick={() => applyEditorCoachPreset()}>
-                Apply editor coach
-              </button>
-              <button className="chip" type="button" onClick={() => applyLearningLane()}>
-                Apply learning lane
-              </button>
-              <button className="chip" type="button" onClick={() => applySessionTempo()}>
-                Apply tempo preset
-              </button>
-              <button className="chip" type="button" onClick={() => applyWorkspaceIntentPreset()}>
-                Apply workspace intent
-              </button>
-            </div>
+                <button className="chip hud-action" type="button" onClick={() => applyWorkflowTrackPreset()}>
+                  Apply track preset
+                </button>
+                <button className="chip" type="button" onClick={() => applyNavigationProfilePreset()}>
+                  Apply navigation preset
+                </button>
+                <button className="chip" type="button" onClick={() => applyEditorCoachPreset()}>
+                  Apply editor coach
+                </button>
+                <button className="chip" type="button" onClick={() => applyLearningLane()}>
+                  Apply learning lane
+                </button>
+                <button className="chip" type="button" onClick={() => applySessionTempo()}>
+                  Apply tempo preset
+                </button>
+                <button className="chip" type="button" onClick={() => applyWorkspaceIntentPreset()}>
+                  Apply workspace intent
+                </button>
+              </div>
+            ) : null}
 
             <div className={`editor-canvas ${sideBySide ? "editor-canvas-split" : ""}`}>
               {showRichView ? (
@@ -10086,8 +10302,26 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
       div[data-callout="true"] { border-radius: 18px; padding: 1rem 1.1rem; background: var(--callout-bg, rgba(242, 109, 61, 0.12)); border: 1px solid var(--callout-border, rgba(242, 109, 61, 0.22)); }
       a { color: inherit; text-decoration-color: ${getAccentLinkColor(accent)}; }
       blockquote { border-left: 3px solid rgba(0,0,0,0.15); margin-left: 0; padding-left: 1rem; font-style: italic; }
-      table { border-collapse: collapse; width: 100%; --table-grid-color: rgba(0,0,0,0.12); --table-cell-padding: 10px; --table-margin-y: 12px; margin: var(--table-margin-y) 0; }
-      td, th { border: 1px solid var(--table-grid-color); padding: var(--table-cell-padding); position: relative; }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        --table-grid-color: rgba(0,0,0,0.12);
+        --table-cell-padding-top: 10px;
+        --table-cell-padding-right: 10px;
+        --table-cell-padding-bottom: 10px;
+        --table-cell-padding-left: 10px;
+        --table-margin-top: 12px;
+        --table-margin-right: 0px;
+        --table-margin-bottom: 12px;
+        --table-margin-left: 0px;
+        margin: var(--table-margin-top) var(--table-margin-right) var(--table-margin-bottom) var(--table-margin-left);
+      }
+      td, th {
+        border: 1px solid var(--table-grid-color);
+        padding: var(--table-cell-padding-top) var(--table-cell-padding-right) var(--table-cell-padding-bottom)
+          var(--table-cell-padding-left);
+        position: relative;
+      }
 ${chunkStyles}
     </style>
   </head>
@@ -10541,6 +10775,14 @@ function computeChunkBuilderCoverage(fields: ChunkField[], data: ChunkData): {
   };
 }
 
+function coerceTableSpaceValue(value: unknown, fallback: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.max(0, Math.round(parsed));
+}
+
 function formatMinimapLabel(value: string, mode: MinimapLabelMode) {
   const normalized = value.trim();
   if (!normalized) {
@@ -10588,6 +10830,29 @@ function readGuidancePreference(): GuidanceLevel {
   }
 
   return "balanced";
+}
+
+function readEditorHudPreference() {
+  try {
+    const raw = localStorage.getItem(EDITOR_HUD_PREFS_KEY);
+    if (raw === "show") {
+      return true;
+    }
+    if (raw === "hide") {
+      return false;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return false;
+}
+
+function writeEditorHudPreference(value: boolean) {
+  try {
+    localStorage.setItem(EDITOR_HUD_PREFS_KEY, value ? "show" : "hide");
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
 }
 
 function writeGuidancePreference(value: GuidanceLevel) {

@@ -23,6 +23,75 @@ import { LineHeight } from "./LineHeight";
 import { FontWeight } from "./FontWeight";
 
 const StyledTable = Table.extend({
+  renderHTML({ node, HTMLAttributes }): any {
+    const rendered = this.parent?.({ node, HTMLAttributes }) ?? ["table", HTMLAttributes, ["tbody", 0]];
+    if (!Array.isArray(rendered)) {
+      return rendered;
+    }
+
+    const tableSpec =
+      rendered[0] === "div" && Array.isArray(rendered[2]) && rendered[2][0] === "table" ? rendered[2] : rendered;
+    if (!Array.isArray(tableSpec) || tableSpec[0] !== "table") {
+      return rendered;
+    }
+
+    const tableAttrs =
+      tableSpec[1] && typeof tableSpec[1] === "object" && !Array.isArray(tableSpec[1])
+        ? { ...(tableSpec[1] as Record<string, unknown>) }
+        : {};
+
+    const styleParts: string[] = [];
+    const existingStyle = typeof tableAttrs.style === "string" ? tableAttrs.style.trim() : "";
+    if (existingStyle) {
+      styleParts.push(existingStyle);
+    }
+
+    const borderColor = typeof node.attrs.borderColor === "string" ? node.attrs.borderColor.trim() : "";
+    if (borderColor) {
+      styleParts.push(`--table-grid-color: ${borderColor}`);
+    }
+
+    const legacyCellPadding = normalizeTableSpace(node.attrs.cellPaddingPx);
+    const cellPaddingTop = normalizeTableSpace(node.attrs.cellPaddingTopPx) ?? legacyCellPadding;
+    const cellPaddingRight = normalizeTableSpace(node.attrs.cellPaddingRightPx) ?? legacyCellPadding;
+    const cellPaddingBottom = normalizeTableSpace(node.attrs.cellPaddingBottomPx) ?? legacyCellPadding;
+    const cellPaddingLeft = normalizeTableSpace(node.attrs.cellPaddingLeftPx) ?? legacyCellPadding;
+    if (cellPaddingTop !== null) {
+      styleParts.push(`--table-cell-padding-top: ${cellPaddingTop}px`);
+    }
+    if (cellPaddingRight !== null) {
+      styleParts.push(`--table-cell-padding-right: ${cellPaddingRight}px`);
+    }
+    if (cellPaddingBottom !== null) {
+      styleParts.push(`--table-cell-padding-bottom: ${cellPaddingBottom}px`);
+    }
+    if (cellPaddingLeft !== null) {
+      styleParts.push(`--table-cell-padding-left: ${cellPaddingLeft}px`);
+    }
+
+    const legacyMarginY = normalizeTableSpace(node.attrs.marginYPx);
+    const marginTop = normalizeTableSpace(node.attrs.marginTopPx) ?? legacyMarginY;
+    const marginRight = normalizeTableSpace(node.attrs.marginRightPx);
+    const marginBottom = normalizeTableSpace(node.attrs.marginBottomPx) ?? legacyMarginY;
+    const marginLeft = normalizeTableSpace(node.attrs.marginLeftPx);
+    if (marginTop !== null) {
+      styleParts.push(`--table-margin-top: ${marginTop}px`);
+    }
+    if (marginRight !== null) {
+      styleParts.push(`--table-margin-right: ${marginRight}px`);
+    }
+    if (marginBottom !== null) {
+      styleParts.push(`--table-margin-bottom: ${marginBottom}px`);
+    }
+    if (marginLeft !== null) {
+      styleParts.push(`--table-margin-left: ${marginLeft}px`);
+    }
+
+    tableAttrs.style = styleParts.join("; ");
+    tableSpec[1] = tableAttrs;
+    return rendered;
+  },
+
   addAttributes() {
     return {
       ...(this.parent?.() ?? {}),
@@ -42,9 +111,7 @@ const StyledTable = Table.extend({
             return {};
           }
 
-          return {
-            style: `--table-grid-color: ${attributes.borderColor}`,
-          };
+          return {};
         },
       },
       cellPaddingPx: {
@@ -57,15 +124,7 @@ const StyledTable = Table.extend({
           }
           return Math.max(0, Math.round(numeric));
         },
-        renderHTML: (attributes) => {
-          const numeric = Number(attributes.cellPaddingPx);
-          if (!Number.isFinite(numeric)) {
-            return {};
-          }
-          return {
-            style: `--table-cell-padding: ${Math.max(0, Math.round(numeric))}px`,
-          };
-        },
+        renderHTML: () => ({}),
       },
       marginYPx: {
         default: null,
@@ -77,19 +136,74 @@ const StyledTable = Table.extend({
           }
           return Math.max(0, Math.round(numeric));
         },
-        renderHTML: (attributes) => {
-          const numeric = Number(attributes.marginYPx);
-          if (!Number.isFinite(numeric)) {
-            return {};
-          }
-          return {
-            style: `--table-margin-y: ${Math.max(0, Math.round(numeric))}px`,
-          };
-        },
+        renderHTML: () => ({}),
+      },
+      cellPaddingTopPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-cell-padding-top", parseTableSpaceVariable(element, "--table-cell-padding")),
+        renderHTML: () => ({}),
+      },
+      cellPaddingRightPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-cell-padding-right", parseTableSpaceVariable(element, "--table-cell-padding")),
+        renderHTML: () => ({}),
+      },
+      cellPaddingBottomPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-cell-padding-bottom", parseTableSpaceVariable(element, "--table-cell-padding")),
+        renderHTML: () => ({}),
+      },
+      cellPaddingLeftPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-cell-padding-left", parseTableSpaceVariable(element, "--table-cell-padding")),
+        renderHTML: () => ({}),
+      },
+      marginTopPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-margin-top", parseTableSpaceVariable(element, "--table-margin-y")),
+        renderHTML: () => ({}),
+      },
+      marginRightPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--table-margin-right"),
+        renderHTML: () => ({}),
+      },
+      marginBottomPx: {
+        default: null,
+        parseHTML: (element) =>
+          parseTableSpaceVariable(element, "--table-margin-bottom", parseTableSpaceVariable(element, "--table-margin-y")),
+        renderHTML: () => ({}),
+      },
+      marginLeftPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--table-margin-left"),
+        renderHTML: () => ({}),
       },
     };
   },
 });
+
+function parseTableSpaceVariable(element: HTMLElement, variableName: string, fallback: number | null = null) {
+  const rawValue = element.style.getPropertyValue(variableName).trim();
+  const numeric = Number.parseFloat(rawValue);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.max(0, Math.round(numeric));
+}
+
+function normalizeTableSpace(value: unknown) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Math.max(0, Math.round(numeric));
+}
 
 const StyledTableCell = TableCell.extend({
   addAttributes() {
