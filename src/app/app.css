@@ -758,7 +758,7 @@ select {
 .toolbar-select,
 .toolbar-input {
   border: 1px solid rgba(67, 44, 29, 0.12);
-  border-radius: 999px;
+  border-radius: 12px;
   background: rgba(255, 251, 247, 0.76);
   color: inherit;
 }
@@ -801,13 +801,14 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.15rem;
-  min-height: 2.15rem;
-  padding: 0.45rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.36rem;
+  border-radius: 10px;
 }
 
 .topbar-icon-glyph {
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -883,6 +884,10 @@ select {
   min-width: 11.4rem;
 }
 
+.structure-sync-selector {
+  min-width: 12.4rem;
+}
+
 .tempo-status-pill {
   border-color: var(--accent-border);
   background: linear-gradient(120deg, var(--accent-soft), rgba(255, 251, 247, 0.9));
@@ -916,6 +921,7 @@ select {
 .app-shell.ui-simple .style-recipe-group,
 .app-shell.ui-simple .style-readability-group,
 .app-shell.ui-simple .pulse-coach-group,
+.app-shell.ui-simple .pulse-learning-lane-group,
 .app-shell.ui-simple .pulse-intervention-group,
 .app-shell.ui-simple .revision-strategy-group {
   display: none;
@@ -1434,6 +1440,16 @@ select {
   margin-bottom: 0.62rem;
 }
 
+.outline-learning-lane-group {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.72rem;
+  margin-bottom: 0.62rem;
+}
+
 .outline-coach-card {
   border: 1px dashed rgba(67, 44, 29, 0.16);
   border-radius: 12px;
@@ -1764,7 +1780,7 @@ select {
 .palette-grid,
 .find-actions,
 .revision-actions {
-  gap: 0.45rem;
+  gap: 0.3rem;
 }
 
 .revision-actions {
@@ -1989,10 +2005,11 @@ select {
 }
 
 .tool.tool-icon {
-  min-width: 2rem;
-  padding: 0.46rem 0.56rem;
-  font-size: 0.78rem;
+  min-width: 2.1rem;
+  padding: 0.34rem 0.46rem;
+  font-size: 0.9rem;
   line-height: 1;
+  border-radius: 10px;
 }
 
 .toolbar-select {
@@ -2247,7 +2264,10 @@ select {
 .velvet-prosemirror table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: var(--table-layout-mode, auto);
   --table-grid-color: rgba(64, 44, 28, 0.12);
+  --table-cell-fixed-width: auto;
+  --table-cell-min-width: 0px;
   --table-cell-padding-top: 10px;
   --table-cell-padding-right: 10px;
   --table-cell-padding-bottom: 10px;
@@ -2257,14 +2277,21 @@ select {
   --table-margin-bottom: 12px;
   --table-margin-left: 0px;
   margin: var(--table-margin-top) var(--table-margin-right) var(--table-margin-bottom) var(--table-margin-left);
+  overflow: hidden;
 }
 
 .velvet-prosemirror td,
 .velvet-prosemirror th {
   border: 1px solid var(--table-grid-color);
-  padding: var(--table-cell-padding-top) var(--table-cell-padding-right) var(--table-cell-padding-bottom)
-    var(--table-cell-padding-left);
+  padding-top: calc(var(--cell-padding-top, var(--table-cell-padding-top)) + var(--cell-margin-top, 0px));
+  padding-right: calc(var(--cell-padding-right, var(--table-cell-padding-right)) + var(--cell-margin-right, 0px));
+  padding-bottom: calc(var(--cell-padding-bottom, var(--table-cell-padding-bottom)) + var(--cell-margin-bottom, 0px));
+  padding-left: calc(var(--cell-padding-left, var(--table-cell-padding-left)) + var(--cell-margin-left, 0px));
+  width: var(--cell-fixed-width, var(--table-cell-fixed-width, auto));
+  min-width: var(--cell-min-width, var(--table-cell-min-width, 0px));
   position: relative;
+  overflow: hidden;
+  background-clip: padding-box;
 }
 
 .velvet-prosemirror td.selectedCell::after,
@@ -2496,6 +2523,7 @@ select {
 }
 
 .pulse-coach-group,
+.pulse-learning-lane-group,
 .pulse-intervention-group,
 .revision-strategy-group,
 .revision-review-lane-group {
@@ -2559,6 +2587,16 @@ select {
   margin-top: 0.72rem;
 }
 
+.outline-learning-lane-card,
+.pulse-learning-lane-card {
+  border: 1px dashed rgba(var(--accent-rgb), 0.28);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(255, 255, 255, 0.74));
+  padding: 0.72rem 0.78rem;
+  display: grid;
+  gap: 0.44rem;
+}
+
 .revision-review-lane-card {
   border: 1px solid rgba(var(--accent-rgb), 0.18);
   border-radius: 14px;
@@ -2575,6 +2613,11 @@ select {
 .guidance-sync-pill {
   border-color: rgba(var(--accent-rgb), 0.24);
   background: rgba(var(--accent-rgb), 0.12);
+}
+
+.structure-sync-pill {
+  border-color: rgba(47, 108, 246, 0.24);
+  background: linear-gradient(120deg, rgba(47, 108, 246, 0.12), rgba(255, 251, 247, 0.84));
 }
 
 .metric-card {
@@ -2874,17 +2917,26 @@ body[data-theme="dark"] .guidance-sync-pill {
   border-color: rgba(var(--accent-rgb), 0.42);
 }
 
+body[data-theme="dark"] .structure-sync-pill {
+  background: linear-gradient(120deg, rgba(47, 108, 246, 0.28), rgba(26, 35, 49, 0.88));
+  border-color: rgba(110, 162, 255, 0.44);
+}
+
 body[data-theme="dark"] .chunk-build-strategy-head,
 body[data-theme="dark"] .chunk-capability-strip,
 body[data-theme="dark"] .outline-strategy-group,
+body[data-theme="dark"] .outline-learning-lane-group,
 body[data-theme="dark"] .outline-coach-card,
 body[data-theme="dark"] .mode-strategy-group,
 body[data-theme="dark"] .minimap-strategy-group,
 body[data-theme="dark"] .pulse-coach-group,
+body[data-theme="dark"] .pulse-learning-lane-group,
 body[data-theme="dark"] .pulse-intervention-group,
 body[data-theme="dark"] .revision-strategy-group,
 body[data-theme="dark"] .revision-review-lane-group,
 body[data-theme="dark"] .pulse-coach-card,
+body[data-theme="dark"] .outline-learning-lane-card,
+body[data-theme="dark"] .pulse-learning-lane-card,
 body[data-theme="dark"] .revision-coach-card,
 body[data-theme="dark"] .revision-review-lane-card,
 body[data-theme="dark"] .mode-coach-card,

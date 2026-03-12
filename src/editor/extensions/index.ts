@@ -68,6 +68,18 @@ const StyledTable = Table.extend({
       styleParts.push(`--table-grid-color: ${borderColor}`);
     }
 
+    const columnWidthMode = node.attrs.columnWidthMode === "fixed" || node.attrs.columnWidthMode === "flex" ? node.attrs.columnWidthMode : "flex";
+    const columnWidthUnits = normalizeTableWidthUnits(node.attrs.columnWidthUnits, 3);
+    if (columnWidthMode === "fixed") {
+      styleParts.push("--table-layout-mode: fixed");
+      styleParts.push(`--table-cell-fixed-width: calc((100% / 12) * ${columnWidthUnits})`);
+      styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    } else {
+      styleParts.push("--table-layout-mode: auto");
+      styleParts.push("--table-cell-fixed-width: auto");
+      styleParts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+    }
+
     const legacyCellPadding = normalizeTableSpace(node.attrs.cellPaddingPx);
     const cellPaddingTop = normalizeTableSpace(node.attrs.cellPaddingTopPx) ?? legacyCellPadding;
     const cellPaddingRight = normalizeTableSpace(node.attrs.cellPaddingRightPx) ?? legacyCellPadding;
@@ -209,6 +221,16 @@ const StyledTable = Table.extend({
         parseHTML: (element) => parseTableSpaceVariable(element, "--table-margin-left"),
         renderHTML: () => ({}),
       },
+      columnWidthMode: {
+        default: "flex",
+        parseHTML: () => "flex",
+        renderHTML: () => ({}),
+      },
+      columnWidthUnits: {
+        default: 3,
+        parseHTML: () => 3,
+        renderHTML: () => ({}),
+      },
     };
   },
 });
@@ -228,6 +250,14 @@ function normalizeTableSpace(value: unknown) {
     return null;
   }
   return Math.max(0, Math.round(numeric));
+}
+
+function normalizeTableWidthUnits(value: unknown, fallback: number) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.max(1, Math.min(12, Math.round(numeric)));
 }
 
 const StyledTableCell = TableCell.extend({
@@ -265,6 +295,72 @@ const StyledTableCell = TableCell.extend({
             style: `border-color: ${attributes.borderColor}`,
           };
         },
+      },
+      paddingTopPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-top"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingTopPx)) ? { style: `--cell-padding-top: ${Math.max(0, Number(attributes.paddingTopPx))}px;` } : {},
+      },
+      paddingRightPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-right"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingRightPx)) ? { style: `--cell-padding-right: ${Math.max(0, Number(attributes.paddingRightPx))}px;` } : {},
+      },
+      paddingBottomPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-bottom"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingBottomPx)) ? { style: `--cell-padding-bottom: ${Math.max(0, Number(attributes.paddingBottomPx))}px;` } : {},
+      },
+      paddingLeftPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-left"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingLeftPx)) ? { style: `--cell-padding-left: ${Math.max(0, Number(attributes.paddingLeftPx))}px;` } : {},
+      },
+      marginTopPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-top"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginTopPx)) ? { style: `--cell-margin-top: ${Math.max(0, Number(attributes.marginTopPx))}px;` } : {},
+      },
+      marginRightPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-right"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginRightPx)) ? { style: `--cell-margin-right: ${Math.max(0, Number(attributes.marginRightPx))}px;` } : {},
+      },
+      marginBottomPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-bottom"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginBottomPx)) ? { style: `--cell-margin-bottom: ${Math.max(0, Number(attributes.marginBottomPx))}px;` } : {},
+      },
+      marginLeftPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-left"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginLeftPx)) ? { style: `--cell-margin-left: ${Math.max(0, Number(attributes.marginLeftPx))}px;` } : {},
+      },
+      widthMode: {
+        default: "flex",
+        parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
+        renderHTML: (attributes) => ({
+          "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
+          style:
+            attributes.widthMode === "fixed"
+              ? `--cell-fixed-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)}); --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`
+              : `--cell-fixed-width: auto; --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
+        }),
+      },
+      widthUnits: {
+        default: 3,
+        parseHTML: (element) => normalizeTableWidthUnits(element.getAttribute("data-width-units"), 3),
+        renderHTML: (attributes) => ({
+          "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
+        }),
       },
     };
   },
@@ -305,6 +401,72 @@ const StyledTableHeader = TableHeader.extend({
             style: `border-color: ${attributes.borderColor}`,
           };
         },
+      },
+      paddingTopPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-top"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingTopPx)) ? { style: `--cell-padding-top: ${Math.max(0, Number(attributes.paddingTopPx))}px;` } : {},
+      },
+      paddingRightPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-right"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingRightPx)) ? { style: `--cell-padding-right: ${Math.max(0, Number(attributes.paddingRightPx))}px;` } : {},
+      },
+      paddingBottomPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-bottom"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingBottomPx)) ? { style: `--cell-padding-bottom: ${Math.max(0, Number(attributes.paddingBottomPx))}px;` } : {},
+      },
+      paddingLeftPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-padding-left"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.paddingLeftPx)) ? { style: `--cell-padding-left: ${Math.max(0, Number(attributes.paddingLeftPx))}px;` } : {},
+      },
+      marginTopPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-top"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginTopPx)) ? { style: `--cell-margin-top: ${Math.max(0, Number(attributes.marginTopPx))}px;` } : {},
+      },
+      marginRightPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-right"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginRightPx)) ? { style: `--cell-margin-right: ${Math.max(0, Number(attributes.marginRightPx))}px;` } : {},
+      },
+      marginBottomPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-bottom"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginBottomPx)) ? { style: `--cell-margin-bottom: ${Math.max(0, Number(attributes.marginBottomPx))}px;` } : {},
+      },
+      marginLeftPx: {
+        default: null,
+        parseHTML: (element) => parseTableSpaceVariable(element, "--cell-margin-left"),
+        renderHTML: (attributes) =>
+          Number.isFinite(Number(attributes.marginLeftPx)) ? { style: `--cell-margin-left: ${Math.max(0, Number(attributes.marginLeftPx))}px;` } : {},
+      },
+      widthMode: {
+        default: "flex",
+        parseHTML: (element) => (element.getAttribute("data-width-mode") === "fixed" ? "fixed" : "flex"),
+        renderHTML: (attributes) => ({
+          "data-width-mode": attributes.widthMode === "fixed" ? "fixed" : "flex",
+          style:
+            attributes.widthMode === "fixed"
+              ? `--cell-fixed-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)}); --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`
+              : `--cell-fixed-width: auto; --cell-min-width: calc((100% / 12) * ${normalizeTableWidthUnits(attributes.widthUnits, 3)});`,
+        }),
+      },
+      widthUnits: {
+        default: 3,
+        parseHTML: (element) => normalizeTableWidthUnits(element.getAttribute("data-width-units"), 3),
+        renderHTML: (attributes) => ({
+          "data-width-units": String(normalizeTableWidthUnits(attributes.widthUnits, 3)),
+        }),
       },
     };
   },

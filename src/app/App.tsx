@@ -125,8 +125,11 @@ const SESSION_TEMPO_PREFS_KEY = "velvet-ink/session-tempo/v1";
 const STYLE_ASSIST_PREFS_KEY = "velvet-ink/style-assist/v1";
 const PULSE_INTERVENTION_PREFS_KEY = "velvet-ink/pulse-intervention/v1";
 const GLOBAL_GUIDANCE_SYNC_PREFS_KEY = "velvet-ink/global-guidance-sync/v1";
+const GLOBAL_STRUCTURE_SYNC_PREFS_KEY = "velvet-ink/global-structure-sync/v1";
 const FIND_GUARD_PREFS_KEY = "velvet-ink/find-guard/v1";
 const REVISION_REVIEW_LANE_PREFS_KEY = "velvet-ink/revision-review-lane/v1";
+const OUTLINE_LEARNING_LANE_PREFS_KEY = "velvet-ink/outline-learning-lane/v1";
+const PULSE_LEARNING_LANE_PREFS_KEY = "velvet-ink/pulse-learning-lane/v1";
 const WORD_GOAL_MIN = 300;
 const WORD_GOAL_MAX = 2400;
 const WORD_GOAL_STEP = 25;
@@ -210,6 +213,8 @@ type OutlineJumpMode = "focus" | "focus-and-fold";
 type OutlineStrategyId = "structure-scan" | "active-draft" | "reorder-pass";
 type OutlineFocusLens = "all-visible" | "active-window" | "active-trail";
 type OutlineFocusWindow = 1 | 2 | 3;
+type OutlineMissionPresetId = "map-and-triage" | "focus-slice" | "resequence-board";
+type OutlineLearningLaneId = "stability-basics" | "focus-flow" | "ship-architecture";
 type MinimapDepthFilter = "all" | "h1-h2" | "h1";
 type MinimapLabelMode = "full" | "compact" | "hidden";
 type MinimapHighlightMode = "active" | "level";
@@ -220,6 +225,7 @@ type PulseLens = "flow" | "structure" | "delivery";
 type PulseCadenceTarget = "calm" | "balanced" | "brisk";
 type PulseCoachPresetId = "cadence-guard" | "structure-shape" | "release-readiness";
 type PulseInterventionId = "stabilize-flow" | "rebalance-structure" | "prep-handoff";
+type PulseLearningLaneId = "cadence-foundation" | "structure-clinic" | "handoff-flightcheck";
 type RevisionFilter = "all" | "checkpoint" | "autosave" | "restore";
 type RevisionDiffFocus = "balanced" | "additions" | "deletions";
 type RevisionStrategyId = "checkpoint-qa" | "growth-audit" | "trim-pass";
@@ -227,6 +233,7 @@ type RevisionDiffDepth = "tight" | "balanced" | "extended";
 type RevisionRestoreGuard = "fast" | "confirm" | "diff-first";
 type RevisionTimelineLens = "all" | "last-hour" | "latest-three";
 type RevisionReviewLaneId = "rapid-verify" | "balanced-qa" | "handoff-audit";
+type GlobalStructureSyncId = "discover-map" | "draft-rhythm" | "ship-audit";
 
 const PANEL_SECTION_IDS = [
   "left-mode",
@@ -286,6 +293,21 @@ type TableCellFormat = {
   backgroundColor: string | null;
   borderColor: string | null;
 };
+type TableFormatScope = "cell" | "table";
+type TableWidthMode = "flex" | "fixed";
+type BorderRadiusTargetNode =
+  | "callout"
+  | "interactiveChunk"
+  | "tableCell"
+  | "tableHeader"
+  | "table"
+  | "codeBlock"
+  | "blockquote"
+  | "heading"
+  | "paragraph"
+  | "bulletList"
+  | "orderedList"
+  | "taskList";
 
 type CopiedFormatSnapshot = {
   bold: boolean;
@@ -322,6 +344,35 @@ const DEFAULT_HIGHLIGHT_RGBA: RgbaValue = { r: 242, g: 109, b: 61, a: 0.18 };
 const DEFAULT_BLOCK_RGBA: RgbaValue = { r: 242, g: 109, b: 61, a: 0.12 };
 const DEFAULT_TABLE_CELL_RGBA: RgbaValue = { r: 255, g: 255, b: 255, a: 1 };
 const DEFAULT_TABLE_GRID_RGBA: RgbaValue = { r: 64, g: 44, b: 28, a: 0.2 };
+const MAX_ELEMENT_ROUNDNESS_PX = 96;
+const BORDER_RADIUS_TARGET_PRIORITY: BorderRadiusTargetNode[] = [
+  "callout",
+  "interactiveChunk",
+  "tableCell",
+  "tableHeader",
+  "table",
+  "codeBlock",
+  "blockquote",
+  "heading",
+  "paragraph",
+  "bulletList",
+  "orderedList",
+  "taskList",
+];
+const BORDER_RADIUS_DEFAULTS: Record<BorderRadiusTargetNode, number> = {
+  callout: 18,
+  interactiveChunk: 14,
+  tableCell: 0,
+  tableHeader: 0,
+  table: 0,
+  codeBlock: 18,
+  blockquote: 0,
+  heading: 0,
+  paragraph: 0,
+  bulletList: 0,
+  orderedList: 0,
+  taskList: 0,
+};
 
 const BLOCK_BACKGROUNDS = [
   { label: "None", value: "none" },
@@ -465,6 +516,43 @@ const GLOBAL_GUIDANCE_SYNC_OPTIONS: Array<{
     tip: "Use when you already know the document and need speed.",
     findGuard: "quick-ship",
     revisionLane: "rapid-verify",
+  },
+];
+const GLOBAL_STRUCTURE_SYNC_OPTIONS: Array<{
+  id: GlobalStructureSyncId;
+  label: string;
+  summary: string;
+  tip: string;
+  outlineMission: OutlineMissionPresetId;
+  pulseLane: PulseLearningLaneId;
+  minimapLane: MinimapCoachLaneId;
+}> = [
+  {
+    id: "discover-map",
+    label: "Discover map",
+    summary: "Teaching-first structure lane for broad scans and calm pulse shaping.",
+    tip: "Use when orienting in a new draft and teaching hierarchy decisions.",
+    outlineMission: "map-and-triage",
+    pulseLane: "structure-clinic",
+    minimapLane: "map-learn",
+  },
+  {
+    id: "draft-rhythm",
+    label: "Draft rhythm",
+    summary: "Balanced lane for active drafting with scoped structure and cadence checks.",
+    tip: "Use for normal writing sessions with periodic structure verification.",
+    outlineMission: "focus-slice",
+    pulseLane: "cadence-foundation",
+    minimapLane: "scan-balance",
+  },
+  {
+    id: "ship-audit",
+    label: "Ship audit",
+    summary: "Release lane tuned for full-map checks and delivery-safe pulse review.",
+    tip: "Use before handoff when structure confidence and final cadence matter most.",
+    outlineMission: "resequence-board",
+    pulseLane: "handoff-flightcheck",
+    minimapLane: "audit-handoff",
   },
 ];
 const DENSITY_OPTIONS: Array<{ label: string; value: InterfaceDensity; copy: string }> = [
@@ -1209,6 +1297,47 @@ const PULSE_INTERVENTION_OPTIONS: Array<{
     timeline: "latest-three",
   },
 ];
+const PULSE_LEARNING_LANE_OPTIONS: Array<{
+  id: PulseLearningLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  coach: PulseCoachPresetId;
+  intervention: PulseInterventionId;
+  lens: PulseLens;
+  target: PulseCadenceTarget;
+}> = [
+  {
+    id: "cadence-foundation",
+    label: "Cadence foundation",
+    summary: "Draft-friendly lane that stabilizes pacing before heavy revisions.",
+    tip: "Use while writing net-new sections and keeping momentum controlled.",
+    coach: "cadence-guard",
+    intervention: "stabilize-flow",
+    lens: "flow",
+    target: "balanced",
+  },
+  {
+    id: "structure-clinic",
+    label: "Structure clinic",
+    summary: "Hierarchy-focused lane for paragraph density and heading distribution.",
+    tip: "Use when sections feel lopsided or heading depth starts drifting.",
+    coach: "structure-shape",
+    intervention: "rebalance-structure",
+    lens: "structure",
+    target: "calm",
+  },
+  {
+    id: "handoff-flightcheck",
+    label: "Handoff flightcheck",
+    summary: "Delivery lane for pre-share pulse verification and revision freshness.",
+    tip: "Use before export to reduce late-stage cadence and checkpoint surprises.",
+    coach: "release-readiness",
+    intervention: "prep-handoff",
+    lens: "delivery",
+    target: "brisk",
+  },
+];
 const REVISION_FILTER_OPTIONS: Array<{
   label: string;
   value: RevisionFilter;
@@ -1483,7 +1612,7 @@ const OUTLINE_FOCUS_WINDOW_OPTIONS: Array<{ label: string; value: OutlineFocusWi
   { label: "±3", value: 3 },
 ];
 const OUTLINE_MISSION_PRESETS: Array<{
-  id: "map-and-triage" | "focus-slice" | "resequence-board";
+  id: OutlineMissionPresetId;
   label: string;
   summary: string;
   tip: string;
@@ -1527,6 +1656,51 @@ const OUTLINE_MISSION_PRESETS: Array<{
     depth: "all",
     jumpMode: "focus",
     focusLens: "all-visible",
+    focusWindow: 3,
+    activeOnly: false,
+  },
+];
+const OUTLINE_LEARNING_LANE_OPTIONS: Array<{
+  id: OutlineLearningLaneId;
+  label: string;
+  summary: string;
+  tip: string;
+  mission: OutlineMissionPresetId;
+  strategy: OutlineStrategyId;
+  focusLens: OutlineFocusLens;
+  focusWindow: OutlineFocusWindow;
+  activeOnly: boolean;
+}> = [
+  {
+    id: "stability-basics",
+    label: "Stability basics",
+    summary: "Broad hierarchy lane with teaching cues for depth consistency.",
+    tip: "Use while cleaning heading levels and validating top-level structure.",
+    mission: "map-and-triage",
+    strategy: "structure-scan",
+    focusLens: "all-visible",
+    focusWindow: 2,
+    activeOnly: false,
+  },
+  {
+    id: "focus-flow",
+    label: "Focus flow",
+    summary: "Local drafting lane that keeps nearby context without full-map noise.",
+    tip: "Use while deep-writing one branch and preserving nearby heading context.",
+    mission: "focus-slice",
+    strategy: "active-draft",
+    focusLens: "active-window",
+    focusWindow: 1,
+    activeOnly: true,
+  },
+  {
+    id: "ship-architecture",
+    label: "Ship architecture",
+    summary: "Full-map lane for resequencing, bridge checks, and final hierarchy QA.",
+    tip: "Use before handoff when chapter ordering and heading continuity are critical.",
+    mission: "resequence-board",
+    strategy: "reorder-pass",
+    focusLens: "active-trail",
     focusWindow: 3,
     activeOnly: false,
   },
@@ -2169,6 +2343,9 @@ function Workspace({
   const [viewportWidth, setViewportWidth] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
   const [guidanceLevel, setGuidanceLevel] = useState<GuidanceLevel>(() => readGuidancePreference());
   const [globalGuidanceSync, setGlobalGuidanceSync] = useState<GuidanceLevel>(() => readGlobalGuidanceSyncPreference());
+  const [globalStructureSyncId, setGlobalStructureSyncId] = useState<GlobalStructureSyncId>(() =>
+    readGlobalStructureSyncPreference(),
+  );
   const [showEditorHud, setShowEditorHud] = useState(() => readEditorHudPreference());
   const [interfaceDensity, setInterfaceDensity] = useState<InterfaceDensity>(() => readDensityPreference());
   const [workflowTrack, setWorkflowTrack] = useState<WorkflowTrack>(() => readWorkflowTrackPreference());
@@ -2223,12 +2400,13 @@ function Workspace({
   const [outlineDepthFilter, setOutlineDepthFilter] = useState<OutlineDepthFilter>("all");
   const [outlineActiveOnly, setOutlineActiveOnly] = useState(false);
   const [outlineJumpMode, setOutlineJumpMode] = useState<OutlineJumpMode>("focus");
-  const [outlineMissionPresetId, setOutlineMissionPresetId] = useState<"map-and-triage" | "focus-slice" | "resequence-board">(
-    "focus-slice",
-  );
+  const [outlineMissionPresetId, setOutlineMissionPresetId] = useState<OutlineMissionPresetId>("focus-slice");
   const [outlineStrategyId, setOutlineStrategyId] = useState<OutlineStrategyId>(() => readOutlineStrategyPreference());
   const [outlineFocusLens, setOutlineFocusLens] = useState<OutlineFocusLens>(() => readOutlineFocusLensPreference());
   const [outlineFocusWindow, setOutlineFocusWindow] = useState<OutlineFocusWindow>(() => readOutlineFocusWindowPreference());
+  const [outlineLearningLaneId, setOutlineLearningLaneId] = useState<OutlineLearningLaneId>(() =>
+    readOutlineLearningLanePreference(),
+  );
   const [minimapDepthFilter, setMinimapDepthFilter] = useState<MinimapDepthFilter>(() => readMinimapDepthPreference());
   const [minimapLabelMode, setMinimapLabelMode] = useState<MinimapLabelMode>(() => readMinimapLabelPreference());
   const [minimapHighlightMode, setMinimapHighlightMode] = useState<MinimapHighlightMode>(() =>
@@ -2241,6 +2419,7 @@ function Workspace({
   const [pulseCadenceTarget, setPulseCadenceTarget] = useState<PulseCadenceTarget>(() => readPulseTargetPreference());
   const [pulseCoachPresetId, setPulseCoachPresetId] = useState<PulseCoachPresetId>(() => readPulseCoachPreference());
   const [pulseInterventionId, setPulseInterventionId] = useState<PulseInterventionId>(() => readPulseInterventionPreference());
+  const [pulseLearningLaneId, setPulseLearningLaneId] = useState<PulseLearningLaneId>(() => readPulseLearningLanePreference());
   const [revisionFilter, setRevisionFilter] = useState<RevisionFilter>(() => readRevisionFilterPreference());
   const [revisionDiffFocus, setRevisionDiffFocus] = useState<RevisionDiffFocus>(() => readRevisionDiffFocusPreference());
   const [revisionStrategyId, setRevisionStrategyId] = useState<RevisionStrategyId>(() => readRevisionStrategyPreference());
@@ -2262,6 +2441,9 @@ function Workspace({
   const [tableMarginRightPx, setTableMarginRightPx] = useState(0);
   const [tableMarginBottomPx, setTableMarginBottomPx] = useState(12);
   const [tableMarginLeftPx, setTableMarginLeftPx] = useState(0);
+  const [tableFormatScope, setTableFormatScope] = useState<TableFormatScope>("cell");
+  const [tableWidthMode, setTableWidthMode] = useState<TableWidthMode>("flex");
+  const [tableWidthUnits, setTableWidthUnits] = useState(3);
   const [copiedFormatSnapshot, setCopiedFormatSnapshot] = useState<CopiedFormatSnapshot | null>(null);
   const [fontSizeNumberDraft, setFontSizeNumberDraft] = useState("16");
   const [fontSizeUnitDraft, setFontSizeUnitDraft] = useState<LengthUnit>("px");
@@ -2808,6 +2990,10 @@ function Workspace({
   }, [globalGuidanceSync]);
 
   useEffect(() => {
+    writeGlobalStructureSyncPreference(globalStructureSyncId);
+  }, [globalStructureSyncId]);
+
+  useEffect(() => {
     writeEditorHudPreference(showEditorHud);
   }, [showEditorHud]);
 
@@ -2916,6 +3102,10 @@ function Workspace({
   }, [pulseInterventionId]);
 
   useEffect(() => {
+    writePulseLearningLanePreference(pulseLearningLaneId);
+  }, [pulseLearningLaneId]);
+
+  useEffect(() => {
     writeRevisionFilterPreference(revisionFilter);
   }, [revisionFilter]);
 
@@ -2998,6 +3188,10 @@ function Workspace({
   useEffect(() => {
     writeOutlineFocusWindowPreference(outlineFocusWindow);
   }, [outlineFocusWindow]);
+
+  useEffect(() => {
+    writeOutlineLearningLanePreference(outlineLearningLaneId);
+  }, [outlineLearningLaneId]);
 
   useEffect(() => {
     writeStyleReadabilityPreference(styleReadabilityTargetId);
@@ -3083,14 +3277,16 @@ function Workspace({
   const currentLetterSpacing = String(editor?.getAttributes("textStyle").letterSpacing ?? "");
   const currentHighlightColor = String(editor?.getAttributes("highlight").color ?? "");
   const currentCalloutBackground = String(editor?.getAttributes("callout").backgroundColor ?? "");
+  const currentTableCellAttrs = editor?.getAttributes("tableCell") ?? {};
+  const currentTableHeaderAttrs = editor?.getAttributes("tableHeader") ?? {};
   const currentTableCellBackground = String(
-    editor?.getAttributes("tableCell").backgroundColor ??
-      editor?.getAttributes("tableHeader").backgroundColor ??
+    currentTableCellAttrs.backgroundColor ??
+      currentTableHeaderAttrs.backgroundColor ??
       "",
   );
   const currentTableGridColor = String(
-    editor?.getAttributes("tableCell").borderColor ??
-      editor?.getAttributes("tableHeader").borderColor ??
+    currentTableCellAttrs.borderColor ??
+      currentTableHeaderAttrs.borderColor ??
       editor?.getAttributes("table").borderColor ??
       "",
   );
@@ -3120,6 +3316,62 @@ function Workspace({
     legacyTableMarginYPx,
   );
   const currentTableMarginLeftPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.marginLeftPx, 0);
+  const currentCellPaddingTopPx = coerceTableSpaceValue(
+    currentTableCellAttrs.paddingTopPx ?? currentTableHeaderAttrs.paddingTopPx,
+    currentTableCellPaddingTopPx,
+  );
+  const currentCellPaddingRightPx = coerceTableSpaceValue(
+    currentTableCellAttrs.paddingRightPx ?? currentTableHeaderAttrs.paddingRightPx,
+    currentTableCellPaddingRightPx,
+  );
+  const currentCellPaddingBottomPx = coerceTableSpaceValue(
+    currentTableCellAttrs.paddingBottomPx ?? currentTableHeaderAttrs.paddingBottomPx,
+    currentTableCellPaddingBottomPx,
+  );
+  const currentCellPaddingLeftPx = coerceTableSpaceValue(
+    currentTableCellAttrs.paddingLeftPx ?? currentTableHeaderAttrs.paddingLeftPx,
+    currentTableCellPaddingLeftPx,
+  );
+  const currentCellMarginTopPx = coerceTableSpaceValue(
+    currentTableCellAttrs.marginTopPx ?? currentTableHeaderAttrs.marginTopPx,
+    0,
+  );
+  const currentCellMarginRightPx = coerceTableSpaceValue(
+    currentTableCellAttrs.marginRightPx ?? currentTableHeaderAttrs.marginRightPx,
+    0,
+  );
+  const currentCellMarginBottomPx = coerceTableSpaceValue(
+    currentTableCellAttrs.marginBottomPx ?? currentTableHeaderAttrs.marginBottomPx,
+    0,
+  );
+  const currentCellMarginLeftPx = coerceTableSpaceValue(
+    currentTableCellAttrs.marginLeftPx ?? currentTableHeaderAttrs.marginLeftPx,
+    0,
+  );
+  const currentCellWidthMode = resolveTableWidthMode(currentTableCellAttrs.widthMode, "flex");
+  const currentCellWidthUnits = resolveTableWidthUnits(currentTableCellAttrs.widthUnits, 3);
+  const currentTableWidthMode = resolveTableWidthMode(activeTableNode?.node?.attrs?.columnWidthMode, "flex");
+  const currentTableWidthUnits = resolveTableWidthUnits(activeTableNode?.node?.attrs?.columnWidthUnits, 3);
+  const currentTableBorderRadiusPx = coerceTableSpaceValue(activeTableNode?.node?.attrs?.borderRadiusPx, 0);
+  const currentCellBorderRadiusPx = coerceTableSpaceValue(
+    currentTableCellAttrs.borderRadiusPx ?? currentTableHeaderAttrs.borderRadiusPx,
+    currentTableBorderRadiusPx,
+  );
+  const activeBorderRadiusTarget = resolveActiveBorderRadiusTarget(editor, tableFormatScope);
+  const currentElementRoundnessPx = resolveActiveBorderRadiusPx(
+    editor,
+    activeBorderRadiusTarget,
+    tableFormatScope,
+    currentTableBorderRadiusPx,
+    currentCellBorderRadiusPx,
+  );
+  const canEditElementRoundness = activeBorderRadiusTarget !== null;
+  const roundnessControlLabel =
+    activeBorderRadiusTarget === "table"
+      ? "Table radius"
+      : activeBorderRadiusTarget === "tableCell" || activeBorderRadiusTarget === "tableHeader"
+        ? "Cell radius"
+        : "Radius";
   const currentAlignment = String(editor?.getAttributes("heading").textAlign ?? editor?.getAttributes("paragraph").textAlign ?? "left");
   const currentLineHeight = resolveLineHeight(editor);
   const currentCalloutTone = editor?.isActive("callout") ? String(editor.getAttributes("callout").tone ?? "note") : "none";
@@ -3150,36 +3402,41 @@ function Workspace({
   }, [currentTableGridColor]);
 
   useEffect(() => {
-    setTableCellPaddingTopPx(currentTableCellPaddingTopPx);
-  }, [currentTableCellPaddingTopPx]);
+    setTableCellPaddingTopPx(tableFormatScope === "cell" ? currentCellPaddingTopPx : currentTableCellPaddingTopPx);
+  }, [currentCellPaddingTopPx, currentTableCellPaddingTopPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableCellPaddingRightPx(currentTableCellPaddingRightPx);
-  }, [currentTableCellPaddingRightPx]);
+    setTableCellPaddingRightPx(tableFormatScope === "cell" ? currentCellPaddingRightPx : currentTableCellPaddingRightPx);
+  }, [currentCellPaddingRightPx, currentTableCellPaddingRightPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableCellPaddingBottomPx(currentTableCellPaddingBottomPx);
-  }, [currentTableCellPaddingBottomPx]);
+    setTableCellPaddingBottomPx(tableFormatScope === "cell" ? currentCellPaddingBottomPx : currentTableCellPaddingBottomPx);
+  }, [currentCellPaddingBottomPx, currentTableCellPaddingBottomPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableCellPaddingLeftPx(currentTableCellPaddingLeftPx);
-  }, [currentTableCellPaddingLeftPx]);
+    setTableCellPaddingLeftPx(tableFormatScope === "cell" ? currentCellPaddingLeftPx : currentTableCellPaddingLeftPx);
+  }, [currentCellPaddingLeftPx, currentTableCellPaddingLeftPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableMarginTopPx(currentTableMarginTopPx);
-  }, [currentTableMarginTopPx]);
+    setTableMarginTopPx(tableFormatScope === "cell" ? currentCellMarginTopPx : currentTableMarginTopPx);
+  }, [currentCellMarginTopPx, currentTableMarginTopPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableMarginRightPx(currentTableMarginRightPx);
-  }, [currentTableMarginRightPx]);
+    setTableMarginRightPx(tableFormatScope === "cell" ? currentCellMarginRightPx : currentTableMarginRightPx);
+  }, [currentCellMarginRightPx, currentTableMarginRightPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableMarginBottomPx(currentTableMarginBottomPx);
-  }, [currentTableMarginBottomPx]);
+    setTableMarginBottomPx(tableFormatScope === "cell" ? currentCellMarginBottomPx : currentTableMarginBottomPx);
+  }, [currentCellMarginBottomPx, currentTableMarginBottomPx, tableFormatScope]);
 
   useEffect(() => {
-    setTableMarginLeftPx(currentTableMarginLeftPx);
-  }, [currentTableMarginLeftPx]);
+    setTableMarginLeftPx(tableFormatScope === "cell" ? currentCellMarginLeftPx : currentTableMarginLeftPx);
+  }, [currentCellMarginLeftPx, currentTableMarginLeftPx, tableFormatScope]);
+
+  useEffect(() => {
+    setTableWidthMode(tableFormatScope === "cell" ? currentCellWidthMode : currentTableWidthMode);
+    setTableWidthUnits(tableFormatScope === "cell" ? currentCellWidthUnits : currentTableWidthUnits);
+  }, [currentCellWidthMode, currentCellWidthUnits, currentTableWidthMode, currentTableWidthUnits, tableFormatScope]);
 
   useEffect(() => {
     const parsed = parseLengthValue(currentFontSize, "16", "px");
@@ -3216,6 +3473,8 @@ function Workspace({
     GUIDANCE_OPTIONS.find((option) => option.value === guidanceLevel) ?? GUIDANCE_OPTIONS[1];
   const selectedGlobalGuidanceSync =
     GLOBAL_GUIDANCE_SYNC_OPTIONS.find((option) => option.value === globalGuidanceSync) ?? GLOBAL_GUIDANCE_SYNC_OPTIONS[1];
+  const selectedGlobalStructureSync =
+    GLOBAL_STRUCTURE_SYNC_OPTIONS.find((option) => option.id === globalStructureSyncId) ?? GLOBAL_STRUCTURE_SYNC_OPTIONS[1];
   const selectedDensityOption =
     DENSITY_OPTIONS.find((option) => option.value === interfaceDensity) ?? DENSITY_OPTIONS[1];
   const selectedWorkflowTrack =
@@ -3264,6 +3523,8 @@ function Workspace({
     PULSE_COACH_OPTIONS.find((option) => option.id === pulseCoachPresetId) ?? PULSE_COACH_OPTIONS[0];
   const selectedPulseIntervention =
     PULSE_INTERVENTION_OPTIONS.find((option) => option.id === pulseInterventionId) ?? PULSE_INTERVENTION_OPTIONS[1];
+  const selectedPulseLearningLane =
+    PULSE_LEARNING_LANE_OPTIONS.find((option) => option.id === pulseLearningLaneId) ?? PULSE_LEARNING_LANE_OPTIONS[0];
   const selectedRevisionStrategy =
     REVISION_STRATEGY_OPTIONS.find((option) => option.id === revisionStrategyId) ?? REVISION_STRATEGY_OPTIONS[0];
   const selectedRevisionDiffDepth =
@@ -3303,6 +3564,8 @@ function Workspace({
     OUTLINE_STRATEGY_OPTIONS.find((strategy) => strategy.id === outlineStrategyId) ?? OUTLINE_STRATEGY_OPTIONS[0];
   const selectedOutlineMissionPreset =
     OUTLINE_MISSION_PRESETS.find((preset) => preset.id === outlineMissionPresetId) ?? OUTLINE_MISSION_PRESETS[1];
+  const selectedOutlineLearningLane =
+    OUTLINE_LEARNING_LANE_OPTIONS.find((lane) => lane.id === outlineLearningLaneId) ?? OUTLINE_LEARNING_LANE_OPTIONS[1];
   const selectedOutlineFocusLens =
     OUTLINE_FOCUS_LENS_OPTIONS.find((option) => option.value === outlineFocusLens) ?? OUTLINE_FOCUS_LENS_OPTIONS[0];
   const selectedChunkIntentTemplate = getChunkTemplate(selectedChunkIntentProfile.templateId);
@@ -3372,6 +3635,18 @@ function Workspace({
       : pulseInterventionScore >= 48
         ? "Pulse is recoverable. Apply intervention, then capture a checkpoint once metrics settle."
         : "Pulse is volatile. Apply intervention and run a guarded revision check before big edits.";
+  const pulseLearningLaneScore = clampPercent(
+    (pulseCoachPresetId === selectedPulseLearningLane.coach ? 25 : 0) +
+      (pulseInterventionId === selectedPulseLearningLane.intervention ? 25 : 0) +
+      (pulseLens === selectedPulseLearningLane.lens ? 25 : 0) +
+      (pulseCadenceTarget === selectedPulseLearningLane.target ? 25 : 0),
+  );
+  const pulseLearningLaneTip =
+    pulseLearningLaneScore >= 85
+      ? "Pulse lane aligned: coaching and intervention controls are synchronized."
+      : pulseLearningLaneScore >= 55
+        ? "Pulse lane partly aligned: apply lane before deeper pacing edits."
+        : "Pulse lane drifted: apply lane to restore predictable pulse diagnostics.";
   const findMatchDensity = stats.words > 0 ? Math.round((matches.length / stats.words) * 1000 * 10) / 10 : 0;
   const findDensityTip =
     findMatchDensity > 12
@@ -3497,6 +3772,19 @@ function Workspace({
       : outlineMissionAlignmentScore >= 55
         ? "Mission partly aligned: apply mission to restore depth and lens consistency."
         : "Mission drifted: re-apply mission before major drag-and-drop reorder changes.";
+  const outlineLearningLaneScore = clampPercent(
+    (outlineMissionPresetId === selectedOutlineLearningLane.mission ? 20 : 0) +
+      (outlineStrategyId === selectedOutlineLearningLane.strategy ? 20 : 0) +
+      (outlineFocusLens === selectedOutlineLearningLane.focusLens ? 20 : 0) +
+      (outlineFocusWindow === selectedOutlineLearningLane.focusWindow ? 20 : 0) +
+      (outlineActiveOnly === selectedOutlineLearningLane.activeOnly ? 20 : 0),
+  );
+  const outlineLearningLaneTip =
+    outlineLearningLaneScore >= 85
+      ? "Learning lane aligned: outline controls are synchronized for this structure phase."
+      : outlineLearningLaneScore >= 55
+        ? "Learning lane partly aligned: apply lane to stabilize strategy and focus behavior."
+        : "Learning lane drifted: apply lane before drag-reorder or heavy folding changes.";
   const outlineLensTip =
     outlineFocusLens === "all-visible"
       ? "All-visible lens keeps complete context for map-wide reordering."
@@ -3621,6 +3909,11 @@ function Workspace({
     (guidanceLevel === selectedGlobalGuidanceSync.value ? 34 : 0) +
       (findGuardPresetId === selectedGlobalGuidanceSync.findGuard ? 33 : 0) +
       (revisionReviewLaneId === selectedGlobalGuidanceSync.revisionLane ? 33 : 0),
+  );
+  const globalStructureAlignmentScore = clampPercent(
+    (outlineMissionPresetId === selectedGlobalStructureSync.outlineMission ? 34 : 0) +
+      (pulseLearningLaneId === selectedGlobalStructureSync.pulseLane ? 33 : 0) +
+      (minimapCoachLaneId === selectedGlobalStructureSync.minimapLane ? 33 : 0),
   );
   const revisionReviewLaneAlignmentScore = clampPercent(
     (revisionStrategyId === selectedRevisionReviewLane.strategy ? 16 : 0) +
@@ -3881,6 +4174,8 @@ function Workspace({
       .unsetFontWeight()
       .unsetLetterSpacing()
       .run();
+
+    applyElementRoundness(null, tableFormatScope);
   }
 
   function applyWorkspaceDocument(document: EditorDocument) {
@@ -4192,24 +4487,34 @@ function Workspace({
     activeEditor.chain().focus().unsetHighlight().run();
   }
 
-  function applyTableCellBackgroundColor(color: string | null) {
+  function applyTableCellBackgroundColor(color: string | null, scope: TableFormatScope = tableFormatScope) {
     if (!activeEditor.isActive("table")) {
+      return;
+    }
+
+    if (scope === "table") {
+      updateActiveTableCells(activeEditor, { backgroundColor: color });
       return;
     }
 
     activeEditor.chain().focus().setCellAttribute("backgroundColor", color).run();
   }
 
-  function applyTableGridColor(color: string | null) {
+  function applyTableGridColor(color: string | null, scope: TableFormatScope = tableFormatScope) {
     if (!activeEditor.isActive("table")) {
       return;
     }
 
+    if (scope === "table") {
+      updateActiveTableCells(activeEditor, { borderColor: color });
+      updateActiveTableAttributes(activeEditor, { borderColor: color });
+      return;
+    }
+
     activeEditor.chain().focus().setCellAttribute("borderColor", color).run();
-    updateActiveTableAttributes(activeEditor, { borderColor: color });
   }
 
-  function applyTableCellPadding(side: "top" | "right" | "bottom" | "left", value: number) {
+  function applyTableCellPadding(side: "top" | "right" | "bottom" | "left", value: number, scope: TableFormatScope = tableFormatScope) {
     if (!activeEditor.isActive("table")) {
       return;
     }
@@ -4223,18 +4528,62 @@ function Workspace({
           : side === "bottom"
             ? "cellPaddingBottomPx"
             : "cellPaddingLeftPx";
-    updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
+    if (scope === "table") {
+      updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
+      return;
+    }
+    const cellAttributeName =
+      side === "top"
+        ? "paddingTopPx"
+        : side === "right"
+          ? "paddingRightPx"
+          : side === "bottom"
+            ? "paddingBottomPx"
+            : "paddingLeftPx";
+    activeEditor.chain().focus().setCellAttribute(cellAttributeName, nextValue).run();
   }
 
-  function applyTableMargin(side: "top" | "right" | "bottom" | "left", value: number) {
+  function applyTableMargin(side: "top" | "right" | "bottom" | "left", value: number, scope: TableFormatScope = tableFormatScope) {
     if (!activeEditor.isActive("table")) {
       return;
     }
 
     const nextValue = coerceTableSpaceValue(value, 0);
-    const attributeName =
-      side === "top" ? "marginTopPx" : side === "right" ? "marginRightPx" : side === "bottom" ? "marginBottomPx" : "marginLeftPx";
-    updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
+    if (scope === "table") {
+      const attributeName =
+        side === "top" ? "marginTopPx" : side === "right" ? "marginRightPx" : side === "bottom" ? "marginBottomPx" : "marginLeftPx";
+      updateActiveTableAttributes(activeEditor, { [attributeName]: nextValue });
+      return;
+    }
+    const cellAttributeName =
+      side === "top"
+        ? "marginTopPx"
+        : side === "right"
+          ? "marginRightPx"
+          : side === "bottom"
+            ? "marginBottomPx"
+            : "marginLeftPx";
+    activeEditor.chain().focus().setCellAttribute(cellAttributeName, nextValue).run();
+  }
+
+  function applyTableCellWidth(mode: TableWidthMode, units: number, scope: TableFormatScope = tableFormatScope) {
+    if (!activeEditor.isActive("table")) {
+      return;
+    }
+    const nextUnits = resolveTableWidthUnits(units, 3);
+    if (scope === "table") {
+      updateActiveTableAttributes(activeEditor, {
+        columnWidthMode: mode,
+        columnWidthUnits: nextUnits,
+      });
+      return;
+    }
+    activeEditor
+      .chain()
+      .focus()
+      .setCellAttribute("widthMode", mode)
+      .setCellAttribute("widthUnits", nextUnits)
+      .run();
   }
 
   function copySelectionFormat() {
@@ -4519,6 +4868,28 @@ function Workspace({
     }
 
     activeEditor.chain().focus().updateAttributes("callout", { backgroundColor: color }).run();
+  }
+
+  function applyElementRoundness(value: number | null, scope: TableFormatScope = tableFormatScope) {
+    const target = resolveActiveBorderRadiusTarget(activeEditor, scope);
+    if (!target) {
+      return;
+    }
+
+    const nextValue = value === null ? null : Math.min(MAX_ELEMENT_ROUNDNESS_PX, coerceTableSpaceValue(value, 0));
+
+    if (target === "table") {
+      updateActiveTableAttributes(activeEditor, { borderRadiusPx: nextValue });
+      updateActiveTableCells(activeEditor, { borderRadiusPx: nextValue });
+      return;
+    }
+
+    if (target === "tableCell" || target === "tableHeader") {
+      activeEditor.chain().focus().setCellAttribute("borderRadiusPx", nextValue).run();
+      return;
+    }
+
+    activeEditor.chain().focus().updateAttributes(target, { borderRadiusPx: nextValue }).run();
   }
 
   function insertIcon(icon: string) {
@@ -4838,6 +5209,17 @@ function Workspace({
     setGuidanceLevel(syncProfile.value);
     applyFindGuardPreset(syncProfile.findGuard);
     applyRevisionReviewLane(syncProfile.revisionLane);
+  }
+
+  function applyGlobalStructureSync(nextPresetId: GlobalStructureSyncId = globalStructureSyncId) {
+    const preset = GLOBAL_STRUCTURE_SYNC_OPTIONS.find((option) => option.id === nextPresetId);
+    if (!preset) {
+      return;
+    }
+    setGlobalStructureSyncId(preset.id);
+    applyOutlineMissionPreset(preset.outlineMission);
+    applyPulseLearningLane(preset.pulseLane);
+    applyMinimapCoachLane(preset.minimapLane);
   }
 
   function applyFindStrategy(nextStrategy: FindStrategyId = findStrategyId) {
@@ -5174,9 +5556,7 @@ function Workspace({
     openAllOutlineSections();
   }
 
-  function applyOutlineMissionPreset(
-    nextPresetId: "map-and-triage" | "focus-slice" | "resequence-board" = outlineMissionPresetId,
-  ) {
+  function applyOutlineMissionPreset(nextPresetId: OutlineMissionPresetId = outlineMissionPresetId) {
     const preset = OUTLINE_MISSION_PRESETS.find((option) => option.id === nextPresetId);
     if (!preset) {
       return;
@@ -5188,6 +5568,20 @@ function Workspace({
     setOutlineFocusLens(preset.focusLens);
     setOutlineFocusWindow(preset.focusWindow);
     setOutlineActiveOnly(preset.activeOnly);
+  }
+
+  function applyOutlineLearningLane(nextLane: OutlineLearningLaneId = outlineLearningLaneId) {
+    const lane = OUTLINE_LEARNING_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setOutlineLearningLaneId(lane.id);
+    setOutlineMissionPresetId(lane.mission);
+    setOutlineStrategyId(lane.strategy);
+    setOutlineFocusLens(lane.focusLens);
+    setOutlineFocusWindow(lane.focusWindow);
+    setOutlineActiveOnly(lane.activeOnly);
+    applyOutlineMissionPreset(lane.mission);
   }
 
   function moveMinimapSelection(step: 1 | -1) {
@@ -5296,6 +5690,20 @@ function Workspace({
       setRevisionFilter("checkpoint");
       setRevisionDiffFocus("balanced");
     }
+  }
+
+  function applyPulseLearningLane(nextLane: PulseLearningLaneId = pulseLearningLaneId) {
+    const lane = PULSE_LEARNING_LANE_OPTIONS.find((option) => option.id === nextLane);
+    if (!lane) {
+      return;
+    }
+    setPulseLearningLaneId(lane.id);
+    setPulseCoachPresetId(lane.coach);
+    setPulseInterventionId(lane.intervention);
+    setPulseLens(lane.lens);
+    setPulseCadenceTarget(lane.target);
+    applyPulseCoachPreset(lane.coach);
+    applyPulseIntervention(lane.intervention);
   }
 
   function applyRevisionStrategy(nextStrategy: RevisionStrategyId = revisionStrategyId) {
@@ -5870,6 +6278,26 @@ function Workspace({
           <TopbarIconButton label="Apply guidance sync" icon="⇄" onClick={() => applyGlobalGuidanceSync()} />
           <span className="meta-pill guidance-sync-pill" title={selectedGlobalGuidanceSync.tip}>
             Guidance sync {globalGuidanceAlignmentScore}%
+          </span>
+          <label className="theme-selector structure-sync-selector" htmlFor="structure-sync-selector">
+            <span>Structure sync</span>
+            <select
+              id="structure-sync-selector"
+              value={globalStructureSyncId}
+              aria-label="Global structure sync"
+              title={selectedGlobalStructureSync.summary}
+              onChange={(event) => setGlobalStructureSyncId(event.target.value as GlobalStructureSyncId)}
+            >
+              {GLOBAL_STRUCTURE_SYNC_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <TopbarIconButton label="Apply structure sync" icon="⌗" onClick={() => applyGlobalStructureSync()} />
+          <span className="meta-pill structure-sync-pill" title={selectedGlobalStructureSync.tip}>
+            Structure {globalStructureAlignmentScore}%
           </span>
           <label className="theme-selector" htmlFor="view-mode-selector">
             <span>View</span>
@@ -6894,9 +7322,7 @@ function Workspace({
                 <span>Outline mission</span>
                 <select
                   value={outlineMissionPresetId}
-                  onChange={(event) =>
-                    setOutlineMissionPresetId(event.target.value as "map-and-triage" | "focus-slice" | "resequence-board")
-                  }
+                  onChange={(event) => setOutlineMissionPresetId(event.target.value as OutlineMissionPresetId)}
                 >
                   {OUTLINE_MISSION_PRESETS.map((option) => (
                     <option key={option.id} value={option.id}>
@@ -6926,6 +7352,50 @@ function Workspace({
                 Mission alignment {outlineMissionAlignmentScore}%. {outlineMissionTip}
               </p>
               <p className="small-copy">Tip: {selectedOutlineMissionPreset.tip}</p>
+            </div>
+            <div className="outline-learning-lane-group">
+              <label className="style-control">
+                <span>Learning lane</span>
+                <select
+                  value={outlineLearningLaneId}
+                  title={selectedOutlineLearningLane.summary}
+                  onChange={(event) => setOutlineLearningLaneId(event.target.value as OutlineLearningLaneId)}
+                >
+                  {OUTLINE_LEARNING_LANE_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {OUTLINE_LEARNING_LANE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${outlineLearningLaneId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={outlineLearningLaneId === option.id}
+                    onClick={() => setOutlineLearningLaneId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyOutlineLearningLane()}>
+                  Apply learning lane
+                </button>
+              </div>
+              <article className="outline-learning-lane-card">
+                <div className="meter-head">
+                  <span>{selectedOutlineLearningLane.label} alignment</span>
+                  <span>{outlineLearningLaneScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${outlineLearningLaneScore}%` }}></span>
+                </div>
+                <p className="small-copy">{selectedOutlineLearningLane.summary}</p>
+                <p className="small-copy">{outlineLearningLaneTip}</p>
+                <p className="small-copy">Tip: {selectedOutlineLearningLane.tip}</p>
+              </article>
             </div>
             <div className="outline-strategy-group">
               <label className="style-control">
@@ -7811,6 +8281,30 @@ function Workspace({
                 active={false}
                 onClick={() => handleToolbar(() => applyBlockBackgroundColor(null))}
               />
+              <ToolbarInput label={roundnessControlLabel}>
+                <input
+                  type="number"
+                  min="0"
+                  max={String(MAX_ELEMENT_ROUNDNESS_PX)}
+                  step="1"
+                  value={String(currentElementRoundnessPx)}
+                  disabled={!canEditElementRoundness}
+                  onChange={(event) => {
+                    const parsed = Number.parseFloat(event.target.value);
+                    if (!Number.isFinite(parsed)) {
+                      return;
+                    }
+                    applyElementRoundness(parsed, tableFormatScope);
+                  }}
+                />
+              </ToolbarInput>
+              <ToolbarButton
+                label="Reset roundness"
+                icon="◻"
+                active={false}
+                disabled={!canEditElementRoundness}
+                onClick={() => handleToolbar(() => applyElementRoundness(null, tableFormatScope))}
+              />
               <ToolbarSelect
                 label="Insert icon"
                 value=""
@@ -7931,6 +8425,10 @@ function Workspace({
               />
               {activeEditor.isActive("table") ? (
                 <>
+                  <ToolbarSelect label="Scope" value={tableFormatScope} onChange={(value) => setTableFormatScope(value as TableFormatScope)}>
+                    <option value="cell">Cell only</option>
+                    <option value="table">Whole table</option>
+                  </ToolbarSelect>
                   <ToolbarInput label="Cell bg">
                     <input
                       type="color"
@@ -7941,7 +8439,7 @@ function Workspace({
                           a: tableCellBackgroundRgba.a,
                         };
                         setTableCellBackgroundRgba(nextColor);
-                        applyTableCellBackgroundColor(toRgbaString(nextColor));
+                        applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -7962,7 +8460,7 @@ function Workspace({
                           a: clampAlpha(parsedAlpha),
                         };
                         setTableCellBackgroundRgba(nextColor);
-                        applyTableCellBackgroundColor(toRgbaString(nextColor));
+                        applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -7976,7 +8474,7 @@ function Workspace({
                           a: tableGridRgba.a,
                         };
                         setTableGridRgba(nextColor);
-                        applyTableGridColor(toRgbaString(nextColor));
+                        applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -7997,7 +8495,7 @@ function Workspace({
                           a: clampAlpha(parsedAlpha),
                         };
                         setTableGridRgba(nextColor);
-                        applyTableGridColor(toRgbaString(nextColor));
+                        applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8015,7 +8513,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableCellPaddingTopPx(nextValue);
-                        applyTableCellPadding("top", nextValue);
+                        applyTableCellPadding("top", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8033,7 +8531,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableCellPaddingRightPx(nextValue);
-                        applyTableCellPadding("right", nextValue);
+                        applyTableCellPadding("right", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8051,7 +8549,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableCellPaddingBottomPx(nextValue);
-                        applyTableCellPadding("bottom", nextValue);
+                        applyTableCellPadding("bottom", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8069,7 +8567,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableCellPaddingLeftPx(nextValue);
-                        applyTableCellPadding("left", nextValue);
+                        applyTableCellPadding("left", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8087,7 +8585,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableMarginTopPx(nextValue);
-                        applyTableMargin("top", nextValue);
+                        applyTableMargin("top", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8105,7 +8603,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableMarginRightPx(nextValue);
-                        applyTableMargin("right", nextValue);
+                        applyTableMargin("right", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8123,7 +8621,7 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableMarginBottomPx(nextValue);
-                        applyTableMargin("bottom", nextValue);
+                        applyTableMargin("bottom", nextValue, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8141,7 +8639,38 @@ function Workspace({
                         }
                         const nextValue = coerceTableSpaceValue(parsed, 0);
                         setTableMarginLeftPx(nextValue);
-                        applyTableMargin("left", nextValue);
+                        applyTableMargin("left", nextValue, tableFormatScope);
+                      }}
+                    />
+                  </ToolbarInput>
+                  <ToolbarInput label="Width mode">
+                    <select
+                      value={tableWidthMode}
+                      onChange={(event) => {
+                        const nextMode = event.target.value as TableWidthMode;
+                        setTableWidthMode(nextMode);
+                        applyTableCellWidth(nextMode, tableWidthUnits, tableFormatScope);
+                      }}
+                    >
+                      <option value="flex">Flex (min)</option>
+                      <option value="fixed">Fixed</option>
+                    </select>
+                  </ToolbarInput>
+                  <ToolbarInput label="Width /12">
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      step="1"
+                      value={String(tableWidthUnits)}
+                      onChange={(event) => {
+                        const parsed = Number.parseFloat(event.target.value);
+                        if (!Number.isFinite(parsed)) {
+                          return;
+                        }
+                        const nextUnits = resolveTableWidthUnits(parsed, 3);
+                        setTableWidthUnits(nextUnits);
+                        applyTableCellWidth(tableWidthMode, nextUnits, tableFormatScope);
                       }}
                     />
                   </ToolbarInput>
@@ -8184,13 +8713,13 @@ function Workspace({
                     label="Clear cell"
                     icon="□×"
                     active={false}
-                    onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null))}
+                    onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null, tableFormatScope))}
                   />
                   <ToolbarButton
                     label="Clear grid"
                     icon="⌗×"
                     active={false}
-                    onClick={() => handleToolbar(() => applyTableGridColor(null))}
+                    onClick={() => handleToolbar(() => applyTableGridColor(null, tableFormatScope))}
                   />
                   <ToolbarButton
                     label="Delete table"
@@ -8422,6 +8951,50 @@ function Workspace({
                 </button>
               </div>
               <p className="small-copy">{selectedPulseCoach.summary}</p>
+            </div>
+            <div className="pulse-learning-lane-group">
+              <label className="style-control">
+                <span>Pulse learning lane</span>
+                <select
+                  value={pulseLearningLaneId}
+                  title={selectedPulseLearningLane.summary}
+                  onChange={(event) => setPulseLearningLaneId(event.target.value as PulseLearningLaneId)}
+                >
+                  {PULSE_LEARNING_LANE_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="compact-grid">
+                {PULSE_LEARNING_LANE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`chip ${pulseLearningLaneId === option.id ? "active" : ""}`}
+                    type="button"
+                    aria-pressed={pulseLearningLaneId === option.id}
+                    onClick={() => setPulseLearningLaneId(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <button className="chip" type="button" onClick={() => applyPulseLearningLane()}>
+                  Apply pulse lane
+                </button>
+              </div>
+              <article className="pulse-learning-lane-card">
+                <div className="meter-head">
+                  <span>{selectedPulseLearningLane.label} alignment</span>
+                  <span>{pulseLearningLaneScore}%</span>
+                </div>
+                <div className="meter">
+                  <span style={{ width: `${pulseLearningLaneScore}%` }}></span>
+                </div>
+                <p className="small-copy">{selectedPulseLearningLane.summary}</p>
+                <p className="small-copy">{pulseLearningLaneTip}</p>
+                <p className="small-copy">Tip: {selectedPulseLearningLane.tip}</p>
+              </article>
             </div>
             <div className="pulse-intervention-group">
               <label className="style-control">
@@ -10834,9 +11407,21 @@ function resolveActiveTableNode(editor: Editor | null) {
   }
 
   const selection = editor.state.selection as {
-    $anchor?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
-    $from?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
-    $anchorCell?: { depth: number; node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown> }; before: (depth: number) => number };
+    $anchor?: {
+      depth: number;
+      node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown>; nodeSize: number };
+      before: (depth: number) => number;
+    };
+    $from?: {
+      depth: number;
+      node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown>; nodeSize: number };
+      before: (depth: number) => number;
+    };
+    $anchorCell?: {
+      depth: number;
+      node: (depth: number) => { type: { name: string }; attrs: Record<string, unknown>; nodeSize: number };
+      before: (depth: number) => number;
+    };
   };
   const resolved = selection.$anchorCell ?? selection.$anchor ?? selection.$from;
   if (!resolved) {
@@ -10879,12 +11464,63 @@ function updateActiveTableAttributes(editor: Editor, partial: Record<string, unk
   return true;
 }
 
+function updateActiveTableCells(editor: Editor, partial: Record<string, unknown>) {
+  const target = resolveActiveTableNode(editor);
+  if (!target) {
+    return false;
+  }
+
+  const tableStart = target.pos;
+  const tableEnd = tableStart + target.node.nodeSize;
+  let transaction = editor.state.tr;
+  let touched = false;
+
+  editor.state.doc.descendants((node, pos) => {
+    if (pos <= tableStart || pos >= tableEnd) {
+      return true;
+    }
+    if (node.type.name !== "tableCell" && node.type.name !== "tableHeader") {
+      return true;
+    }
+    transaction = transaction.setNodeMarkup(pos, undefined, {
+      ...node.attrs,
+      ...partial,
+    });
+    touched = true;
+    return true;
+  });
+
+  if (!touched) {
+    return false;
+  }
+  editor.view.dispatch(transaction);
+  return true;
+}
+
 function buildTableStyleAttribute(attrs: Record<string, unknown>) {
   const parts: string[] = [];
 
   const borderColor = typeof attrs.borderColor === "string" ? attrs.borderColor.trim() : "";
   if (borderColor) {
     parts.push(`--table-grid-color: ${borderColor}`);
+  }
+
+  const borderRadiusPx = resolveOptionalTableSpace(attrs.borderRadiusPx);
+  if (borderRadiusPx !== null) {
+    parts.push(`border-radius: ${borderRadiusPx}px`);
+    parts.push("overflow: hidden");
+  }
+
+  const columnWidthMode = resolveTableWidthMode(attrs.columnWidthMode, "flex");
+  const columnWidthUnits = resolveTableWidthUnits(attrs.columnWidthUnits, 3);
+  if (columnWidthMode === "fixed") {
+    parts.push("--table-layout-mode: fixed");
+    parts.push(`--table-cell-fixed-width: calc((100% / 12) * ${columnWidthUnits})`);
+    parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
+  } else {
+    parts.push("--table-layout-mode: auto");
+    parts.push("--table-cell-fixed-width: auto");
+    parts.push(`--table-cell-min-width: calc((100% / 12) * ${columnWidthUnits})`);
   }
 
   const legacyPadding = resolveOptionalTableSpace(attrs.cellPaddingPx);
@@ -10932,6 +11568,18 @@ function resolveOptionalTableSpace(value: unknown) {
     return null;
   }
   return Math.max(0, Math.round(numeric));
+}
+
+function resolveTableWidthMode(value: unknown, fallback: TableWidthMode): TableWidthMode {
+  return value === "fixed" || value === "flex" ? value : fallback;
+}
+
+function resolveTableWidthUnits(value: unknown, fallback: number) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+  return Math.max(1, Math.min(12, Math.round(numeric)));
 }
 
 function replaceEditorDocument(editor: Editor, content: JSONContent) {
@@ -11024,7 +11672,10 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
       table {
         border-collapse: collapse;
         width: 100%;
+        table-layout: var(--table-layout-mode, auto);
         --table-grid-color: rgba(0,0,0,0.12);
+        --table-cell-fixed-width: auto;
+        --table-cell-min-width: 0px;
         --table-cell-padding-top: 10px;
         --table-cell-padding-right: 10px;
         --table-cell-padding-bottom: 10px;
@@ -11034,12 +11685,19 @@ function exportHtml(editor: Editor, title: string, accent: AccentName) {
         --table-margin-bottom: 12px;
         --table-margin-left: 0px;
         margin: var(--table-margin-top) var(--table-margin-right) var(--table-margin-bottom) var(--table-margin-left);
+        overflow: hidden;
       }
       td, th {
         border: 1px solid var(--table-grid-color);
-        padding: var(--table-cell-padding-top) var(--table-cell-padding-right) var(--table-cell-padding-bottom)
-          var(--table-cell-padding-left);
+        padding-top: calc(var(--cell-padding-top, var(--table-cell-padding-top)) + var(--cell-margin-top, 0px));
+        padding-right: calc(var(--cell-padding-right, var(--table-cell-padding-right)) + var(--cell-margin-right, 0px));
+        padding-bottom: calc(var(--cell-padding-bottom, var(--table-cell-padding-bottom)) + var(--cell-margin-bottom, 0px));
+        padding-left: calc(var(--cell-padding-left, var(--table-cell-padding-left)) + var(--cell-margin-left, 0px));
+        width: var(--cell-fixed-width, var(--table-cell-fixed-width, auto));
+        min-width: var(--cell-min-width, var(--table-cell-min-width, 0px));
         position: relative;
+        overflow: hidden;
+        background-clip: padding-box;
       }
 ${chunkStyles}
     </style>
@@ -11602,6 +12260,26 @@ function writeGlobalGuidanceSyncPreference(value: GuidanceLevel) {
   }
 }
 
+function readGlobalStructureSyncPreference(): GlobalStructureSyncId {
+  try {
+    const raw = localStorage.getItem(GLOBAL_STRUCTURE_SYNC_PREFS_KEY);
+    if (raw === "discover-map" || raw === "draft-rhythm" || raw === "ship-audit") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "draft-rhythm";
+}
+
+function writeGlobalStructureSyncPreference(value: GlobalStructureSyncId) {
+  try {
+    localStorage.setItem(GLOBAL_STRUCTURE_SYNC_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readDensityPreference(): InterfaceDensity {
   try {
     const raw = localStorage.getItem(DENSITY_PREFS_KEY);
@@ -12123,6 +12801,26 @@ function writePulseInterventionPreference(value: PulseInterventionId) {
   }
 }
 
+function readPulseLearningLanePreference(): PulseLearningLaneId {
+  try {
+    const raw = localStorage.getItem(PULSE_LEARNING_LANE_PREFS_KEY);
+    if (raw === "cadence-foundation" || raw === "structure-clinic" || raw === "handoff-flightcheck") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "cadence-foundation";
+}
+
+function writePulseLearningLanePreference(value: PulseLearningLaneId) {
+  try {
+    localStorage.setItem(PULSE_LEARNING_LANE_PREFS_KEY, value);
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
 function readRevisionFilterPreference(): RevisionFilter {
   try {
     const raw = localStorage.getItem(REVISION_FILTER_PREFS_KEY);
@@ -12478,6 +13176,26 @@ function readOutlineFocusWindowPreference(): OutlineFocusWindow {
 function writeOutlineFocusWindowPreference(value: OutlineFocusWindow) {
   try {
     localStorage.setItem(OUTLINE_FOCUS_WINDOW_PREFS_KEY, String(value));
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+}
+
+function readOutlineLearningLanePreference(): OutlineLearningLaneId {
+  try {
+    const raw = localStorage.getItem(OUTLINE_LEARNING_LANE_PREFS_KEY);
+    if (raw === "stability-basics" || raw === "focus-flow" || raw === "ship-architecture") {
+      return raw;
+    }
+  } catch {
+    // Ignore storage errors in hardened standalone/file:// mode.
+  }
+  return "focus-flow";
+}
+
+function writeOutlineLearningLanePreference(value: OutlineLearningLaneId) {
+  try {
+    localStorage.setItem(OUTLINE_LEARNING_LANE_PREFS_KEY, value);
   } catch {
     // Ignore storage errors in hardened standalone/file:// mode.
   }
@@ -13046,6 +13764,46 @@ function resolveLineHeight(editor: Editor | null) {
     String(editor.getAttributes("heading").lineHeight ?? ""),
     String(editor.getAttributes("blockquote").lineHeight ?? ""),
   ].find((value) => value.trim().length > 0) ?? "";
+}
+
+function resolveActiveBorderRadiusTarget(editor: Editor | null, scope: TableFormatScope): BorderRadiusTargetNode | null {
+  if (!editor) {
+    return null;
+  }
+
+  if (editor.isActive("table")) {
+    if (scope === "table") {
+      return "table";
+    }
+    if (editor.isActive("tableHeader")) {
+      return "tableHeader";
+    }
+    return "tableCell";
+  }
+
+  return BORDER_RADIUS_TARGET_PRIORITY.find((nodeType) => nodeType !== "table" && nodeType !== "tableCell" && nodeType !== "tableHeader" && editor.isActive(nodeType)) ?? null;
+}
+
+function resolveActiveBorderRadiusPx(
+  editor: Editor | null,
+  target: BorderRadiusTargetNode | null,
+  scope: TableFormatScope,
+  tableRadiusPx: number,
+  cellRadiusPx: number,
+) {
+  if (!editor || !target) {
+    return 0;
+  }
+
+  if (target === "table" || (editor.isActive("table") && scope === "table")) {
+    return tableRadiusPx;
+  }
+  if (target === "tableCell" || target === "tableHeader") {
+    return cellRadiusPx;
+  }
+
+  const attrs = editor.getAttributes(target);
+  return coerceTableSpaceValue(attrs.borderRadiusPx, BORDER_RADIUS_DEFAULTS[target]);
 }
 
 function resolveSelectValue(value: string, options: readonly string[]) {
