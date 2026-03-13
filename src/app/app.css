@@ -2182,6 +2182,13 @@ select {
   tab-size: 2;
 }
 
+.code-surface-layout-oneline .code-view,
+.code-surface-layout-oneline .code-editor {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .code-error {
   margin: 0;
   font-size: 0.86rem;

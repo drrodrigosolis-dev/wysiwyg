@@ -3968,7 +3968,7 @@ function Workspace({
   const documentJson = activeEditor.getJSON() as JSONContent;
   const htmlSource = generateHTML(documentJson, editorExtensions);
   const exportableHtmlSource = generateExportableHtml(documentJson, editorExtensions);
-  const activeCodeMode: CodeMode = viewMode === "exportable" ? "exportable" : "html";
+  const activeCodeMode: CodeMode = sideBySide || viewMode === "exportable" ? "exportable" : "html";
   const codeSources: Record<CodeMode, string> = {
     html: htmlSource,
     exportable: exportableHtmlSource,
@@ -10233,7 +10233,7 @@ function HtmlCodeView({
   }
 
   return (
-    <div className="code-surface" role="region" aria-label={label}>
+    <div className={`code-surface code-surface-layout-${layout}`} role="region" aria-label={label}>
       <div className="code-actions">
         <span className="small-copy">{editing ? "Cmd/Ctrl+Enter to apply" : "Syntax-highlighted preview"}</span>
         <div className="code-action-buttons">
