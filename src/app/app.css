@@ -16,6 +16,18 @@ select {
   font: inherit;
 }
 
+button {
+  transition:
+    transform 120ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(0.98);
+}
+
 .app-shell {
   min-height: 100vh;
   height: 100vh;
@@ -786,6 +798,19 @@ select {
   cursor: not-allowed;
 }
 
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+}
+
+.tool-icon {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  font-size: 1.04rem;
+}
+
 .primary-action {
   background: linear-gradient(135deg, var(--accent-main), var(--accent-secondary));
   color: #fff7f1;
@@ -801,17 +826,25 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
+  min-width: 2.42rem;
+  min-height: 2.42rem;
   padding: 0.36rem;
   border-radius: 10px;
 }
 
 .topbar-icon-glyph {
-  font-size: 0.92rem;
+  font-size: 1.08rem;
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.button-feedback-success {
+  box-shadow: 0 0 0 1px rgba(20, 130, 93, 0.35);
+}
+
+.button-feedback-error {
+  box-shadow: 0 0 0 1px rgba(201, 73, 117, 0.36);
 }
 
 .view-mode-toggle {
@@ -886,6 +919,10 @@ select {
 
 .structure-sync-selector {
   min-width: 12.4rem;
+}
+
+.action-selector {
+  min-width: 12rem;
 }
 
 .tempo-status-pill {
@@ -1918,6 +1955,48 @@ select {
   z-index: 12;
   background: rgba(255, 251, 246, 0.94);
   backdrop-filter: blur(12px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+.toolbar-ribbon-panel {
+  border: 1px solid rgba(64, 44, 28, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+  padding: 0.48rem 0.52rem;
+  display: grid;
+  gap: 0.36rem;
+  min-width: 0;
+}
+
+.toolbar-ribbon-title {
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #6b584a;
+}
+
+.toolbar-ribbon-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: flex-end;
+}
+
+.toolbar-ribbon-controls .toolbar-select,
+.toolbar-ribbon-controls .toolbar-input {
+  min-width: 8.7rem;
+}
+
+.toolbar-compat-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .toolbar,

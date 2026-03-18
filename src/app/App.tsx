@@ -3990,6 +3990,27 @@ function Workspace({
     engine: chunkTemplateEngineFilter,
     capabilityTag: chunkCapabilityFilter === "all" ? undefined : chunkCapabilityFilter,
   });
+  const toolbarChunkOptions = CHUNK_TEMPLATE_CONCEPTS.flatMap((concept) => {
+    return (["html", "javascript"] as const).flatMap((engine) => {
+      const templateId = concept.templateIds[engine];
+      if (!templateId) {
+        return [];
+      }
+      const template = getChunkTemplate(templateId);
+      if (!template || template.id === RAW_CHUNK_TEMPLATE_ID) {
+        return [];
+      }
+      const capabilitySummary = summarizeChunkCapabilities(template.capabilityTags);
+      return [
+        {
+          category: concept.category,
+          value: template.id,
+          label: `${concept.label} · ${capabilitySummary} · ${template.variantLabel}`,
+          title: `${concept.label} — ${capabilitySummary} (${template.variantLabel})`,
+        },
+      ];
+    });
+  });
   const selectedChunkTemplate = getChunkTemplate(chunkPickerTemplateId);
   const selectedChunkConcept =
     (selectedChunkTemplate && selectedChunkTemplate.id !== RAW_CHUNK_TEMPLATE_ID
@@ -4292,6 +4313,30 @@ function Workspace({
     setSaveLabel("Started a new blank document");
   }
 
+  function handleTopbarQuickAction(action: string) {
+    if (action === "save") {
+      void saveCurrentDocumentEntry();
+      return;
+    }
+    if (action === "delete") {
+      deleteSavedDocumentEntry(selectedSavedDocumentId);
+      return;
+    }
+    if (action === "new") {
+      void resetToBlankDocument();
+      return;
+    }
+    if (action === "apply-syncs") {
+      applyGlobalGuidanceSync();
+      applyGlobalStructureSync();
+      applySessionTempo();
+      return;
+    }
+    if (action === "clear-formatting") {
+      clearSelectionFormatting();
+    }
+  }
+
   function applyLink() {
     const value = normalizeUrl(linkValue);
     if (!value) {
@@ -4338,7 +4383,8 @@ function Workspace({
   }
 
   async function copyCodeText(mode: CodeMode) {
-    const source = codeDrafts[mode] ?? formatHtmlForEditing(codeSources[mode], htmlCodeLayout);
+    const draft = codeDrafts[mode];
+    const source = draft === null ? codeSources[mode] : normalizeEditableHtml(draft);
     await navigator.clipboard.writeText(source);
   }
 
@@ -6301,7 +6347,6 @@ function Workspace({
               ))}
             </select>
           </label>
-          <TopbarIconButton label="Apply guidance sync" icon="⇄" onClick={() => applyGlobalGuidanceSync()} />
           <span className="meta-pill guidance-sync-pill" title={selectedGlobalGuidanceSync.tip}>
             Guidance sync {globalGuidanceAlignmentScore}%
           </span>
@@ -6321,7 +6366,15 @@ function Workspace({
               ))}
             </select>
           </label>
-          <TopbarIconButton label="Apply structure sync" icon="⌗" onClick={() => applyGlobalStructureSync()} />
+          <TopbarIconButton
+            label="Apply selected sync presets"
+            icon="⟳"
+            onClick={() => {
+              applyGlobalGuidanceSync();
+              applyGlobalStructureSync();
+              applySessionTempo();
+            }}
+          />
           <span className="meta-pill structure-sync-pill" title={selectedGlobalStructureSync.tip}>
             Structure {globalStructureAlignmentScore}%
           </span>
@@ -6375,16 +6428,33 @@ function Workspace({
             </select>
           </label>
 
-          <TopbarIconButton label="Save document" icon="SV" onClick={() => void saveCurrentDocumentEntry()} />
-          <TopbarIconButton
-            label="Delete saved document"
-            icon="DEL"
-            disabled={!selectedSavedDocumentId}
-            onClick={() => deleteSavedDocumentEntry(selectedSavedDocumentId)}
-          />
-          <TopbarIconButton label="New blank document" icon="＋" onClick={() => void resetToBlankDocument()} />
-          <TopbarIconButton label="Apply tempo preset" icon="⏱" onClick={() => applySessionTempo()} />
-          <TopbarIconButton label="Clear formatting" icon="Tx" onClick={clearSelectionFormatting} />
+          <label className="theme-selector action-selector" htmlFor="topbar-action-selector">
+            <span>Actions</span>
+            <select
+              id="topbar-action-selector"
+              aria-label="Quick workspace actions"
+              title="Save, new document, sync presets, and formatting actions"
+              defaultValue=""
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) {
+                  return;
+                }
+                handleTopbarQuickAction(value);
+                event.target.value = "";
+              }}
+            >
+              <option value="">Quick actions</option>
+              <option value="save">Save document</option>
+              <option value="new">New blank document</option>
+              <option value="delete" disabled={!selectedSavedDocumentId}>
+                Delete selected save
+              </option>
+              <option value="apply-syncs">Apply selected sync presets</option>
+              <option value="clear-formatting">Clear selection formatting</option>
+            </select>
+          </label>
+          <TopbarIconButton label="Save document" icon="💾" onClick={() => void saveCurrentDocumentEntry()} />
 
           <TopbarIconButton
             label={focusMode ? "Exit focus mode" : "Focus mode"}
@@ -6395,7 +6465,7 @@ function Workspace({
           />
           <TopbarIconButton
             label={showEditorHud ? "Hide editor HUD" : "Show editor HUD"}
-            icon={showEditorHud ? "◫" : "◧"}
+            icon={showEditorHud ? "⎯" : "▤"}
             active={showEditorHud}
             pressed={showEditorHud}
             onClick={() => setShowEditorHud((current) => !current)}
@@ -6414,10 +6484,10 @@ function Workspace({
               setCommandQuery("");
             }}
           />
-          <TopbarIconButton label="Open find" icon="⌕" onClick={() => setFindPanelOpen(true)} />
+          <TopbarIconButton label="Open find" icon="🔍" onClick={() => setFindPanelOpen(true)} />
           <TopbarIconButton
             label={workspacePage === "chunk-builder" ? "Back to editor" : "Chunk builder"}
-            icon={workspacePage === "chunk-builder" ? "⬑" : "▦"}
+            icon={workspacePage === "chunk-builder" ? "↩" : "🧩"}
             active={workspacePage === "chunk-builder"}
             onClick={() => {
               if (workspacePage === "chunk-builder") {
@@ -6446,7 +6516,7 @@ function Workspace({
           />
           <TopbarIconButton
             label="Export HTML"
-            icon="⇪"
+            icon="⤴"
             variant="primary"
             onClick={() => exportHtml(activeEditor, title, accent)}
           />
@@ -7820,81 +7890,108 @@ function Workspace({
               </div>
             ) : null}
             <div className="toolbar">
-              <ToolbarSelect
-                label="Chunk type"
-                value={chunkTemplateEngineFilter}
-                onChange={(nextValue) => setChunkTemplateEngine(nextValue as ChunkTemplateEngine)}
-              >
-                {CHUNK_ENGINE_FILTER_OPTIONS.map((option) => (
-                  <option key={`toolbar-engine-${option.value}`} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </ToolbarSelect>
-              <ToolbarSelect
-                label="Capability"
-                value={chunkCapabilityFilter}
-                onChange={(nextValue) => setChunkCapability(nextValue)}
-              >
-                <option value="all">All capabilities</option>
-                {chunkCapabilityTags.map((tag) => (
-                  <option key={`toolbar-capability-${tag}`} value={tag}>
-                    {formatCapabilityTag(tag)}
-                  </option>
-                ))}
-              </ToolbarSelect>
-              <ToolbarSelect
-                label="Chunk"
-                value={selectedChunkConcept?.id ?? ""}
-                onChange={(nextValue) => setChunkPickerConcept(nextValue)}
-              >
-                {INTERACTIVE_CHUNK_CATEGORIES.map((category) => (
-                  <optgroup key={`toolbar-${category}`} label={category}>
-                    {filteredChunkConcepts.filter((concept) => concept.category === category).map((concept) => (
-                      <option key={`toolbar-concept-${concept.id}`} value={concept.id}>
-                        {formatChunkConceptLabel(concept)}
+              <section className="toolbar-ribbon-panel" aria-label="Chunk tools">
+                <span className="toolbar-ribbon-title">Chunk</span>
+                <div className="toolbar-ribbon-controls">
+                  <ToolbarSelect
+                    label="Chunk preset"
+                    value={chunkPickerTemplateId}
+                    onChange={(nextValue) => setChunkTemplate(nextValue)}
+                  >
+                    {INTERACTIVE_CHUNK_CATEGORIES.map((category) => (
+                      <optgroup key={`toolbar-preset-${category}`} label={category}>
+                        {toolbarChunkOptions
+                          .filter((option) => option.category === category)
+                          .map((option) => (
+                            <option key={`toolbar-preset-${option.value}`} value={option.value} title={option.title}>
+                              {option.label}
+                            </option>
+                          ))}
+                      </optgroup>
+                    ))}
+                  </ToolbarSelect>
+                  <ToolbarButton
+                    label="Add chunk"
+                    icon="🧩"
+                    active={false}
+                    onClick={() => insertStructuredChunk(chunkPickerTemplateId)}
+                  />
+                  <ToolbarButton
+                    label="Raw HTML [Advanced]"
+                    icon="</>"
+                    active={false}
+                    onClick={() => insertRawChunk()}
+                    disabled={chunkTemplateEngineFilter === "javascript"}
+                  />
+                </div>
+                <div className="toolbar-compat-hidden">
+                  <ToolbarSelect
+                    label="Chunk type"
+                    value={chunkTemplateEngineFilter}
+                    onChange={(nextValue) => setChunkTemplateEngine(nextValue as ChunkTemplateEngine)}
+                  >
+                    {CHUNK_ENGINE_FILTER_OPTIONS.map((option) => (
+                      <option key={`toolbar-engine-${option.value}`} value={option.value}>
+                        {option.label}
                       </option>
                     ))}
-                  </optgroup>
-                ))}
-              </ToolbarSelect>
-              {selectedChunkConcept?.templateIds.html && selectedChunkConcept.templateIds.javascript ? (
-                <ToolbarSelect
-                  label="Variant"
-                  value={selectedChunkTemplate?.engine ?? "html"}
-                  onChange={(nextValue) => setChunkPickerVariant(nextValue as ChunkTemplateEngine)}
-                >
-                  <option value="html">Pure HTML</option>
-                  <option value="javascript">JavaScript</option>
-                </ToolbarSelect>
-              ) : null}
-              <ToolbarButton
-                label="Add chunk"
-                icon="＋"
-                active={false}
-                onClick={() => insertStructuredChunk(chunkPickerTemplateId)}
-              />
-              <ToolbarButton
-                label="Raw HTML [Advanced]"
-                icon="</>"
-                active={false}
-                onClick={() => insertRawChunk()}
-                disabled={chunkTemplateEngineFilter === "javascript"}
-              />
-              <ToolbarButton
-                label="Undo"
-                icon="↶"
-                active={false}
-                onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())}
-              />
-              <ToolbarButton
-                label="Redo"
-                icon="↷"
-                active={false}
-                onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())}
-              />
+                  </ToolbarSelect>
+                  <ToolbarSelect
+                    label="Chunk"
+                    value={selectedChunkConcept?.id ?? ""}
+                    onChange={(nextValue) => setChunkPickerConcept(nextValue)}
+                  >
+                    {CHUNK_TEMPLATE_CONCEPTS.map((concept) => (
+                      <option key={`toolbar-compat-concept-${concept.id}`} value={concept.id}>
+                        {concept.label}
+                      </option>
+                    ))}
+                  </ToolbarSelect>
+                </div>
+              </section>
+
+              <section className="toolbar-ribbon-panel" aria-label="History tools">
+                <span className="toolbar-ribbon-title">History</span>
+                <div className="toolbar-ribbon-controls">
+                  <ToolbarButton
+                    label="Undo"
+                    icon="↶"
+                    active={false}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())}
+                  />
+                  <ToolbarButton
+                    label="Redo"
+                    icon="↷"
+                    active={false}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())}
+                  />
+                  <ToolbarButton
+                    label="Copy formatting"
+                    icon="🖌"
+                    active={false}
+                    onClick={() => handleToolbar(copySelectionFormat)}
+                  />
+                  <ToolbarButton
+                    label="Paste formatting"
+                    icon="📋"
+                    active={false}
+                    disabled={!copiedFormatSnapshot}
+                    onClick={() => handleToolbar(pasteSelectionFormat)}
+                  />
+                  <ToolbarButton
+                    label="Clear format"
+                    icon="🧹"
+                    active={false}
+                    onClick={() => handleToolbar(clearSelectionFormatting)}
+                  />
+                </div>
+              </section>
+
+              <section className="toolbar-ribbon-panel" aria-label="Typography tools">
+                <span className="toolbar-ribbon-title">Typography</span>
+                <div className="toolbar-ribbon-controls">
               <ToolbarSelect
-                label="Size"
+                label="Font preset"
                 value={fontSizeSelectValue}
                 onChange={(nextValue) => {
                   if (nextValue === CUSTOM_SELECT_VALUE) {
@@ -7916,7 +8013,7 @@ function Workspace({
                   </option>
                 ) : null}
               </ToolbarSelect>
-              <ToolbarInput label="Size value">
+              <ToolbarInput label="Font size value">
                 <input
                   type="number"
                   step="0.1"
@@ -7930,7 +8027,7 @@ function Workspace({
                   }}
                 />
               </ToolbarInput>
-              <ToolbarInput label="Size unit">
+              <ToolbarInput label="Font size unit">
                 <select
                   value={fontSizeUnitDraft}
                   onChange={(event) => {
@@ -8076,8 +8173,8 @@ function Workspace({
                       {unit === "unitless" ? "unitless" : unit}
                     </option>
                   ))}
-                </select>
-              </ToolbarInput>
+                  </select>
+                </ToolbarInput>
               <ToolbarSelect
                 label="Track"
                 value={letterSpacingSelectValue}
@@ -8393,43 +8490,43 @@ function Workspace({
                 onClick={() => applyAlignment("justify")}
               />
               <ToolbarButton
-                label="H1"
+                label="Heading 1"
                 icon="H1"
                 active={activeEditor.isActive("heading", { level: 1 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 1 }).run())}
               />
               <ToolbarButton
-                label="H2"
+                label="Heading 2"
                 icon="H2"
                 active={activeEditor.isActive("heading", { level: 2 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 2 }).run())}
               />
               <ToolbarButton
-                label="H3"
+                label="Heading 3"
                 icon="H3"
                 active={activeEditor.isActive("heading", { level: 3 })}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleHeading({ level: 3 }).run())}
               />
               <ToolbarButton
-                label="Bullets"
+                label="Bulleted list"
                 icon="•"
                 active={activeEditor.isActive("bulletList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBulletList().run())}
               />
               <ToolbarButton
-                label="Numbered"
+                label="Numbered list"
                 icon="1."
                 active={activeEditor.isActive("orderedList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleOrderedList().run())}
               />
               <ToolbarButton
-                label="Task"
+                label="Task list"
                 icon="☑"
                 active={activeEditor.isActive("taskList")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleTaskList().run())}
               />
               <ToolbarButton
-                label="Quote"
+                label="Block quote"
                 icon="❝"
                 active={activeEditor.isActive("blockquote")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleBlockquote().run())}
@@ -8441,14 +8538,26 @@ function Workspace({
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().setCallout("note").run())}
               />
               <ToolbarButton
-                label="Sup"
+                label="Superscript"
                 icon="x²"
                 active={activeEditor.isActive("superscript")}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().toggleSuperscript().run())}
               />
-              <ToolbarButton label="Link" icon="Lnk" active={activeEditor.isActive("link")} onClick={() => setLinkEditorOpen(true)} />
               <ToolbarButton
-                label="Rule"
+                label="Add or edit link"
+                icon="🔗"
+                active={activeEditor.isActive("link")}
+                onClick={() => setLinkEditorOpen(true)}
+              />
+              <ToolbarButton
+                label="Remove link"
+                icon="⛓"
+                active={false}
+                disabled={!activeEditor.isActive("link")}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().extendMarkRange("link").unsetLink().run())}
+              />
+              <ToolbarButton
+                label="Horizontal rule"
                 icon="―"
                 active={false}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().setHorizontalRule().run())}
@@ -8779,20 +8888,8 @@ function Workspace({
                   />
                 </>
               ) : null}
-              <ToolbarButton label="Copy formatting" icon="⧉" active={false} onClick={() => handleToolbar(copySelectionFormat)} />
-              <ToolbarButton
-                label="Paste formatting"
-                icon="⎘"
-                active={false}
-                disabled={!copiedFormatSnapshot}
-                onClick={() => handleToolbar(pasteSelectionFormat)}
-              />
-              <ToolbarButton
-                label="Clear format"
-                icon="Tx"
-                active={false}
-                onClick={() => handleToolbar(clearSelectionFormatting)}
-              />
+                </div>
+              </section>
             </div>
 
             {showEditorHud ? (
@@ -8884,7 +8981,7 @@ function Workspace({
                     dirty={codeIsDirty}
                     error={codeErrors[activeCodeMode]}
                     onChange={(nextValue) => updateCodeDraft(activeCodeMode, nextValue)}
-                    onCopy={() => void copyCodeText(activeCodeMode)}
+                    onCopy={() => copyCodeText(activeCodeMode)}
                     onApply={() => applyCodeDraft(activeCodeMode)}
                     onReset={() => resetCodeDraft(activeCodeMode)}
                     onStartEdit={() => setCodeEditing((current) => ({ ...current, [activeCodeMode]: true }))}
@@ -10207,13 +10304,40 @@ function HtmlCodeView({
   dirty: boolean;
   error: string | null;
   onChange: (value: string) => void;
-  onCopy: () => void;
+  onCopy: () => void | Promise<void>;
   onApply: () => void;
   onReset: () => void;
   onStartEdit: () => void;
   onStopEdit: () => void;
 }) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const copyTimerRef = useRef<number | null>(null);
   const lines = formatHtmlForCodeView(value, layout);
+
+  useEffect(
+    () => () => {
+      if (copyTimerRef.current !== null) {
+        window.clearTimeout(copyTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  async function handleCopyClick() {
+    try {
+      await onCopy();
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+
+    if (copyTimerRef.current !== null) {
+      window.clearTimeout(copyTimerRef.current);
+    }
+    copyTimerRef.current = window.setTimeout(() => {
+      setCopyState("idle");
+    }, 1400);
+  }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     const isModifier = event.metaKey || event.ctrlKey;
@@ -10237,8 +10361,13 @@ function HtmlCodeView({
       <div className="code-actions">
         <span className="small-copy">{editing ? "Cmd/Ctrl+Enter to apply" : "Syntax-highlighted preview"}</span>
         <div className="code-action-buttons">
-          <button className="ghost-action" type="button" onClick={onCopy}>
-            Copy text
+          <button
+            className={`ghost-action ${copyState === "copied" ? "active button-feedback-success" : ""} ${copyState === "error" ? "button-feedback-error" : ""}`}
+            type="button"
+            title="Copy clean HTML without visual code-view spacing."
+            onClick={() => void handleCopyClick()}
+          >
+            {copyState === "copied" ? "Copied" : copyState === "error" ? "Copy failed" : "Copy text"}
           </button>
           {editing ? (
             <>
@@ -10506,17 +10635,21 @@ function ToolbarSelect({
   value,
   onChange,
   children,
+  title,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   children: React.ReactNode;
+  title?: string;
 }) {
   return (
     <label className="toolbar-select">
       <span>{label}</span>
       <select
         value={value}
+        title={title ?? label}
+        aria-label={label}
         onChange={(event) => onChange(event.target.value)}
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -10528,7 +10661,7 @@ function ToolbarSelect({
 
 function ToolbarInput({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="toolbar-input">
+    <label className="toolbar-input" title={label}>
       <span>{label}</span>
       <div onMouseDown={(event) => event.stopPropagation()}>{children}</div>
     </label>
@@ -12261,6 +12394,17 @@ function formatChunkConceptLabel(concept: ChunkTemplateConcept) {
     return `[JS] ${concept.label} • ${runtimeLabel}`;
   }
   return `[HTML] ${concept.label} • ${runtimeLabel}`;
+}
+
+function summarizeChunkCapabilities(capabilityTags: string[], max = 2) {
+  if (!capabilityTags.length) {
+    return "General";
+  }
+  const visible = capabilityTags.slice(0, max).map(formatCapabilityTag);
+  if (capabilityTags.length > max) {
+    visible.push(`+${String(capabilityTags.length - max)}`);
+  }
+  return visible.join(", ");
 }
 
 function readGuidancePreference(): GuidanceLevel {
