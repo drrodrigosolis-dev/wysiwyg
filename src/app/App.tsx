@@ -337,6 +337,7 @@ type SavedDocumentEntry = {
 
 type ViewMode = "rich" | "html" | "exportable";
 type CodeMode = "html" | "exportable";
+type ToolbarTabId = "chunks" | "typography" | "tables";
 type LengthUnit = "px" | "em" | "rem" | "%" | "pt" | "ch" | "vw" | "vh";
 type LineHeightUnit = "unitless" | "px" | "em" | "rem" | "%";
 
@@ -2314,6 +2315,7 @@ function Workspace({
   const [viewMode, setViewMode] = useState<ViewMode>("rich");
   const [sideBySide, setSideBySide] = useState(false);
   const [htmlCodeLayout, setHtmlCodeLayout] = useState<HtmlCodeLayoutMode>("paragraphs");
+  const [toolbarTab, setToolbarTab] = useState<ToolbarTabId>("chunks");
   const [codeDrafts, setCodeDrafts] = useState<Record<CodeMode, string | null>>({
     html: null,
     exportable: null,
@@ -7889,8 +7891,45 @@ function Workspace({
                 </button>
               </div>
             ) : null}
-            <div className="toolbar">
-              <section className="toolbar-ribbon-panel" aria-label="Chunk tools">
+            <div className="toolbar" data-active-tab={toolbarTab}>
+              <div className="toolbar-tabs" role="tablist" aria-label="Toolbar tabs">
+                <button
+                  className={`chip toolbar-tab ${toolbarTab === "chunks" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={toolbarTab === "chunks"}
+                  aria-controls="toolbar-chunks-panel"
+                  title="Chunk tools: insert structured chunks, switch presets, and add raw HTML blocks."
+                  onClick={() => setToolbarTab("chunks")}
+                >
+                  Chunks
+                </button>
+                <button
+                  className={`chip toolbar-tab ${toolbarTab === "typography" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={toolbarTab === "typography"}
+                  aria-controls="toolbar-typography-panel"
+                  title="Typography tools: text styling, alignment, spacing, links, and structure formatting."
+                  onClick={() => setToolbarTab("typography")}
+                >
+                  Typography
+                </button>
+                <button
+                  className={`chip toolbar-tab ${toolbarTab === "tables" ? "active" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={toolbarTab === "tables"}
+                  aria-controls="toolbar-tables-panel"
+                  title="Table tools: insert tables and adjust cell colors, spacing, sizing, and structure."
+                  onClick={() => setToolbarTab("tables")}
+                >
+                  Tables
+                </button>
+              </div>
+
+              {toolbarTab === "chunks" ? (
+              <section id="toolbar-chunks-panel" className="toolbar-ribbon-panel" aria-label="Chunk tools">
                 <span className="toolbar-ribbon-title">Chunk</span>
                 <div className="toolbar-ribbon-controls">
                   <ToolbarSelect
@@ -7949,47 +7988,43 @@ function Workspace({
                   </ToolbarSelect>
                 </div>
               </section>
+              ) : null}
 
-              <section className="toolbar-ribbon-panel" aria-label="History tools">
-                <span className="toolbar-ribbon-title">History</span>
-                <div className="toolbar-ribbon-controls">
-                  <ToolbarButton
-                    label="Undo"
-                    icon="↶"
-                    active={false}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())}
-                  />
-                  <ToolbarButton
-                    label="Redo"
-                    icon="↷"
-                    active={false}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())}
-                  />
-                  <ToolbarButton
-                    label="Copy formatting"
-                    icon="🖌"
-                    active={false}
-                    onClick={() => handleToolbar(copySelectionFormat)}
-                  />
-                  <ToolbarButton
-                    label="Paste formatting"
-                    icon="📋"
-                    active={false}
-                    disabled={!copiedFormatSnapshot}
-                    onClick={() => handleToolbar(pasteSelectionFormat)}
-                  />
-                  <ToolbarButton
-                    label="Clear format"
-                    icon="🧹"
-                    active={false}
-                    onClick={() => handleToolbar(clearSelectionFormatting)}
-                  />
-                </div>
-              </section>
-
-              <section className="toolbar-ribbon-panel" aria-label="Typography tools">
+              {toolbarTab === "typography" ? (
+              <section id="toolbar-typography-panel" className="toolbar-ribbon-panel" aria-label="Typography tools">
                 <span className="toolbar-ribbon-title">Typography</span>
                 <div className="toolbar-ribbon-controls">
+              <ToolbarButton
+                label="Undo"
+                icon="↶"
+                active={false}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().undo().run())}
+              />
+              <ToolbarButton
+                label="Redo"
+                icon="↷"
+                active={false}
+                onClick={() => handleToolbar(() => activeEditor.chain().focus().redo().run())}
+              />
+              <ToolbarButton
+                label="Copy formatting"
+                icon="🖌"
+                active={false}
+                onClick={() => handleToolbar(copySelectionFormat)}
+              />
+              <ToolbarButton
+                label="Paste formatting"
+                icon="📋"
+                active={false}
+                disabled={!copiedFormatSnapshot}
+                onClick={() => handleToolbar(pasteSelectionFormat)}
+              />
+              <ToolbarButton
+                label="Clear format"
+                icon="🧹"
+                active={false}
+                onClick={() => handleToolbar(clearSelectionFormatting)}
+              />
               <ToolbarSelect
                 label="Font preset"
                 value={fontSizeSelectValue}
@@ -8562,334 +8597,345 @@ function Workspace({
                 active={false}
                 onClick={() => handleToolbar(() => activeEditor.chain().focus().setHorizontalRule().run())}
               />
-              <ToolbarButton
-                label="Table"
-                icon="▦"
-                active={activeEditor.isActive("table")}
-                onClick={() => handleToolbar(() => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
-              />
-              {activeEditor.isActive("table") ? (
-                <>
-                  <ToolbarSelect label="Scope" value={tableFormatScope} onChange={(value) => setTableFormatScope(value as TableFormatScope)}>
-                    <option value="cell">Cell only</option>
-                    <option value="table">Whole table</option>
-                  </ToolbarSelect>
-                  <ToolbarInput label="Cell bg">
-                    <input
-                      type="color"
-                      value={toHexColor(tableCellBackgroundRgba)}
-                      onChange={(event) => {
-                        const nextColor = {
-                          ...parseCssColor(event.target.value, tableCellBackgroundRgba),
-                          a: tableCellBackgroundRgba.a,
-                        };
-                        setTableCellBackgroundRgba(nextColor);
-                        applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Cell α">
-                    <input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={formatAlpha(tableCellBackgroundRgba.a)}
-                      onChange={(event) => {
-                        const parsedAlpha = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsedAlpha)) {
-                          return;
-                        }
-                        const nextColor = {
-                          ...tableCellBackgroundRgba,
-                          a: clampAlpha(parsedAlpha),
-                        };
-                        setTableCellBackgroundRgba(nextColor);
-                        applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Grid">
-                    <input
-                      type="color"
-                      value={toHexColor(tableGridRgba)}
-                      onChange={(event) => {
-                        const nextColor = {
-                          ...parseCssColor(event.target.value, tableGridRgba),
-                          a: tableGridRgba.a,
-                        };
-                        setTableGridRgba(nextColor);
-                        applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Grid α">
-                    <input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={formatAlpha(tableGridRgba.a)}
-                      onChange={(event) => {
-                        const parsedAlpha = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsedAlpha)) {
-                          return;
-                        }
-                        const nextColor = {
-                          ...tableGridRgba,
-                          a: clampAlpha(parsedAlpha),
-                        };
-                        setTableGridRgba(nextColor);
-                        applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Pad top">
-                    <input
-                      type="number"
-                      min="0"
-                      max="64"
-                      step="1"
-                      value={String(tableCellPaddingTopPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableCellPaddingTopPx(nextValue);
-                        applyTableCellPadding("top", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Pad right">
-                    <input
-                      type="number"
-                      min="0"
-                      max="64"
-                      step="1"
-                      value={String(tableCellPaddingRightPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableCellPaddingRightPx(nextValue);
-                        applyTableCellPadding("right", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Pad bottom">
-                    <input
-                      type="number"
-                      min="0"
-                      max="64"
-                      step="1"
-                      value={String(tableCellPaddingBottomPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableCellPaddingBottomPx(nextValue);
-                        applyTableCellPadding("bottom", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Pad left">
-                    <input
-                      type="number"
-                      min="0"
-                      max="64"
-                      step="1"
-                      value={String(tableCellPaddingLeftPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableCellPaddingLeftPx(nextValue);
-                        applyTableCellPadding("left", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Margin top">
-                    <input
-                      type="number"
-                      min="0"
-                      max="80"
-                      step="1"
-                      value={String(tableMarginTopPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableMarginTopPx(nextValue);
-                        applyTableMargin("top", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Margin right">
-                    <input
-                      type="number"
-                      min="0"
-                      max="80"
-                      step="1"
-                      value={String(tableMarginRightPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableMarginRightPx(nextValue);
-                        applyTableMargin("right", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Margin bottom">
-                    <input
-                      type="number"
-                      min="0"
-                      max="80"
-                      step="1"
-                      value={String(tableMarginBottomPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableMarginBottomPx(nextValue);
-                        applyTableMargin("bottom", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Margin left">
-                    <input
-                      type="number"
-                      min="0"
-                      max="80"
-                      step="1"
-                      value={String(tableMarginLeftPx)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextValue = coerceTableSpaceValue(parsed, 0);
-                        setTableMarginLeftPx(nextValue);
-                        applyTableMargin("left", nextValue, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Width mode">
-                    <select
-                      value={tableWidthMode}
-                      onChange={(event) => {
-                        const nextMode = event.target.value as TableWidthMode;
-                        setTableWidthMode(nextMode);
-                        applyTableCellWidth(nextMode, tableWidthUnits, tableFormatScope);
-                      }}
-                    >
-                      <option value="flex">Flex (min)</option>
-                      <option value="fixed">Fixed</option>
-                    </select>
-                  </ToolbarInput>
-                  <ToolbarInput label="Width /12">
-                    <input
-                      type="number"
-                      min="1"
-                      max="12"
-                      step="1"
-                      value={String(tableWidthUnits)}
-                      onChange={(event) => {
-                        const parsed = Number.parseFloat(event.target.value);
-                        if (!Number.isFinite(parsed)) {
-                          return;
-                        }
-                        const nextUnits = resolveTableWidthUnits(parsed, 3);
-                        setTableWidthUnits(nextUnits);
-                        applyTableCellWidth(tableWidthMode, nextUnits, tableFormatScope);
-                      }}
-                    />
-                  </ToolbarInput>
-                  <ToolbarInput label="Text wrap">
-                    <select
-                      value={tableWrapMode}
-                      onChange={(event) => {
-                        const nextMode = resolveTableWrapMode(event.target.value, "auto");
-                        setTableWrapMode(nextMode);
-                        applyTableTextWrap(nextMode, tableFormatScope);
-                      }}
-                    >
-                      <option value="auto">Auto width</option>
-                      <option value="wrap">Wrap to cell</option>
-                    </select>
-                  </ToolbarInput>
-                  <ToolbarButton
-                    label="Add row"
-                    icon="R+"
-                    active={false}
-                    disabled={!activeEditor.can().addRowAfter()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())}
-                  />
-                  <ToolbarButton
-                    label="Add column"
-                    icon="C+"
-                    active={false}
-                    disabled={!activeEditor.can().addColumnAfter()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())}
-                  />
-                  <ToolbarButton
-                    label="Delete row"
-                    icon="R-"
-                    active={false}
-                    disabled={!activeEditor.can().deleteRow()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())}
-                  />
-                  <ToolbarButton
-                    label="Delete column"
-                    icon="C-"
-                    active={false}
-                    disabled={!activeEditor.can().deleteColumn()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())}
-                  />
-                  <ToolbarButton
-                    label="Merge/Split"
-                    icon="⇄"
-                    active={false}
-                    disabled={!activeEditor.can().mergeOrSplit()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().mergeOrSplit().run())}
-                  />
-                  <ToolbarButton
-                    label="Clear cell"
-                    icon="□×"
-                    active={false}
-                    onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null, tableFormatScope))}
-                  />
-                  <ToolbarButton
-                    label="Clear grid"
-                    icon="⌗×"
-                    active={false}
-                    onClick={() => handleToolbar(() => applyTableGridColor(null, tableFormatScope))}
-                  />
-                  <ToolbarButton
-                    label="Delete table"
-                    icon="▦×"
-                    active={false}
-                    disabled={!activeEditor.can().deleteTable()}
-                    onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteTable().run())}
-                  />
-                </>
-              ) : null}
                 </div>
               </section>
+              ) : null}
+
+              {toolbarTab === "tables" ? (
+              <section id="toolbar-tables-panel" className="toolbar-ribbon-panel" aria-label="Table tools">
+                <span className="toolbar-ribbon-title">Tables</span>
+                <div className="toolbar-ribbon-controls">
+                  <ToolbarButton
+                    label="Insert table"
+                    icon="▦"
+                    active={activeEditor.isActive("table")}
+                    onClick={() => handleToolbar(() => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
+                  />
+                  {activeEditor.isActive("table") ? (
+                    <>
+                      <ToolbarSelect label="Scope" value={tableFormatScope} onChange={(value) => setTableFormatScope(value as TableFormatScope)}>
+                        <option value="cell">Cell only</option>
+                        <option value="table">Whole table</option>
+                      </ToolbarSelect>
+                      <ToolbarInput label="Cell bg">
+                        <input
+                          type="color"
+                          value={toHexColor(tableCellBackgroundRgba)}
+                          onChange={(event) => {
+                            const nextColor = {
+                              ...parseCssColor(event.target.value, tableCellBackgroundRgba),
+                              a: tableCellBackgroundRgba.a,
+                            };
+                            setTableCellBackgroundRgba(nextColor);
+                            applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Cell α">
+                        <input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={formatAlpha(tableCellBackgroundRgba.a)}
+                          onChange={(event) => {
+                            const parsedAlpha = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsedAlpha)) {
+                              return;
+                            }
+                            const nextColor = {
+                              ...tableCellBackgroundRgba,
+                              a: clampAlpha(parsedAlpha),
+                            };
+                            setTableCellBackgroundRgba(nextColor);
+                            applyTableCellBackgroundColor(toRgbaString(nextColor), tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Grid">
+                        <input
+                          type="color"
+                          value={toHexColor(tableGridRgba)}
+                          onChange={(event) => {
+                            const nextColor = {
+                              ...parseCssColor(event.target.value, tableGridRgba),
+                              a: tableGridRgba.a,
+                            };
+                            setTableGridRgba(nextColor);
+                            applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Grid α">
+                        <input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={formatAlpha(tableGridRgba.a)}
+                          onChange={(event) => {
+                            const parsedAlpha = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsedAlpha)) {
+                              return;
+                            }
+                            const nextColor = {
+                              ...tableGridRgba,
+                              a: clampAlpha(parsedAlpha),
+                            };
+                            setTableGridRgba(nextColor);
+                            applyTableGridColor(toRgbaString(nextColor), tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Pad top">
+                        <input
+                          type="number"
+                          min="0"
+                          max="64"
+                          step="1"
+                          value={String(tableCellPaddingTopPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableCellPaddingTopPx(nextValue);
+                            applyTableCellPadding("top", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Pad right">
+                        <input
+                          type="number"
+                          min="0"
+                          max="64"
+                          step="1"
+                          value={String(tableCellPaddingRightPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableCellPaddingRightPx(nextValue);
+                            applyTableCellPadding("right", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Pad bottom">
+                        <input
+                          type="number"
+                          min="0"
+                          max="64"
+                          step="1"
+                          value={String(tableCellPaddingBottomPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableCellPaddingBottomPx(nextValue);
+                            applyTableCellPadding("bottom", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Pad left">
+                        <input
+                          type="number"
+                          min="0"
+                          max="64"
+                          step="1"
+                          value={String(tableCellPaddingLeftPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableCellPaddingLeftPx(nextValue);
+                            applyTableCellPadding("left", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Margin top">
+                        <input
+                          type="number"
+                          min="0"
+                          max="80"
+                          step="1"
+                          value={String(tableMarginTopPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableMarginTopPx(nextValue);
+                            applyTableMargin("top", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Margin right">
+                        <input
+                          type="number"
+                          min="0"
+                          max="80"
+                          step="1"
+                          value={String(tableMarginRightPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableMarginRightPx(nextValue);
+                            applyTableMargin("right", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Margin bottom">
+                        <input
+                          type="number"
+                          min="0"
+                          max="80"
+                          step="1"
+                          value={String(tableMarginBottomPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableMarginBottomPx(nextValue);
+                            applyTableMargin("bottom", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Margin left">
+                        <input
+                          type="number"
+                          min="0"
+                          max="80"
+                          step="1"
+                          value={String(tableMarginLeftPx)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextValue = coerceTableSpaceValue(parsed, 0);
+                            setTableMarginLeftPx(nextValue);
+                            applyTableMargin("left", nextValue, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Width mode">
+                        <select
+                          value={tableWidthMode}
+                          onChange={(event) => {
+                            const nextMode = event.target.value as TableWidthMode;
+                            setTableWidthMode(nextMode);
+                            applyTableCellWidth(nextMode, tableWidthUnits, tableFormatScope);
+                          }}
+                        >
+                          <option value="flex">Flex (min)</option>
+                          <option value="fixed">Fixed</option>
+                        </select>
+                      </ToolbarInput>
+                      <ToolbarInput label="Width /12">
+                        <input
+                          type="number"
+                          min="1"
+                          max="12"
+                          step="1"
+                          value={String(tableWidthUnits)}
+                          onChange={(event) => {
+                            const parsed = Number.parseFloat(event.target.value);
+                            if (!Number.isFinite(parsed)) {
+                              return;
+                            }
+                            const nextUnits = resolveTableWidthUnits(parsed, 3);
+                            setTableWidthUnits(nextUnits);
+                            applyTableCellWidth(tableWidthMode, nextUnits, tableFormatScope);
+                          }}
+                        />
+                      </ToolbarInput>
+                      <ToolbarInput label="Text wrap">
+                        <select
+                          value={tableWrapMode}
+                          onChange={(event) => {
+                            const nextMode = resolveTableWrapMode(event.target.value, "auto");
+                            setTableWrapMode(nextMode);
+                            applyTableTextWrap(nextMode, tableFormatScope);
+                          }}
+                        >
+                          <option value="auto">Auto width</option>
+                          <option value="wrap">Wrap to cell</option>
+                        </select>
+                      </ToolbarInput>
+                      <ToolbarButton
+                        label="Add row"
+                        icon="R+"
+                        active={false}
+                        disabled={!activeEditor.can().addRowAfter()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().addRowAfter().run())}
+                      />
+                      <ToolbarButton
+                        label="Add column"
+                        icon="C+"
+                        active={false}
+                        disabled={!activeEditor.can().addColumnAfter()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().addColumnAfter().run())}
+                      />
+                      <ToolbarButton
+                        label="Delete row"
+                        icon="R-"
+                        active={false}
+                        disabled={!activeEditor.can().deleteRow()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteRow().run())}
+                      />
+                      <ToolbarButton
+                        label="Delete column"
+                        icon="C-"
+                        active={false}
+                        disabled={!activeEditor.can().deleteColumn()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteColumn().run())}
+                      />
+                      <ToolbarButton
+                        label="Merge/Split"
+                        icon="⇄"
+                        active={false}
+                        disabled={!activeEditor.can().mergeOrSplit()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().mergeOrSplit().run())}
+                      />
+                      <ToolbarButton
+                        label="Clear cell"
+                        icon="□×"
+                        active={false}
+                        onClick={() => handleToolbar(() => applyTableCellBackgroundColor(null, tableFormatScope))}
+                      />
+                      <ToolbarButton
+                        label="Clear grid"
+                        icon="⌗×"
+                        active={false}
+                        onClick={() => handleToolbar(() => applyTableGridColor(null, tableFormatScope))}
+                      />
+                      <ToolbarButton
+                        label="Delete table"
+                        icon="▦×"
+                        active={false}
+                        disabled={!activeEditor.can().deleteTable()}
+                        onClick={() => handleToolbar(() => activeEditor.chain().focus().deleteTable().run())}
+                      />
+                    </>
+                  ) : (
+                    <p className="small-copy">Place the cursor inside a table cell to unlock table editing controls.</p>
+                  )}
+                </div>
+              </section>
+              ) : null}
             </div>
 
             {showEditorHud ? (
@@ -10562,17 +10608,143 @@ function RgbaEditor({
   );
 }
 
+const TOOL_TOOLTIP_OVERRIDES: Record<string, string> = {
+  "Chunk preset": "Selects a chunk template, including capability profile and runtime variant, for insertion.",
+  "Add chunk": "Inserts the selected chunk preset at the current cursor location.",
+  "Raw HTML [Advanced]": "Inserts a raw HTML block for advanced manual markup editing.",
+  "Chunk type": "Filters chunk templates by runtime target so you can choose JavaScript-capable or HTML-only chunks.",
+  Chunk: "Selects the chunk concept family used by the preset picker.",
+  Undo: "Reverts the most recent editing action.",
+  Redo: "Reapplies the last undone editing action.",
+  "Copy formatting": "Copies style and formatting attributes from the current selection.",
+  "Paste formatting": "Applies the copied formatting snapshot to the current selection.",
+  "Clear format": "Removes marks, alignment, typography overrides, and custom node formatting.",
+  "Font preset": "Applies a predefined font-size value to the current selection.",
+  "Font size value": "Sets a custom numeric font-size value.",
+  "Font size unit": "Sets the CSS unit used for custom font size values.",
+  Font: "Applies a predefined font-family stack.",
+  "Font stack": "Sets a custom font-family stack string for the selection.",
+  Weight: "Applies a predefined font-weight value.",
+  "Weight value": "Sets a custom numeric or keyword font-weight value.",
+  Line: "Applies a predefined line-height value.",
+  "Line value": "Sets a custom numeric line-height value.",
+  "Line unit": "Sets the unit mode used by the custom line-height value.",
+  Track: "Applies a predefined letter-spacing value.",
+  "Track value": "Sets a custom numeric letter-spacing value.",
+  "Track unit": "Sets the CSS unit for custom letter-spacing values.",
+  Bold: "Toggles bold styling for the selected text.",
+  Italic: "Toggles italic styling for the selected text.",
+  Underline: "Toggles underline styling for the selected text.",
+  Strikethrough: "Toggles strike-through styling for the selected text.",
+  Code: "Formats the selected text as inline code.",
+  "Highlight mark": "Toggles highlighted text using the current highlight color.",
+  Text: "Sets the text color for the selected content.",
+  "Text α": "Adjusts text color opacity between fully transparent (0) and fully opaque (1).",
+  "Clear text color": "Removes custom text color and restores inherited color.",
+  Highlight: "Sets the text highlight color for the selected content.",
+  "Highlight α": "Adjusts highlight color opacity between fully transparent (0) and fully opaque (1).",
+  "Clear highlight color": "Clears text highlight color from the selection.",
+  Block: "Sets the background color of the current block element.",
+  "Block α": "Adjusts block background opacity between fully transparent (0) and fully opaque (1).",
+  Tone: "Applies a semantic background tone preset to the current block.",
+  "Reset roundness": "Resets corner rounding on the current element or table scope.",
+  "Insert icon": "Inserts a preset icon character at the current cursor position.",
+  "Icon custom": "Enter any custom icon or symbol to insert into the document.",
+  "Insert custom icon": "Inserts the custom icon text exactly as entered.",
+  "Align left": "Aligns the current paragraph or selected block to the left edge.",
+  "Align center": "Centers the current paragraph or selected block.",
+  "Align right": "Aligns the current paragraph or selected block to the right edge.",
+  "Align justify": "Justifies the current paragraph so text aligns to both edges.",
+  "Heading 1": "Converts the current block to Heading 1.",
+  "Heading 2": "Converts the current block to Heading 2.",
+  "Heading 3": "Converts the current block to Heading 3.",
+  "Bulleted list": "Turns the current block into a bulleted list or toggles it off.",
+  "Numbered list": "Turns the current block into a numbered list or toggles it off.",
+  "Task list": "Turns the current block into a checklist-style task list.",
+  "Block quote": "Formats the current block as a quotation block.",
+  Callout: "Converts the current block into a callout container.",
+  Superscript: "Toggles superscript formatting for the selected text.",
+  "Add or edit link": "Opens the link editor for creating or updating a hyperlink on the selected text.",
+  "Remove link": "Removes hyperlink formatting from the selected linked text.",
+  "Horizontal rule": "Inserts a horizontal divider line at the cursor position.",
+  "Insert table": "Inserts a new 3x3 table with a header row at the cursor position.",
+  Scope: "Sets whether table edits apply to the active cell or the whole table.",
+  "Cell bg": "Sets the selected table cell or table background color.",
+  "Cell α": "Adjusts table cell background opacity between fully transparent (0) and fully opaque (1).",
+  Grid: "Sets table border/grid line color.",
+  "Grid α": "Adjusts table border/grid line opacity between fully transparent (0) and fully opaque (1).",
+  "Pad top": "Sets top inner padding for the selected cell or full table scope.",
+  "Pad right": "Sets right inner padding for the selected cell or full table scope.",
+  "Pad bottom": "Sets bottom inner padding for the selected cell or full table scope.",
+  "Pad left": "Sets left inner padding for the selected cell or full table scope.",
+  "Margin top": "Sets top outer margin for the selected table or table container.",
+  "Margin right": "Sets right outer margin for the selected table or table container.",
+  "Margin bottom": "Sets bottom outer margin for the selected table or table container.",
+  "Margin left": "Sets left outer margin for the selected table or table container.",
+  "Width mode": "Chooses whether table cells use flexible minimum width or fixed width units.",
+  "Width /12": "Sets table width units on a 12-column scale.",
+  "Text wrap": "Controls whether table text wraps inside cell width or follows auto sizing.",
+  "Add row": "Inserts a new row after the current row.",
+  "Add column": "Inserts a new column after the current column.",
+  "Delete row": "Deletes the current row.",
+  "Delete column": "Deletes the current column.",
+  "Merge/Split": "Merges selected cells or splits a merged cell.",
+  "Clear cell": "Clears custom cell background formatting.",
+  "Clear grid": "Clears custom table border/grid color formatting.",
+  "Delete table": "Removes the entire table from the document.",
+  "Apply selected sync presets": "Applies the currently selected guidance, structure, and tempo sync presets across the workspace.",
+  "Save document": "Saves the current document snapshot to the saved documents list.",
+  "Focus mode": "Hides side panels so you can focus on writing in the editor canvas.",
+  "Exit focus mode": "Restores side panels and exits focused writing mode.",
+  "Show editor HUD": "Displays the editor status HUD with workflow and guidance diagnostics.",
+  "Hide editor HUD": "Hides the editor status HUD to reduce visual noise.",
+  "Show left panel": "Opens the left rail with outline and minimap navigation tools.",
+  "Hide left panel": "Closes the left rail to create more editor space.",
+  "Open commands": "Opens the command palette for keyboard-driven editor actions.",
+  "Open find": "Opens find/search controls for locating text in the current document.",
+  "Chunk builder": "Switches to the chunk builder workspace for composing structured chunk blocks.",
+  "Back to editor": "Returns from chunk builder to the main document editor.",
+  "Show right panel": "Opens the right rail with design, preview, and chunk settings.",
+  "Hide right panel": "Closes the right rail to create more editor space.",
+  "Export HTML": "Exports the current document as HTML using current export settings.",
+};
+
+function buildDetailedToolTitle(label: string, kind: "button" | "select" | "input" | "topbar", explicit?: string) {
+  const normalizedLabel = label.replace(/\s+/g, " ").trim();
+  const lowerLabel = normalizedLabel.toLowerCase();
+  const inferredDetail =
+    TOOL_TOOLTIP_OVERRIDES[normalizedLabel] ??
+    (normalizedLabel.startsWith("HTML layout:")
+      ? "Switches between paragraph-spaced code view and compact one-line code formatting without changing exported HTML."
+      : lowerLabel.includes("roundness")
+        ? "Adjusts corner radius for the active element or selected table formatting scope."
+        : undefined);
+  const detail =
+    explicit ??
+    inferredDetail ??
+    (kind === "button"
+      ? "Runs this command on the current selection or cursor position in the editor."
+      : kind === "topbar"
+        ? "Runs this workspace-level action."
+        : kind === "select"
+          ? `Choose a ${lowerLabel} option to update editor behavior or formatting.`
+          : `Adjust ${lowerLabel} to update the active selection or cursor block.`);
+  return `${normalizedLabel}: ${detail}`;
+}
+
 function ToolbarButton({
   label,
   icon,
   active,
   disabled = false,
+  description,
   onClick,
 }: {
   label: string;
   icon?: string;
   active: boolean;
   disabled?: boolean;
+  description?: string;
   onClick: () => void;
 }) {
   return (
@@ -10581,7 +10753,7 @@ function ToolbarButton({
       type="button"
       disabled={disabled}
       aria-label={label}
-      title={label}
+      title={buildDetailedToolTitle(label, "button", description)}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
     >
@@ -10598,6 +10770,7 @@ function TopbarIconButton({
   active = false,
   disabled = false,
   variant = "ghost",
+  description,
 }: {
   label: string;
   icon: string;
@@ -10606,6 +10779,7 @@ function TopbarIconButton({
   active?: boolean;
   disabled?: boolean;
   variant?: "ghost" | "primary";
+  description?: string;
 }) {
   const className = `${variant === "primary" ? "primary-action" : "ghost-action"} topbar-icon-action ${
     active ? "active" : ""
@@ -10618,7 +10792,7 @@ function TopbarIconButton({
       type="button"
       disabled={disabled}
       aria-label={label}
-      title={label}
+      title={buildDetailedToolTitle(label, "topbar", description)}
       onClick={onClick}
       {...pressedProps}
     >
@@ -10648,7 +10822,7 @@ function ToolbarSelect({
       <span>{label}</span>
       <select
         value={value}
-        title={title ?? label}
+        title={buildDetailedToolTitle(label, "select", title)}
         aria-label={label}
         onChange={(event) => onChange(event.target.value)}
         onMouseDown={(event) => event.stopPropagation()}
@@ -10661,7 +10835,7 @@ function ToolbarSelect({
 
 function ToolbarInput({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="toolbar-input" title={label}>
+    <label className="toolbar-input" title={buildDetailedToolTitle(label, "input")}>
       <span>{label}</span>
       <div onMouseDown={(event) => event.stopPropagation()}>{children}</div>
     </label>
