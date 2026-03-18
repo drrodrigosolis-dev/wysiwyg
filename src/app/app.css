@@ -1975,6 +1975,7 @@ button:not(:disabled):active {
 }
 
 .toolbar-ribbon-panel {
+  grid-column: 1 / -1;
   border: 1px solid rgba(64, 44, 28, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.68);
